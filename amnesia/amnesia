@@ -32,6 +32,10 @@ while (( "$#" )); do
       BRANCH_NAME=$2
       shift 2
       ;;
+    -i|--install)
+      INSTALL_FLAG=1
+      shift
+      ;;
     -v|--version)
       print_version
       shift
@@ -48,6 +52,19 @@ while (( "$#" )); do
 done
 # set positional arguments in their proper place
 eval set -- "$PARAMS"
+
+# Function to handle the installation process
+install_script() {
+    cp $0 /usr/local/bin/amnesia
+    chmod +x /usr/local/bin/amnesia
+    echo "amnesia installed successfully to /usr/local/bin/amnesia"
+    exit 0
+}
+
+# Check if install flag is set
+if [ "$INSTALL_FLAG" = "1" ]; then
+    install_script
+fi
 
 # Check if SEARCH_STRING is set
 if [ -z "$SEARCH_STRING" ]; then
