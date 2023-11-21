@@ -64,19 +64,6 @@ def process_csv(in_file_path, out_file_path=None):
 
     print(f"\nSummary: {available_count} domains available, {unavailable_count} domains not available.")
 
-def main():
-    parser = argparse.ArgumentParser(description='Check domain availability from a CSV file or command line.')
-    parser.add_argument('--in-file', help='Path to the CSV file containing domain names')
-    parser.add_argument('--out-file', help='Path to the CSV file to write results to')
-    parser.add_argument('-d', '--domain', help='Comma separated list of domain names to check')
-    args = parser.parse_args()
-    if args.domain:
-        check_domains(args.domain.split(','), args.out_file)
-    else:
-        process_csv(args.in_file, args.out_file)
-
-if __name__ == "__main__":
-    main()
 def check_domains(domains, out_file_path=None):
     """Check the availability of a list of domains."""
     results = []
@@ -94,3 +81,17 @@ def check_domains(domains, out_file_path=None):
     else:
         for result in results:
             print(f"{result['name']}: {'Available' if result['available'] else 'Not Available'}")
+
+def main():
+    parser = argparse.ArgumentParser(description='Check domain availability from a CSV file or command line.')
+    parser.add_argument('--in-file', help='Path to the CSV file containing domain names')
+    parser.add_argument('--out-file', help='Path to the CSV file to write results to')
+    parser.add_argument('-d', '--domain', help='Comma separated list of domain names to check')
+    args = parser.parse_args()
+    if args.domain:
+        check_domains(args.domain.split(','), args.out_file)
+    else:
+        process_csv(args.in_file, args.out_file)
+
+if __name__ == "__main__":
+    main()
