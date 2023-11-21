@@ -33,7 +33,7 @@ def check_domain_availability(domain):
         print("Failed to decode JSON from response.")
         return False  # Or handle as appropriate
 
-def process_csv(file_path):
+def process_csv(in_file_path, out_file_path=None):
     """Process the CSV file to check domain availability."""
     updated_rows = []
     available_count = 0
@@ -43,15 +43,20 @@ def process_csv(file_path):
         reader = csv.DictReader(file)
         for row in reader:
             domain = row['name']
-            is_available = check_domain_availability(domain)
-            print(f"Checking {domain}: {'Available' if is_available else 'Not Available'}")
-            updated_rows.append({**row, 'available': int(is_available)})
-            if is_available:
-                available_count += 1
+            if 'available' not in row:
+                is_available = check_domain_availability(domain)
+                print(f"Checking {domain}: {'Available' if is_available else 'Not Available'}")
+                updated_rows.append({**row, 'available': int(is_available)})
+                if is_available:
+                    available_count += 1
+                else:
+                    unavailable_count += 1
             else:
-                unavailable_count += 1
+                print(f"Skipping {domain}: Results already available")
+                updated_rows.append(row)
 
-    with open(file_path, mode='w', newline='', encoding='utf-8') as file:
+    out_file_path = out_file_path or in_file_path
+    with open(out_file_path, mode='w', newline='', encoding='utf-8') as file:
         fieldnames = reader.fieldnames + ['available']
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         writer.writeheader()
@@ -61,9 +66,10 @@ def process_csv(file_path):
 
 def main():
     parser = argparse.ArgumentParser(description='Check domain availability from a CSV file.')
-    parser.add_argument('csv_file', help='Path to the CSV file')
+    parser.add_argument('--in-file', required=True, help='Path to the CSV file with domain names')
+    parser.add_argument('--out-file', help='Path to the CSV file to write results to')
     args = parser.parse_args()
-    process_csv(args.csv_file)
+    process_csv(args.in_file, args.out_file)
 
 if __name__ == "__main__":
     main()
