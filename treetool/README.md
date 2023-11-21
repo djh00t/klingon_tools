@@ -4,8 +4,8 @@
 
 ## Features
 
-- Generate a directory structure from a CSV file.
-- Generate a CSV file representing the file and directory structure from an existing directory.
+- Create a directory structure from a CSV file.
+- Save a CSV file representing the file and directory structure from a project.
 - Accept raw input from `tree -F` and generate a CSV file from it.
 
 ## Usage
@@ -16,10 +16,12 @@ tt [OPTIONS]
 
 Options:
 
-- `-i, --input FILE`: Use the provided CSV file as input.
-- `-o, --output FILE`: Write the directory and file structure to the provided CSV file.
+- `-c, --create FILE`: Create directory and file structure using a CSV file as input.
+- `-s, --save FILE`: Save the directory and file structure to the CSV file provided.
 - `-i, --install`: Install tt into /usr/local/bin/ and test if it's in the path.
-- `--raw`: Process raw input from `tree` and create a CSV file.
+- `--raw`: Process raw input from 'tree -F' and create a CSV file. (Must be
+  used with -o/--output)
+- `-v, --version`: Print the version number and exit.
 
 ## Installation
 
