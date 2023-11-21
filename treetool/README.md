@@ -1,11 +1,17 @@
 # tt - Treetool
 
-`tt` is a utility for mapping and generating directory structures. It was designed to provide a rapid way of generating directory and file structures for new projects. 
+A tool for saving and generating project file and directory structures. It was
+designed to provide a rapid way of generating directory and file structures for
+new projects. 
+
+It can take a CSV file as input to create a directory structure or save a CSV
+file representing the file and directory structure from an existing project. It
+also has a raw mode that accepts piped input from `tree -F`.
 
 ## Features
 
 - Create a directory structure from a CSV file.
-- Save a CSV file representing the file and directory structure from a project.
+- Save a CSV file representing the file and directory structure of a project.
 - Accept raw input from `tree -F` and generate a CSV file from it.
 
 ## Usage
@@ -25,7 +31,7 @@ Options:
 
 ## Installation
 
-`tt` can be installed into `/usr/local/bin/` using the `-i` or `--install` command-line argument.
+`tt` can be installed and upgraded using the `-i` or `--install` command-line argument.
 
 ## Contributing
 
