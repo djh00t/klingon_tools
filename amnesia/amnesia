@@ -5,6 +5,8 @@
 ### Repo: https://github.com/djh00t/klingon_utils
 ###
 
+VERSION="1.0.0"
+
 # Usage message
 usage() {
     echo "Usage: $0 -s <string> -b <branch>"
@@ -22,6 +24,10 @@ while (( "$#" )); do
       BRANCH_NAME=$2
       shift 2
       ;;
+    -v|--version)
+      VERSION_FLAG=1
+      shift
+      ;;
     -*|--*=) # unsupported flags
       echo "Error: Unsupported flag $1" >&2
       usage
@@ -34,6 +40,12 @@ while (( "$#" )); do
 done
 # set positional arguments in their proper place
 eval set -- "$PARAMS"
+
+# Check if version flag is set
+if [ "$VERSION_FLAG" = "1" ]; then
+    echo "amnesia version $VERSION"
+    exit 0
+fi
 
 # Check if SEARCH_STRING is set
 if [ -z "$SEARCH_STRING" ]; then
