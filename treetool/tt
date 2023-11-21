@@ -5,6 +5,7 @@
 ### Repo: https://github.com/djh00t/klingon_utils
 ###
 
+VERSION="1.0.0"
 input_csv=false
 input_file=""
 output_csv=false
@@ -200,7 +201,7 @@ install_tt() {
 
 # Function to print a helpful message
 print_version() {
-    echo "Treetool (tt) Version 1.0.0"
+    echo -e "Treetool (tt) Version $VERSION"
     echo "Copyright (c) 2023 David Hooton <david@hooton.org>"
     echo "Repo: https://github.com/djh00t/klingon_utils"
     exit 0
