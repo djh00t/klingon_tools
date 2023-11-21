@@ -130,7 +130,7 @@ dmypy.json
 
 # aider
 .aider*
-**.aider**
+**/.aider**
 
 # Pyre type checker
 .pyre/
