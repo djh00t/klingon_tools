@@ -9,6 +9,7 @@ Currently, the repository includes the following utilities:
 
 - `treetool (tt)`: A tool for saving and generating project file and directory structures. See [treetool/README.md](treetool/README.md) for more details.
 - `gitignore`: A generic .gitignore file. See [gitignore/README.md](gitignore/README.md) for more details.
+- `amnesia`: A utility for rewriting commit history in a Git repository. See [amnesia/README.md](amnesia/README.md) for more details.
 
 ## Usage
 

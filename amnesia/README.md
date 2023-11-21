@@ -1,9 +1,6 @@
-# Amnesia
+# Amnesia - History Rewriting Utility
 
-This script is used to cleanup commit messages in a Git repository. It uses the
-`git filter-branch` command to rewrite history, replacing a specified string in
-commit messages with another string (or deleting it) all of these things being
-something you really shouldn't be doing.
+Amnesia is a utility script used to cleanup commit messages in a Git repository. It leverages the `git filter-branch` command to rewrite history, replacing a specified string in commit messages with another string or deleting it. This utility is designed for those rare cases where you need to modify commit history, and should be used with caution as it can permanently alter your repository's history.
 
 **WARNING:** This script rewrites history. Git won't remember the thing
 you delete. There is no turning back. Using this script is almost certainly an
