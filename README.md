@@ -15,6 +15,8 @@ Currently, the repository includes the following utilities:
     directory structure or generate a CSV file representing the file and
     directory structure from an existing directory. It also has a raw
     mode that accepts raw input from `tree -F` and generates a CSV file from it.
+    It can be installed into `/usr/local/bin/` using the `-i` or `--install` command-line argument.
+    It also has a `-v` or `--version` option to print the version number and exit.
 
 ## Usage
 
