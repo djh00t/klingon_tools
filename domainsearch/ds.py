@@ -65,8 +65,8 @@ def process_csv(in_file_path, out_file_path=None):
     print(f"\nSummary: {available_count} domains available, {unavailable_count} domains not available.")
 
 def main():
-    parser = argparse.ArgumentParser(description='Check domain availability from a CSV file.')
-    parser.add_argument('--in-file', required=True, help='Path to the CSV file with domain names')
+    parser = argparse.ArgumentParser(description='Check domain availability from a CSV file or command line.')
+    parser.add_argument('--in-file', required=True, help='Path to the CSV file containing domain names')
     parser.add_argument('--out-file', help='Path to the CSV file to write results to')
     args = parser.parse_args()
     process_csv(args.in_file, args.out_file)
