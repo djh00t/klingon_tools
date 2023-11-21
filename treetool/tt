@@ -203,18 +203,18 @@ print_version() {
 }
 
 print_help() {
-    echo -e "Usage: tt [OPTIONS]"
-    echo -e "Map and Create directory structures using 'tree' outputs."
-    echo -e ""
-    echo -e "Options:"
-    echo -e "  --raw               Process raw input from 'tree -F' and create a CSV file. (Must be used with -o/--output)"
-    echo -e "  -c, --create FILE   Create directory and file structure using a CSV file as input."
-    echo -e "  -i, --install       Install tt into /usr/local/bin/"
-    echo -e "  -s, --save FILE     Save the directory and file structure to the CSV file provided."
-    echo -e "  -v, --version       Print the version of tt and exit."
-    echo -e "  -v, --version       Print the version number and exit."
-    echo -e ""
-    echo -e "If no options are provided, this help message will be displayed."
+    echo "Usage: tt [OPTIONS]"
+    echo "Map and Create directory structures using 'tree' outputs."
+    echo ""
+    echo "Options:"
+    echo "  --raw               Process raw input from 'tree -F' and create a CSV file. (Must be used with -o/--output)"
+    echo "  -c, --create FILE   Create directory and file structure using a CSV file as input."
+    echo "  -i, --install       Install tt into /usr/local/bin/"
+    echo "  -s, --save FILE     Save the directory and file structure to the CSV file provided."
+    echo "  -v, --version       Print the version of tt and exit."
+    echo "  -v, --version       Print the version number and exit."
+    echo ""
+    echo "If no options are provided, this help message will be displayed."
 }
 
 # Main function
