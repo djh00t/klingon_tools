@@ -28,6 +28,7 @@ function parse_arguments() {
                     exit 1
                 fi
                 export raw_input=true; shift ;;
+            -i|--install) install_tt; exit 0 ;;
             *) echo "Unknown parameter: $1"; exit 1 ;;
         esac
         shift
@@ -167,6 +168,16 @@ process_raw_input() {
     compare_raw_and_F_output "$raw_output" "$F_output"
 }
 
+# Function to install tt into /usr/local/bin/ and test if it's in the path
+install_tt() {
+    cp "$0" /usr/local/bin/tt
+    if ! command -v tt &> /dev/null; then
+        echo "Error: tt could not be found in the PATH after installation."
+        exit 1
+    fi
+    echo "tt has been installed successfully."
+}
+
 # Function to print a helpful message
 print_help() {
     echo "Usage: tt [OPTIONS]"
@@ -175,6 +186,7 @@ print_help() {
     echo "Options:"
     echo "  -i, --input FILE    Use the provided CSV file as input."
     echo "  -o, --output FILE   Write the directory and file structure to the provided CSV file."
+    echo "  -i, --install       Install tt into /usr/local/bin/ and test if it's in the path."
     echo "  --raw               Process raw input from `tree` and create a CSV file."
     echo ""
     echo "If no options are provided, this help message will be displayed."
