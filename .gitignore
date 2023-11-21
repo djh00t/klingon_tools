@@ -1,3 +1,7 @@
+# git specific
+.git/
+.gitignore
+
 # macOS specific
 .DS_Store
 .AppleDouble
