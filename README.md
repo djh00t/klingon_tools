@@ -7,7 +7,13 @@ This repository contains a set of utilities that are frequently used. These util
 
 Currently, the repository includes the following utilities:
 
-- `treetool/tt`: A tool for mapping and creating directory structures using `tree` outputs. It can take a CSV file as input to create a directory structure, or it can output the current directory structure to a CSV file. It also has a raw mode that accepts raw input from `tree`.
+- `treetool (tt)`: A tool for mapping and generating directory structures. 
+
+    tt was designed to provide a rapid way of generating directory and file
+    structures for new projects. It can take a CSV file as input to create a
+    directory structure or generate a CSV file representing the file and
+    directory structure from an existing directory. It also has a raw
+    mode that accepts raw input from `tree -F` and generates a CSV file from it.
 
 ## Usage
 
