@@ -13,6 +13,14 @@ usage() {
     exit 1
 }
 
+# Function to print the version message
+print_version() {
+    echo -e "amnesia Version $VERSION"
+    echo "Copyright (c) 2023 David Hooton <david@hooton.org>"
+    echo "Repo: https://github.com/djh00t/klingon_utils"
+    exit 0
+}
+
 # Parse command line arguments
 while (( "$#" )); do
   case "$1" in
@@ -25,7 +33,7 @@ while (( "$#" )); do
       shift 2
       ;;
     -v|--version)
-      VERSION_FLAG=1
+      print_version
       shift
       ;;
     -*|--*=) # unsupported flags
@@ -40,12 +48,6 @@ while (( "$#" )); do
 done
 # set positional arguments in their proper place
 eval set -- "$PARAMS"
-
-# Check if version flag is set
-if [ "$VERSION_FLAG" = "1" ]; then
-    echo "amnesia version $VERSION"
-    exit 0
-fi
 
 # Check if SEARCH_STRING is set
 if [ -z "$SEARCH_STRING" ]; then
