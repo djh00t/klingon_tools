@@ -13,7 +13,7 @@ function parse_arguments() {
     while [[ "$#" -gt 0 ]]; do
         case $1 in
             # Input file name used to create the directory structure and files
-            -i|--input) export input_csv=true; input_file="$2"; shift ;;
+            -c|--create) export input_csv=true; input_file="$2"; shift ;;
             # Output file name used to write the directory structure and files
             -o|--output) 
                 if [ -z "$2" ]; then
@@ -35,21 +35,21 @@ function parse_arguments() {
     done
 
     # Apply rules based on the arguments:
-    #  - input_csv and output_csv cannot be true at the same time
-    #  - input_csv is true then input_file must be provided and exist
+    #  - create_csv and output_csv cannot be true at the same time
+    #  - create_csv is true then create_file must be provided and exist
     #  - output_csv is true then the output_file must be provided and exist
-    if [[ $input_csv == true && $output_csv == true ]]; then
-        # Cannot use both input and output CSV at the same time
-        echo "Error: Cannot use both input and output CSV at the same time."
+    if [[ $create_csv == true && $output_csv == true ]]; then
+        # Cannot use both create and output CSV at the same time
+        echo "Error: Cannot use both create and output CSV at the same time."
         exit 1
-    # Check if input_csv is true and input_file is provided
-    elif [[ $input_csv == true ]]; then
-        if [[ -z "$input_file" ]]; then
-            echo "Error: Input file is required."
+    # Check if create_csv is true and create_file is provided
+    elif [[ $create_csv == true ]]; then
+        if [[ -z "$create_file" ]]; then
+            echo "Error: Create file is required."
             exit 1
         fi
-        # Check if the input file exists
-        check_file_exists "$input_file"
+        # Check if the create file exists
+        check_file_exists "$create_file"
     # Check if output_csv is true and output_file is provided
     elif [[ $output_csv == true ]]; then
         if [[ -z "$output_file" ]]; then
