@@ -168,12 +168,28 @@ process_raw_input() {
     compare_raw_and_F_output "$raw_output" "$F_output"
 }
 
-# Function to install tt into /usr/local/bin/ and test if it's in the path
+# Function to install tt into /usr/local/bin/, test if it's in the path, and check if `tree` is installed
 install_tt() {
     cp "$0" /usr/local/bin/tt
     if ! command -v tt &> /dev/null; then
         echo "Error: tt could not be found in the PATH after installation."
         exit 1
+    fi
+    if ! command -v tree &> /dev/null; then
+        echo "tree is not installed. Attempting to install..."
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            brew install tree
+        elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            if [[ -f /etc/debian_version ]]; then
+                sudo apt-get install tree
+            else
+                echo "Error: Your Linux distribution is not supported. Please install tree manually."
+                exit 1
+            fi
+        else
+            echo "Error: Your operating system is not supported. Please install tree manually."
+            exit 1
+        fi
     fi
     echo "tt has been installed successfully."
 }
