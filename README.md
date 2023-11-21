@@ -8,6 +8,7 @@ This repository contains a set of utilities that are frequently used. These util
 Currently, the repository includes the following utilities:
 
 - `treetool (tt)`: A tool for mapping and generating directory structures. 
+- `gitignore`: A file containing patterns of files to be ignored by git. See [gitignore/README.md](gitignore/README.md) for more details.
 
     tt was designed to provide a rapid way of generating directory and file
     structures for new projects. It can take a CSV file as input to create a
