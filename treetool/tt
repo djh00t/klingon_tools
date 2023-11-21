@@ -14,14 +14,15 @@ function parse_arguments() {
         case $1 in
             # Input file name used to create the directory structure and files
             -c|--create) export input_csv=true; input_file="$2"; shift ;;
-            # Output file name used to write the directory structure and files
-            -o|--output) 
+            # Output file name used to save the project directory and file structure
+            -s|--save) 
                 if [ -z "$2" ]; then
                     echo "Error: No output file provided."
                     exit 1
                 fi
                 export output_csv=true; output_file="$2"; shift ;;
-            # Raw mode - accept raw input from `tree`
+            # Raw mode - accept raw input from `tree -F` and create a CSV file
+            # using the --output argument
             --raw) 
                 if [ -z "$2" ]; then
                     echo "Error: No output file provided."
@@ -196,16 +197,16 @@ install_tt() {
 
 # Function to print a helpful message
 print_help() {
-    echo "Usage: tt [OPTIONS]"
-    echo "Map and Create directory structures using `tree` outputs."
-    echo ""
-    echo "Options:"
-    echo "  -i, --input FILE    Use the provided CSV file as input."
-    echo "  -o, --output FILE   Write the directory and file structure to the provided CSV file."
-    echo "  -i, --install       Install tt into /usr/local/bin/ and test if it's in the path."
-    echo "  --raw               Process raw input from `tree` and create a CSV file."
-    echo ""
-    echo "If no options are provided, this help message will be displayed."
+    echo -e "Usage: tt [OPTIONS]"
+    echo -e "Map and Create directory structures using 'tree' outputs."
+    echo -e ""
+    echo -e "Options:"
+    echo -e "  -c, --create FILE   Create directory and file structure using a CSV file as input."
+    echo -e "  -s, --save FILE   Save the directory and file structure to the CSV file provided."
+    echo -e "  -i, --install       Install tt into /usr/local/bin/"
+    echo -e "  --raw               Process raw input from 'tree -F' and create a CSV file. (Must be used with -o/--output)"
+    echo -e ""
+    echo -e "If no options are provided, this help message will be displayed."
 }
 
 # Main function
