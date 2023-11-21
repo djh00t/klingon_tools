@@ -1,4 +1,6 @@
 #!/bin/bash
+# Copyright (c) 2022 David Hooton <david@hooton.org>
+# https://github.com/djh00t/klingon_utils
 ###
 ### Treetool - Map and Create directory structures using `tree` outputs
 ###
