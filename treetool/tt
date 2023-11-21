@@ -1,8 +1,8 @@
 #!/bin/bash
-# Copyright (c) 2022 David Hooton <david@hooton.org>
-# https://github.com/djh00t/klingon_utils
 ###
-### Treetool - Map and Create directory structures using `tree` outputs
+### Treetool (tt) - Map and Create directory structures using `tree` outputs
+### Copyright (c) 2023 David Hooton <david@hooton.org>
+### Repo: https://github.com/djh00t/klingon_utils
 ###
 
 input_csv=false
@@ -200,7 +200,9 @@ install_tt() {
 
 # Function to print a helpful message
 print_version() {
-    echo "tt version 1.0.0"
+    echo "Treetool (tt) Version 1.0.0"
+    echo "Copyright (c) 2023 David Hooton <david@hooton.org>"
+    echo "Repo: https://github.com/djh00t/klingon_utils"
     exit 0
 }
 
