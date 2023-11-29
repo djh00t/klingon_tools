@@ -204,3 +204,6 @@ $RECYCLE.BIN/
 *.o
 *.obj
 *.pyd
+
+# Ignore CSV's in domainsearch
+domainsearch/*.csv
