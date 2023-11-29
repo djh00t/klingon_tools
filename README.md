@@ -11,7 +11,10 @@ Currently, the repository includes the following utilities:
 - `gitignore`: A generic .gitignore file. See [gitignore/README.md](gitignore/README.md) for more details.
 - `amnesia`: A utility for rewriting commit history in a Git repository. See
   [amnesia/README.md](amnesia/README.md) for more details.
-- `Cxcel`: Render CSV files in both terminal and web interfaces. Real-time updates to the displayed CSV content by monitoring file changes. See [Cxcel/README.md](Cxcel/README.md) for more details.
+- `Cxcel`: Render CSV files in both terminal and web interfaces. Real-time
+  updates to the displayed CSV content by monitoring file changes. See
+  [Cxcel/README.md](Cxcel/README.md) for more details.
+- `klingon tool (kt)`: Installer/updater for klingon tools.
 
 ## Usage
 
