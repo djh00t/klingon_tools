@@ -627,16 +627,47 @@ function main() {
 # Get project name from git repo
 PROJECT=$(basename "$ROOT_DIR")
 
+# Function to detect the OS
+detect_os() {
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        if command -v apt &>/dev/null; then
+            echo "ubuntu"
+        else
+            echo "unsupported_linux"
+        fi
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "macos"
+    else
+        echo "unsupported_os"
+    fi
+}
+
+OS=$(detect_os)
+
 # Make sure pre-commit is installed
 if ! command -v pre-commit &>/dev/null; then
     echo "pre-commit could not be found, installing it."
-    HOMEBREW_NO_AUTO_UPDATE=true brew install pre-commit
+    if [ "$OS" == "macos" ]; then
+        HOMEBREW_NO_AUTO_UPDATE=true brew install pre-commit
+    elif [ "$OS" == "ubuntu" ]; then
+        sudo apt update && sudo apt install -y pre-commit
+    else
+        echo "Unsupported OS for automatic installation of pre-commit."
+        exit 1
+    fi
 fi
 
 # Make sure flux is installed
 if ! command -v flux &>/dev/null; then
     echo "flux could not be found, installing it."
-    HOMEBREW_NO_AUTO_UPDATE=true brew install flux
+    if [ "$OS" == "macos" ]; then
+        HOMEBREW_NO_AUTO_UPDATE=true brew install flux
+    elif [ "$OS" == "ubuntu" ]; then
+        sudo apt update && sudo apt install -y flux
+    else
+        echo "Unsupported OS for automatic installation of flux."
+        exit 1
+    fi
 fi
 
 # Find changed files, get them into git, generate a meaningful commit message,
