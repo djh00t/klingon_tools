@@ -2,6 +2,9 @@
 .git/
 .gitignore
 
+# Age Encryption
+**age.agekey
+
 # macOS specific
 .DS_Store
 .AppleDouble
