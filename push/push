@@ -44,6 +44,12 @@ if [ ! -f "$PUSH_CONFIG_FILE" ]; then
     cp "$TEMPLATE_FILE" "$PUSH_CONFIG_FILE"
 fi
 
+if [ -z "$ENCRYPT_SECRETS" ]; then
+    printf "${NC}%s${NC}\n" " ENCRYPT_SECRETS=${ENCRYPT_SECRETS:-false}"
+else
+    printf "${NC}%s${NC}\n" " ENCRYPT_SECRETS=$ENCRYPT_SECRETS"
+fi
+
 if [ -f "$PUSH_CONFIG_FILE" ]; then
     . "$PUSH_CONFIG_FILE"
 else
@@ -117,7 +123,7 @@ function run_precommit_all() {
     local max_retries=5
     local last_error=""
     while true; do
-        pre-commit run --all-files
+        SKIP=forbid_secrets pre-commit run --all-files
         EXIT=$?
         if [[ $EXIT -eq 0 ]]; then
             generate_precommit_logging "Pre-commit run finished" "Passed"
@@ -378,19 +384,18 @@ function generate_commit_message() {
 }
 
 function git_pull_rebase_precommit() {
-    # Perform a git pull before adding or committing anything
-    # If git pull --rebase fails, exit the script with an error message.
-    # Redirect stdout and stderr to /dev/null to suppress the output unless
-    # there is an error.
-    if ! git pull --rebase &>/dev/null; then
+    # Stash any unstaged changes before pulling
+    git stash -u
+
+    # Perform a git pull with rebase
+    if ! git pull --rebase; then
         generate_precommit_logging "Error pulling changes from the remote repository." "ERROR "
+        git stash pop
         exit 1
     fi
 
-    #git stash
-    #git pull --rebase
-    #git stash pop
-    #git stash clear
+    # Pop the stash to restore the unstaged changes
+    git stash pop
 
     # Run pre-commit over the whole repository until it exits with zero
     if [ "$NO_PRE_COMMIT" != "true" ]; then
@@ -476,8 +481,8 @@ function generate_precommit_logging() {
 
 function git_push_changes() {
     if [ "$NO_PUSH" != "true" ]; then
-        if ! git push; then
-            generate_precommit_logging "Failed to push changes to the remote repository." "ERROR "
+        if ! git pull --rebase && git push; then
+            generate_precommit_logging "Failed to pull and push changes to the remote repository." "ERROR "
             exit 1
         else
             generate_precommit_logging "Changes successfully pushed to the remote repository." "OK"
@@ -537,6 +542,9 @@ function handle_changed_files() {
         # Make sure the changes are safe to push with pre-commit
         # Process each changed file individually
         for FILE in "${CHANGED_FILES[@]}"; do
+            if [ "$ENCRYPT_SECRETS" == "true" ] && [ "$NO_ENCRYPT" != "true" ]; then
+                "$ROOT_DIR/scripts/encrypt" "$ROOT_DIR/$FILE"
+            fi
             git add "$ROOT_DIR/$FILE"
             run_precommit_all
             local commit_msg=$(generate_commit_message)
@@ -657,16 +665,18 @@ if ! command -v pre-commit &>/dev/null; then
     fi
 fi
 
-# Make sure flux is installed
-if ! command -v flux &>/dev/null; then
-    echo "flux could not be found, installing it."
-    if [ "$OS" == "macos" ]; then
-        HOMEBREW_NO_AUTO_UPDATE=true brew install flux
-    elif [ "$OS" == "ubuntu" ]; then
-        sudo apt update && sudo apt install -y flux
-    else
-        echo "Unsupported OS for automatic installation of flux."
-        exit 1
+if [ "$NO_FLUX" != "true" ]; then
+    # Make sure flux is installed
+    if ! command -v flux &>/dev/null; then
+        echo "flux could not be found, installing it."
+        if [ "$OS" == "macos" ]; then
+            HOMEBREW_NO_AUTO_UPDATE=true brew install flux
+        elif [ "$OS" == "ubuntu" ]; then
+            sudo curl -s https://fluxcd.io/install.sh | sudo bash
+        else
+            echo "Unsupported OS for automatic installation of flux."
+            exit 1
+        fi
     fi
 fi
 
