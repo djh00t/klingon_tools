@@ -7,3 +7,4 @@ NO_FLUX=true
 # NO_PRE_COMMIT=true
 # NO_PUSH=true
 NO_SAVE_API=true
+# ENCRYPT_SECRETS=false
