@@ -21,7 +21,7 @@ def check_domain_availability(domain):
     """Check if a domain is available."""
     querystring = {"domain": domain}
     response = requests.get(url, headers=headers, params=querystring)
-    
+
     # Inspect the response
     print(f"Status Code: {response.status_code}")
     print(f"Response Text: {response.text}")
