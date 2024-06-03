@@ -18,7 +18,7 @@ function parse_arguments() {
             # Input file name used to create the directory structure and files
             -c|--create) export input_csv=true; input_file="$2"; shift ;;
             # Output file name used to save the project directory and file structure
-            -s|--save) 
+            -s|--save)
                 if [ -z "$2" ]; then
                     echo "Error: No output file provided."
                     exit 1
@@ -26,7 +26,7 @@ function parse_arguments() {
                 export output_csv=true; output_file="$2"; shift ;;
             # Raw mode - accept raw input from `tree -F` and create a CSV file
             # using the --output argument
-            --raw) 
+            --raw)
                 if [ -z "$2" ]; then
                     echo "Error: No output file provided."
                     exit 1
@@ -257,7 +257,7 @@ main() {
         # Exit the script cleanly
         exit 0
     fi
-    
+
     # If output_csv is true then create the output file
     if [[ $output_csv == true ]]; then
         touch "$output_file"
