@@ -2,7 +2,7 @@
 
 A tool for saving and generating project file and directory structures. It was
 designed to provide a rapid way of generating directory and file structures for
-new projects. 
+new projects.
 
 It can take a CSV file as input to create a directory structure or save a CSV
 file representing the file and directory structure from an existing project. It
