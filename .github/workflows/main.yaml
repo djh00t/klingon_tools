@@ -143,7 +143,7 @@ jobs:
           export VERSION=$(cat VERSION)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "VERSION:                        $VERSION"
-          echo "env.VERSION:                    ${{ env.VERSION }}"
+
 
       # Compile requirements if requirements.in is not empty
       - name: Compile requirements
@@ -261,8 +261,8 @@ jobs:
 #       - name: Tag and push
 #         run: |
 #           git pull || true
-#           git tag -a v${{ env.VERSION }} -m "Version v${{ env.VERSION }}"
-#           git push origin v${{ env.VERSION }}
+#           git tag -a v${VERSION} -m "Version v${VERSION}"
+#           git push origin v${VERSION}
 #           git push || true
 #           sleep 5
   create-release:
@@ -292,7 +292,6 @@ jobs:
           export VERSION=$(cat VERSION)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "VERSION:                        $VERSION"
-          echo "env.VERSION:                    ${{ env.VERSION }}"
 
       - name: Build Changelog
         id: github_release
@@ -304,12 +303,12 @@ jobs:
         run: |
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
-          git tag -a v${{ env.VERSION }} -m "Release version v${{ env.VERSION }}"
-          git push origin v${{ env.VERSION }}
+          git tag -a v${VERSION} -m "Release version v${VERSION}"
+          git push origin v${VERSION}
 
       - name: Create Release
         uses: mikepenz/action-gh-release@v0.4.0
         with:
           body: ${{steps.github_release.outputs.changelog}}
           generate_release_notes: true
-          tag_name: v${{ env.VERSION }}
+          tag_name: v${VERSION}
