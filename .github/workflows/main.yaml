@@ -59,7 +59,7 @@ jobs:
         run: |
           export PYPI_TEST_VERSION=$(curl -s https://test.pypi.org/pypi/${{ vars.APP_NAME }}/json | jq -r '.info.version')
           if [[ ! $PYPI_TEST_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            PYPI_TEST_VERSION=""
+            PYPI_TEST_VERSION="0.0.0"
           fi
           echo "PYPI_TEST_VERSION=$PYPI_TEST_VERSION" >> $GITHUB_ENV
           echo "PYPI_TEST_VERSION:            $PYPI_TEST_VERSION"
@@ -69,7 +69,7 @@ jobs:
         run: |
           export PYPI_PRODUCTION_VERSION=$(curl -s https://pypi.org/pypi/${{ vars.APP_NAME }}/json | jq -r '.info.version')
           if [[ ! $PYPI_PRODUCTION_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            PYPI_PRODUCTION_VERSION=""
+            PYPI_PRODUCTION_VERSION="0.0.0"
           fi
           echo "PYPI_PRODUCTION_VERSION=$PYPI_PRODUCTION_VERSION" >> $GITHUB_ENV
           echo "PYPI_PRODUCTION_VERSION: $PYPI_PRODUCTION_VERSION"
