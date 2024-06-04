@@ -32,7 +32,7 @@ A decorator to run and log shell commands.
 ###### Example Usage
 
 ```python
-from klingon_tools import LogTools
+from klingon_tools.logtools import LogTools
 
 @LogTools.method_state(name="Install numpy")
 def install_numpy():
@@ -58,9 +58,9 @@ Runs a shell command and logs its output.
 ###### Example Usage
 
 ```python
-from klingon_tools import LogTools
+from klingon_tools.logtools import LogTools
 
-LogTools.run_command("PIP_ROOT_USER_ACTION=ignore pip install -q numpy", name="Install numpy")
+LogTools.command_state("PIP_ROOT_USER_ACTION=ignore pip install -q numpy", name="Install numpy")(lambda: None)()
 ```
 
 Expected output:
