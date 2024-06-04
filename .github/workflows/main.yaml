@@ -90,6 +90,9 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo $VERSION > VERSION
           git add VERSION || true
+          # Update version number in setup.py
+          sed -i "s/version='[0-9]*\.[0-9]*\.[0-9]*'/version='$VERSION'/" setup.py
+          git add setup.py || true
           git commit -m "Update version number - $VERSION" || true
           git push || true
           sleep 5
@@ -150,18 +153,6 @@ jobs:
             echo "requirements.txt is missing, skipping installation"
           fi
       
-      # Add AWS Credentials to environment variables
-      - name: Add AWS Credentials
-        run: |
-          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
-          echo "AWS_ACCESS_KEY_ID:      OK"
-          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
-          echo "AWS_SECRET_ACCESS_KEY:  OK"
-          echo "AWS_DEFAULT_REGION=${{ vars.AWS_DEFAULT_REGION }}" >> $GITHUB_ENV
-          echo "AWS_DEFAULT_REGION:     ${{ vars.AWS_DEFAULT_REGION }}"
-          echo "AWS_S3_BUCKET_NAME=${{ vars.AWS_S3_BUCKET_NAME }}" >> $GITHUB_ENV
-          echo "AWS_S3_BUCKET_NAME:     ${{ vars.AWS_S3_BUCKET_NAME }}"
-
       # Builds the package and runs tests
       - name: Build and test
         run: |
