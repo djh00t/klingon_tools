@@ -80,9 +80,7 @@ class LogTools:
             padding = 72 - len(f"Running {display_name}... ")
             print(f"Running {display_name}... " + " " * padding, end="")
             try:
-                result = subprocess.run(command, check=True, shell=True)
-                if result.returncode != 0:
-                    raise subprocess.CalledProcessError(result.returncode, command)
+                subprocess.run(command, check=True, shell=True)
                 print("\033[1;32mOK\033[0m")  # Bold Green
             except subprocess.CalledProcessError as e:
                 print("\033[1;31mERROR\033[0m")  # Bold Red
