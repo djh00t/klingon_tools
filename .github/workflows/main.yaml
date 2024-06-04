@@ -254,7 +254,7 @@ jobs:
       # If tests pass, pushes the package to PyPI and runs tests
       - name: Push to PyPI
         run: |
-        make upload PYPI_USER_AGENT=${{ secrets.PYPI_USER_AGENT }}
+          make upload PYPI_USER_AGENT=${{ secrets.PYPI_USER_AGENT }}
 
 #       # If uploads are successful, and the VERSION file has changed, tag the
 #       # codebase and push the code and tags to the repository
