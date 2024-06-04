@@ -19,8 +19,6 @@ check-packages:
 	fi
 	@echo "Installing missing packages from requirements.txt..."
 	@pip install -r requirements.txt
-	@echo "Installing twine and wheel..."
-	@pip install twine wheel
 
 ## sdist: Create a source distribution package
 sdist: clean
