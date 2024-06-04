@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="klingon_tools",
-    version="0.0.0",
+    version="0.0.2",
     packages=find_packages(),
     install_requires=[
         # No external dependencies required
