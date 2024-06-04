@@ -4,6 +4,8 @@ import subprocess
 from unittest.mock import patch
 
 def test_command_state_decorator_success(mocker):
+    pass
+
 def test_command_state_error(mocker):
     mock_run = mocker.patch('subprocess.run')
     mock_run.side_effect = subprocess.CalledProcessError(returncode=2, cmd="echo 'Hello, World!'")
