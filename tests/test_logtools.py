@@ -32,7 +32,7 @@ def test_command_state_success(mocker):
 
 def test_command_state_error(mocker):
     mock_run = mocker.patch('subprocess.run')
-    mock_run.side_effect = subprocess.CalledProcessError(returncode=1, cmd="echo 'Hello, World!'")
+    mock_run.side_effect = subprocess.CalledProcessError(returncode=2, cmd="echo 'Hello, World!'")
 
     commands = [("echo 'Hello, World!'", "Test Command")]
 
