@@ -88,8 +88,8 @@ jobs:
           echo "HIGHEST_VERSION:                $HIGHEST_VERSION"
           echo "HIGHEST_VERSION=$HIGHEST_VERSION" >> $GITHUB_ENV
       
-      # Set version number as $HIGHEST_VERSION + 1
-      - name: Set version number as $HIGHEST_VERSION + 1
+      # Set version number as $HIGHEST_VERSION + 1 and set env.VERSION
+      - name: Set version number as $HIGHEST_VERSION + 1 and set env.VERSION
         run: |
           export VERSION=$(echo $HIGHEST_VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
           echo "NEW VERSION:                    $VERSION"
