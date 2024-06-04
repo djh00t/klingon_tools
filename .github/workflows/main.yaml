@@ -88,8 +88,8 @@ jobs:
           echo "HIGHEST_VERSION:                $HIGHEST_VERSION"
           echo "HIGHEST_VERSION=$HIGHEST_VERSION" >> $GITHUB_ENV
       
-      # Set version number as $HIGHEST_VERSION + 1 and set env.VERSION
-      - name: Set version number as $HIGHEST_VERSION + 1 and set env.VERSION
+      # Set version number as $HIGHEST_VERSION + 1 and set env.VERSION, update setup.py, and VERSION file
+      - name: Set version number as $HIGHEST_VERSION + 1 and set env.VERSION, update setup.py, and VERSION file
         run: |
           export VERSION=$(echo $HIGHEST_VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
           echo "NEW VERSION:                    $VERSION"
@@ -97,6 +97,8 @@ jobs:
           echo $VERSION > VERSION
           # Update version number in setup.py
           sed -i "s/version='[0-9]*\.[0-9]*\.[0-9]*'/version='$VERSION'/" setup.py
+          # Update version number in VERSION file
+          echo $VERSION > VERSION
 
       # Push changes to GitHub
       - name: Push changes to GitHub
