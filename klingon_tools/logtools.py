@@ -33,49 +33,50 @@ class LogTools:
         Running Install numpy...                                               OK
         ```
         """
-        def decorator(func):
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                command = func(*args, **kwargs)
-                display_name = name if name else f"'{command}'"
-                padding = 72 - len(f"Running {display_name}... ")
-                print(f"Running {display_name}... " + " " * padding, end="")
-                try:
-                    subprocess.run(command, check=True, shell=True)
-                    print("\033[1;32mOK\033[0m")  # Bold Green
-                except subprocess.CalledProcessError as e:
-                    if e.returncode == 1:  # Assuming '1' is a warning
-                        print("\033[1;33mWARNING\033[0m")  # Bold Yellow
-                    else:
-                        print("\033[1;31mERROR\033[0m")  # Bold Red
-                    raise
-            return wrapper
-        return decorator
+        for command, name in commands:
+            display_name = name if name else f"'{command}'"
+            padding = 72 - len(f"Running {display_name}... ")
+            print(f"Running {display_name}... " + " " * padding, end="")
+            try:
+                subprocess.run(command, check=True, shell=True)
+                print("\033[1;32mOK\033[0m")  # Bold Green
+            except subprocess.CalledProcessError as e:
+                if e.returncode == 1:  # Assuming '1' is a warning
+                    print("\033[1;33mWARNING\033[0m")  # Bold Yellow
+                else:
+                    print("\033[1;31mERROR\033[0m")  # Bold Red
+                raise
+
 
     @staticmethod
-    def command_state(command, name=None):
-        """Run a shell command and log its output.
+    def command_state(commands):
+        """Run a list of shell commands and log their output.
 
         Args:
-            command (str): The shell command to run.
-            name (str, optional): A custom name for the command. Defaults to None.
-        
+            commands (list of tuples): Each tuple contains (command, name).
+
         Example Usage:
-        
+
         ```python
         from klingon_tools.logtools import LogTools
-        LogTools.command_state("PIP_ROOT_USER_ACTION=ignore pip install -q numpy", name="Install numpy")(lambda: None)()
+        commands = [
+            ("PIP_ROOT_USER_ACTION=ignore pip install -q numpy", "Install numpy"),
+            ("echo 'Hello, World!'", "Print Hello World")
+        ]
+        LogTools.command_state(commands)
         ```
 
         Expected output:
 
         ```plaintext
         Running Install numpy...                                               OK
+        Running Print Hello World...                                           OK
         ```
         """
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
+                command = func(*args, **kwargs)
                 display_name = name if name else f"'{command}'"
                 padding = 72 - len(f"Running {display_name}... ")
                 print(f"Running {display_name}... " + " " * padding, end="")
