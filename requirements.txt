@@ -19,7 +19,9 @@ idna==3.7
 importlib-metadata==7.1.0
     # via twine
 iniconfig==2.0.0
-    # via pytest
+    # via
+    #   -r requirements.in
+    #   pytest
 jaraco-classes==3.4.0
     # via keyring
 jaraco-context==5.3.0
@@ -57,6 +59,10 @@ pyproject-hooks==1.1.0
     #   build
     #   pip-tools
 pytest==8.2.1
+    # via
+    #   -r requirements.in
+    #   pytest-mock
+pytest-mock==3.14.0
     # via -r requirements.in
 readme-renderer==43.0
     # via twine
