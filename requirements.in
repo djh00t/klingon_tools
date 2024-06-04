@@ -1,1 +1,5 @@
-# No external dependencies required
+# External dependencies
+pip-tools
+twine
+wheel
+pytest
