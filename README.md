@@ -14,7 +14,16 @@ Currently, the repository includes the following utilities:
 - `Cxcel`: Render CSV files in both terminal and web interfaces. Real-time
   updates to the displayed CSV content by monitoring file changes. See
   [Cxcel/README.md](Cxcel/README.md) for more details.
-- `klingon tool (kt)`: Installer/updater for klingon tools.
+- `klingon tool (kt)`: Installer/updater for klingon tools cli.
+
+### klingon_tools
+
+A python library that contains the following utilities:
+
+  - `logtools`: A set of c
+
+- `logtools`: A utility for running and logging shell commands and their exit
+  codes in a user friendly manner.
 
 ## Usage
 
