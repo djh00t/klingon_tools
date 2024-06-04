@@ -84,4 +84,4 @@ class LogTools:
                 print("\033[1;32mOK\033[0m")  # Bold Green
             except subprocess.CalledProcessError as e:
                 print("\033[1;31mERROR\033[0m")  # Bold Red
-                raise e
+                raise subprocess.CalledProcessError(returncode=e.returncode, cmd=e.cmd)
