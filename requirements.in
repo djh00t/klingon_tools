@@ -3,3 +3,4 @@ pip-tools
 twine
 wheel
 pytest
+pytest-mock
