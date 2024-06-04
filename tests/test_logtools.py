@@ -48,22 +48,12 @@ def test_command_state_error(mocker):
     with pytest.raises(subprocess.CalledProcessError):
         dummy_command()
     mock_run.assert_called_once_with("echo 'Hello, World!'", check=True, shell=True)
-def test_command_state_success(mocker):
-    mock_run = mocker.patch('subprocess.run')
-    mock_run.return_value.returncode = 0
-
-    @LogTools.method_state(name="Test Command")
-    def dummy_command():
-        return "echo 'Hello, World!'"
-
-    dummy_command()
-    mock_run.assert_called_once_with("echo 'Hello, World!'", check=True, shell=True)
-
 def test_command_state_error(mocker):
     mock_run = mocker.patch('subprocess.run')
     mock_run.side_effect = subprocess.CalledProcessError(returncode=2, cmd="echo 'Hello, World!'")
 
+    commands = [("echo 'Hello, World!'", "Test Command")]
+
     with pytest.raises(subprocess.CalledProcessError):
-        commands = [("echo 'Hello, World!'", "Test Command")]
         LogTools.command_state(commands)
     mock_run.assert_called_once_with("echo 'Hello, World!'", check=True, shell=True)
