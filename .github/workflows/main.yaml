@@ -95,12 +95,18 @@ jobs:
           echo "NEW VERSION:                    $VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo $VERSION > VERSION
-          git add VERSION || true
           # Update version number in setup.py
           sed -i "s/version='[0-9]*\.[0-9]*\.[0-9]*'/version='$VERSION'/" setup.py
+
+      # Push changes to GitHub
+      - name: Push changes to GitHub
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git add VERSION || true
           git add setup.py || true
           git commit -m "Update version number - $VERSION" || true
-          git push || true
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} HEAD:main
           sleep 5
 
   # build-test workflow
