@@ -130,11 +130,25 @@ jobs:
           echo "VERSION:                        $VERSION"
           echo "env.VERSION:                    ${{ env.VERSION }}"
 
-      # Install dependencies
+      # Compile requirements if requirements.in is not empty
+      - name: Compile requirements
+        run: |
+          if [ -s requirements.in ]; then
+            pip install pip-tools
+            pip-compile requirements.in
+          else
+            echo "requirements.in is empty, skipping pip-compile"
+          fi
+
+      # Install dependencies if requirements.txt exists
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          make check-packages
+          if [ -f requirements.txt ]; then
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+          else
+            echo "requirements.txt is missing, skipping installation"
+          fi
       
       # Add AWS Credentials to environment variables
       - name: Add AWS Credentials
