@@ -220,6 +220,26 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "VERSION:                        $VERSION"
 
+      # Compile requirements if requirements.in is not empty
+      - name: Compile requirements
+        run: |
+          if [ -s requirements.in ]; then
+            pip install pip-tools
+            pip-compile requirements.in
+          else
+            echo "requirements.in is empty, skipping pip-compile"
+          fi
+
+      # Install dependencies if requirements.txt exists
+      - name: Install dependencies
+        run: |
+          if [ -f requirements.txt ]; then
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+          else
+            echo "requirements.txt is missing, skipping installation"
+          fi
+
       # Builds the package and runs tests
       - name: Build and test
         run: |
