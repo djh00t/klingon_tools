@@ -12,6 +12,8 @@ clean:
 
 ## check-packages: Check for required pip packages and requirements.txt, install if missing
 check-packages:
+	@echo "Compiling requirements.txt..."
+	@pip-compile requirements.in
 	@echo "Checking for required pip packages and requirements.txt..."
 	@if [ ! -f requirements.txt ]; then \
 		echo "requirements.txt not found. Please add it to the project root."; \
