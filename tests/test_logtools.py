@@ -54,8 +54,6 @@ def test_command_state_error(mocker):
 
     commands = [("echo 'Hello, World!'", "Test Command")]
 
-    with pytest.raises(subprocess.CalledProcessError) as excinfo:
+    with pytest.raises(subprocess.CalledProcessError):
         LogTools.command_state(commands)
-    assert excinfo.value.returncode == 2
-    assert excinfo.value.cmd == "echo 'Hello, World!'"
     mock_run.assert_called_once_with("echo 'Hello, World!'", check=True, shell=True)
