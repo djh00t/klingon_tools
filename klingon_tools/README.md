@@ -18,11 +18,11 @@ pip install klingon_tools
 
 ### LogTools
 
-The `LogTools` class provides a static method `command_state` to run shell commands and log their output.
+The `LogTools` class provides static methods `method_state` and `command_state` to run shell commands and log their output.
 
 #### Methods
 
-##### `command_state(name=None)`
+##### `method_state(name=None)`
 
 A decorator to run and log shell commands.
 
@@ -34,14 +34,20 @@ A decorator to run and log shell commands.
 ```python
 from klingon_tools import LogTools
 
-@LogTools.command_state(name="Install numpy")
+@LogTools.method_state(name="Install numpy")
 def install_numpy():
     return "PIP_ROOT_USER_ACTION=ignore pip install -q numpy"
 
 install_numpy()
 ```
 
-##### `run_command(command, name=None)`
+Expected output:
+
+```plaintext
+Running Install numpy...                                               OK
+```
+
+##### `command_state(command, name=None)`
 
 Runs a shell command and logs its output.
 
@@ -57,7 +63,7 @@ from klingon_tools import LogTools
 LogTools.run_command("PIP_ROOT_USER_ACTION=ignore pip install -q numpy", name="Install numpy")
 ```
 
-###### Expected Output
+Expected output:
 
 ```plaintext
 Running Install numpy...                                               OK
