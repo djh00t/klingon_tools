@@ -106,7 +106,7 @@ jobs:
           git add VERSION || true
           git add setup.py || true
           git commit -m "Update version number - $VERSION" || true
-          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} HEAD:main
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main
           sleep 5
 
   # build-test workflow
