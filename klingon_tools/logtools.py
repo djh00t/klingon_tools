@@ -20,7 +20,7 @@ class LogTools:
         ```python
         from klingon_tools.logtools import LogTools
 
-        @LogTools.command_state(name="Install numpy")
+        @LogTools.method_state(name="Install numpy")
         def install_numpy():
             return "PIP_ROOT_USER_ACTION=ignore pip install -q numpy"
 
@@ -64,8 +64,7 @@ class LogTools:
         
         ```python
         from klingon_tools.logtools import LogTools
-
-        LogTools.run_command("PIP_ROOT_USER_ACTION=ignore pip install -q numpy", name="Install numpy")
+        LogTools.command_state("PIP_ROOT_USER_ACTION=ignore pip install -q numpy", name="Install numpy")(lambda: None)()
         ```
 
         Expected output:
