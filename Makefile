@@ -68,14 +68,20 @@ test:
 ## CURRENT_VERSION variable it will look like A.B.C Increment the third (C) 
 ## number by 1 and write it back to the VERSION file. Validate that the new
 ## version number is valid and echo it to console then commit it to git and
-## push to origin
+## push to origin. Confirm that VERSION and setup.py are in sync.
 update-version:
 	@CURRENT_VERSION=$$(cat VERSION); \
 	echo "Current version is:		$$CURRENT_VERSION"; \
 	NEW_VERSION=$$(awk -F. '{print $$1"."$$2"."$$3+1}' VERSION); \
 	echo $$NEW_VERSION > VERSION; \
 	echo "New version is:			$$NEW_VERSION"; \
-	git add VERSION; \
+	sed -i "s/version='[0-9]*\.[0-9]*\.[0-9]*'/version='$$NEW_VERSION'/" setup.py; \
+	@SETUP_VERSION=$$(grep "version=" setup.py | awk -F"'" '{print $$2}'); \
+	if [ "$$NEW_VERSION" != "$$SETUP_VERSION" ]; then \
+		echo "Error: VERSION and setup.py are not in sync"; \
+		exit 1; \
+	fi; \
+	git add VERSION setup.py; \
 	git commit -m "Bump version to $$NEW_VERSION"; \
 	git push origin main
 
