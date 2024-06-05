@@ -320,5 +320,5 @@ jobs:
         uses: mikepenz/action-gh-release@v0.4.0
         with:
           body: ${{ steps.build_changelog.outputs.changelog }}
-          generate_release_notes: false
+          generate_release_notes: true
           tag_name: v${{ env.VERSION }}

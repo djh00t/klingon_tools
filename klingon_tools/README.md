@@ -60,7 +60,11 @@ Runs a shell command and logs its output.
 ```python
 from klingon_tools.logtools import LogTools
 
-LogTools.command_state("PIP_ROOT_USER_ACTION=ignore pip install -q numpy", name="Install numpy")(lambda: None)()
+commands = [
+    ("PIP_ROOT_USER_ACTION=ignore pip install -q numpy", "Install numpy"),
+    ("echo 'Hello, World!'", "Print Hello World")
+]
+LogTools.command_state(commands)
 ```
 
 Expected output:

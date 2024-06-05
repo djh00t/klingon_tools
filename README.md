@@ -50,7 +50,11 @@ Running Install numpy...                                               OK
 ```python
 from klingon_tools import LogTools
 
-LogTools.run_command("PIP_ROOT_USER_ACTION=ignore pip install -q numpy", name="Install numpy")
+commands = [
+    ("PIP_ROOT_USER_ACTION=ignore pip install -q numpy", "Install numpy"),
+    ("echo 'Hello, World!'", "Print Hello World")
+]
+LogTools.command_state(commands)
 ```
 
 Expected output:

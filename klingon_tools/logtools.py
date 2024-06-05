@@ -17,6 +17,8 @@ class LogTools:
         
         Example Usage:
         
+        Example Usage:
+
         ```python
         from klingon_tools.logtools import LogTools
 
@@ -59,8 +61,6 @@ class LogTools:
 
         Args:
             commands (list of tuples): Each tuple contains (command, name).
-
-        Example Usage:
 
         ```python
         from klingon_tools.logtools import LogTools
