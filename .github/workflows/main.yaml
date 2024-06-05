@@ -331,4 +331,4 @@ jobs:
         with:
           body: ${{steps.github_release.outputs.changelog}}
           generate_release_notes: true
-          tag_name: v${VERSION}
+          tag_name: v$VERSION
