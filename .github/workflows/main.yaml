@@ -113,8 +113,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git add VERSION setup.py
-          git commit -m "Update version number to ${{ env.VERSION }}"
+          git add VERSION
+          git commit -m "chore(VERSION): Update version number to ${{ env.VERSION }}"
+          git add setup.py
+          git commit -m "chore(setup.py): Update version number to ${{ env.VERSION }}"
           git tag -a v${{ env.VERSION }} -m "Version ${{ env.VERSION }}"
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main --tags
           sleep 5
