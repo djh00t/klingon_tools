@@ -91,22 +91,5 @@ generate-pyproject:
 	@echo "requires = ['setuptools', 'wheel']" >> pyproject.toml
 	@echo "build-backend = 'setuptools.build_meta'" >> pyproject.toml
 
-## release: Once version has been pushed to git, run this to create a new github tag and release
-release:
-	@echo "Creating new release..."
-	@CURRENT_VERSION=$$(cat VERSION); \
-	if git rev-parse "v$$CURRENT_VERSION" >/dev/null 2>&1; then \
-		echo "Version $$CURRENT_VERSION already exists. Incrementing version..."; \
-		NEW_VERSION=$$(awk -F. '{print $$1"."$$2"."$$3+1}' VERSION); \
-		echo $$NEW_VERSION > VERSION; \
-		sed -i.bak "s/version='$$CURRENT_VERSION'/version='$$NEW_VERSION'/" setup.py; \
-		git add VERSION setup.py; \
-		git commit -m "Bump version to $$NEW_VERSION"; \
-		git push origin main; \
-		CURRENT_VERSION=$$NEW_VERSION; \
-	fi; \
-	git tag -a v$$CURRENT_VERSION -m "Release v$$CURRENT_VERSION"; \
-	git push origin v$$CURRENT_VERSION; \
-	echo "New release v$$CURRENT_VERSION created"
 
 .PHONY: clean check-packages sdist wheel upload-test upload install uninstall test update-version generate-pyproject

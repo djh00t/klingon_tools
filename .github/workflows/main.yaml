@@ -88,31 +88,35 @@ jobs:
           echo "HIGHEST_VERSION:                $HIGHEST_VERSION"
           echo "HIGHEST_VERSION=$HIGHEST_VERSION" >> $GITHUB_ENV
       
-      # Set version number as $HIGHEST_VERSION + 1 and set env.VERSION, update setup.py, and VERSION file, and confirm they are in sync
-      - name: Set version number as $HIGHEST_VERSION + 1 and set env.VERSION, update setup.py, and VERSION file, and confirm they are in sync
+      # Determine the highest version number and increment it by 0.0.1
+      - name: Determine and increment version number
         run: |
-          export VERSION=$(echo $HIGHEST_VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
-          echo "NEW VERSION:                    $VERSION"
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo $VERSION > VERSION
+          # Fetch the highest version number from PyPI, TestPyPI, VERSION file, and setup.py
+          export VERSION=$(cat VERSION)
+          export SETUP_VERSION=$(grep "version=" setup.py | awk -F'"' '{print $2}')
+          export HIGHEST_VERSION=$(echo -e "$VERSION\n$PYPI_TEST_VERSION\n$PYPI_PRODUCTION_VERSION\n$SETUP_VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          export NEW_VERSION=$(echo $HIGHEST_VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
+          echo "NEW VERSION:                    $NEW_VERSION"
+          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo $NEW_VERSION > VERSION
           # Update version number in setup.py
-          sed -i "s/version=\"[0-9]*\.[0-9]*\.[0-9]*\"/version=\"$VERSION\"/" setup.py
+          sed -i "s/version=\"[0-9]*\.[0-9]*\.[0-9]*\"/version=\"$NEW_VERSION\"/" setup.py
           # Confirm VERSION and setup.py are in sync
-          SETUP_VERSION=$(grep "version=" setup.py | awk -F"'" '{print $2}')
-          if [ "$VERSION" != "$SETUP_VERSION" ]; then
+          SETUP_VERSION=$(grep "version=" setup.py | awk -F'"' '{print $2}')
+          if [ "$NEW_VERSION" != "$SETUP_VERSION" ]; then
             echo "Error: VERSION and setup.py are not in sync"
             exit 1
           fi
 
-      # Push changes to GitHub
-      - name: Push changes to GitHub
+      # Push changes and create a new tag
+      - name: Push changes and create tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git add VERSION || true
-          git add setup.py || true
-          git commit -m "Update version number - $VERSION" || true
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main
+          git add VERSION setup.py
+          git commit -m "Update version number to $NEW_VERSION"
+          git tag -a v$NEW_VERSION -m "Version $NEW_VERSION"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main --tags
           sleep 5
 
   # build-test workflow
