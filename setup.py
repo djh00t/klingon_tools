@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="klingon_tools",
-    version="0.0.15",  # This line will be updated dynamically by the Makefile
+    version="0.0.16",  # This line will be updated dynamically by the Makefile
     packages=find_packages(),
     install_requires=[
         # No external dependencies required
