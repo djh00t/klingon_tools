@@ -75,7 +75,7 @@ update-version:
 	NEW_VERSION=$$(awk -F. '{print $$1"."$$2"."$$3+1}' VERSION); \
 	echo $$NEW_VERSION > VERSION; \
 	echo "New version is:			$$NEW_VERSION"; \
-	sed -i "s/version='[0-9]*\.[0-9]*\.[0-9]*'/version='$$NEW_VERSION'/" setup.py; \
+	sed -i "s/version=\"[0-9]*\.[0-9]*\.[0-9]*\"/version=\"$$NEW_VERSION\"/" setup.py; \
 	@SETUP_VERSION=$$(grep "version=" setup.py | awk -F"'" '{print $$2}'); \
 	if [ "$$NEW_VERSION" != "$$SETUP_VERSION" ]; then \
 		echo "Error: VERSION and setup.py are not in sync"; \

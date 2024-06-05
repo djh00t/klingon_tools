@@ -96,7 +96,7 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo $VERSION > VERSION
           # Update version number in setup.py
-          sed -i "s/version='[0-9]*\.[0-9]*\.[0-9]*'/version='$VERSION'/" setup.py
+          sed -i "s/version=\"[0-9]*\.[0-9]*\.[0-9]*\"/version=\"$VERSION\"/" setup.py
           # Confirm VERSION and setup.py are in sync
           SETUP_VERSION=$(grep "version=" setup.py | awk -F"'" '{print $2}')
           if [ "$VERSION" != "$SETUP_VERSION" ]; then
