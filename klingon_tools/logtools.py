@@ -38,19 +38,20 @@ class LogTools:
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
-                command = func(*args, **kwargs)
-                display_name = name if name else f"'{command}'"
+                display_name = name if name else func.__name__
                 padding = 72 - len(f"Running {display_name}... ")
                 print(f"Running {display_name}... " + " " * padding, end="")
                 try:
-                    subprocess.run(command, check=True, shell=True)
-                    print("\033[1;32mOK\033[0m")  # Bold Green
-                except subprocess.CalledProcessError as e:
-                    if e.returncode == 1:  # Assuming '1' is a warning
+                    result = func(*args, **kwargs)
+                    if result is None or result:
+                        print("\033[1;32mOK\033[0m")  # Bold Green
+                    elif result == 1:  # Assuming '1' is a warning
                         print("\033[1;33mWARNING\033[0m")  # Bold Yellow
                     else:
                         print("\033[1;31mERROR\033[0m")  # Bold Red
-                    raise
+                except Exception as e:
+                    print("\033[1;31mERROR\033[0m")  # Bold Red
+                    raise e
             return wrapper
         return decorator
 
