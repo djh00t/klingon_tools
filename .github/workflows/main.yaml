@@ -62,7 +62,8 @@ jobs:
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.KLINGON_TOOLS_DEPLOY_KEY }}
+          ssh-private-key: |
+            ${{ secrets.KLINGON_TOOLS_DEPLOY_KEY }}
 
       # Get PyPI Test Version Number
       - name: Get PyPI Test Version Number
@@ -164,7 +165,8 @@ jobs:
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.KLINGON_TOOLS_DEPLOY_KEY }}
+          ssh-private-key: |
+            ${{ secrets.KLINGON_TOOLS_DEPLOY_KEY }}
 
       # Echo the new version number
       - name: Echo the version number
