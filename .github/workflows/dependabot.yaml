@@ -5,7 +5,27 @@
 
 version: 2
 updates:
-	- package-ecosystem: "" # See documentation for possible values
-		directory: "/" # Location of package manifests
-		schedule:
-		interval: "weekly"
+  - package-ecosystem: "pip"
+    directory: "/Cxcel"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "pip"
+    directory: "/domainsearch"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "pip"
+    directory: "/klingon_tools"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "pip"
+    directory: "/kt"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "pip"
+    directory: "/push"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "pip"
+    directory: "/treetool"
+    schedule:
+      interval: "weekly"
