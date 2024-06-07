@@ -32,7 +32,9 @@ The `logtools` utility provides decorators for methods and CLI commands that log
 ```python
 from klingon_tools import LogTools
 
-@LogTools.method_state(name="Install numpy")
+log_tools = LogTools(debug=True)
+
+@log_tools.method_state(name="Install numpy")
 def install_numpy():
     return "PIP_ROOT_USER_ACTION=ignore pip install -q numpy"
 
@@ -54,7 +56,7 @@ commands = [
     ("PIP_ROOT_USER_ACTION=ignore pip install -q numpy", "Install numpy"),
     ("echo 'Hello, World!'", "Print Hello World")
 ]
-LogTools.command_state(commands)
+log_tools.command_state(commands)
 ```
 
 Expected output:
