@@ -23,6 +23,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Install test dependencies
+        run: |
+          pip install pytest
+
       - name: Increment version
         run: |
           export VERSION=$(cat VERSION)
