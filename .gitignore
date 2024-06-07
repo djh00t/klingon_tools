@@ -210,3 +210,6 @@ $RECYCLE.BIN/
 
 # Ignore CSV's in domainsearch
 domainsearch/*.csv
+
+# Ignore deploy keys
+*-deploy-key*
