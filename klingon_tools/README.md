@@ -34,7 +34,9 @@ A decorator to run and log shell commands.
 ```python
 from klingon_tools.logtools import LogTools
 
-@LogTools.method_state(name="Install numpy")
+log_tools = LogTools(debug=True)
+
+@log_tools.method_state(name="Install numpy")
 def install_numpy():
     return "PIP_ROOT_USER_ACTION=ignore pip install -q numpy"
 
@@ -47,9 +49,9 @@ Expected output:
 Running Install numpy...                                               OK
 ```
 
-##### `command_state(command, name=None)`
+##### `command_state(commands)`
 
-Runs a shell command and logs its output.
+Runs a list of shell commands and logs their output.
 
 ###### Args:
 - `command` (str): The shell command to run.
@@ -64,13 +66,47 @@ commands = [
     ("PIP_ROOT_USER_ACTION=ignore pip install -q numpy", "Install numpy"),
     ("echo 'Hello, World!'", "Print Hello World")
 ]
-LogTools.command_state(commands)
+log_tools.command_state(commands)
 ```
 
 Expected output:
 
 ```plaintext
 Running Install numpy...                                               OK
+```
+
+### `log_message(message, category="INFO")`
+
+Logs a message with a given category.
+
+###### Args:
+- `message` (str): The message to log.
+- `category` (str, optional): The category of the message. Defaults to `"INFO"`.
+
+###### Example Usage
+
+```python
+from klingon_tools.logtools import LogTools
+
+LogTools.log_message("This is an info message", "INFO")
+LogTools.log_message("This is a warning message", "WARNING")
+LogTools.log_message("This is an error message", "ERROR")
+```
+
+Expected output:
+
+```plaintext
+This is an info message
+This is a warning message
+This is an error message
+```
+
+## Debug Mode
+
+To enable debug mode, set the `DEBUG` flag to `True`:
+
+```python
+log_tools = LogTools(debug=True)
 ```
 
 ## Contributing
