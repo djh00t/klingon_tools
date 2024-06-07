@@ -1,0 +1,66 @@
+name: Deploy to TestPyPI and PyPI
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  deploy:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Increment version
+        run: |
+          export VERSION=$(cat VERSION)
+          export NEW_VERSION=$(echo $VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
+          echo $NEW_VERSION > VERSION
+          sed -i "s/version=\"[0-9]*\.[0-9]*\.[0-9]*\"/version=\"$NEW_VERSION\"/" setup.py
+          git checkout -b update-version-${NEW_VERSION}
+          git add VERSION setup.py
+          git commit -m "chore: bump version to $NEW_VERSION"
+          git push origin update-version-${NEW_VERSION}
+
+      - name: Create PR for version update
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: bump version to $NEW_VERSION'
+          branch: update-version-${NEW_VERSION}
+          title: "chore: bump version to $NEW_VERSION"
+          body: "This PR bumps the version to $NEW_VERSION."
+
+      - name: Build and test
+        if: github.event.pull_request.merged == true
+        run: |
+          python setup.py sdist bdist_wheel
+          pip install .
+          make test
+
+      - name: Deploy to TestPyPI
+        if: github.event.pull_request.merged == true
+        run: |
+          twine upload --repository-url https://test.pypi.org/legacy/ dist/* -u ${{ secrets.TEST_PYPI_USER_AGENT }}
+
+      - name: Test from TestPyPI
+        if: github.event.pull_request.merged == true
+        run: |
+          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple my-package
+
+      - name: Deploy to PyPI
+        if: success() && github.event.pull_request.merged == true
+        run: |
+          twine upload dist/* -u ${{ secrets.PYPI_USER_AGENT }}
