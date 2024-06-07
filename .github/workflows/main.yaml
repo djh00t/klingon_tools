@@ -26,7 +26,9 @@ on:
     branches: [ main ]
     paths-ignore: [ VERSION ]
   pull_request:
+    types: [ closed ]
     branches: [ main ]
+
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -48,11 +50,19 @@ jobs:
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'david@hooton.org'
+          # Configure git to use SSH instead of HTTPS
+          git remote set-url origin git@github.com:${{ github.repository }}.git
 
       # Get APP_NAME
       - name: Get APP_NAME
         run: |
           echo "APP_NAME:               ${{ vars.APP_NAME }}"
+
+      # Setup SSH Deploy Key
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_DEPLOY_KEY }}
 
       # Get PyPI Test Version Number
       - name: Get PyPI Test Version Number
@@ -118,7 +128,7 @@ jobs:
           git add setup.py
           git commit -m "chore(setup.py): Update version number to ${{ env.VERSION }}"
           git tag -a v${{ env.VERSION }} -m "Version ${{ env.VERSION }}"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main --tags
+          git push HEAD:main --tags
           sleep 5
 
   # build-test workflow
@@ -142,11 +152,19 @@ jobs:
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'david@hooton.org'
-      
+          # Configure git to use SSH instead of HTTPS
+          git remote set-url origin git@github.com:${{ github.repository }}.git
+
       # Get APP_NAME
       - name: Get APP_NAME
         run: |
           echo "APP_NAME:               ${{ vars.APP_NAME }}"
+
+      # Setup SSH Deploy Key
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_DEPLOY_KEY }}
 
       # Echo the new version number
       - name: Echo the version number
@@ -221,11 +239,19 @@ jobs:
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'david@hooton.org'
+          # Configure git to use SSH instead of HTTPS
+          git remote set-url origin git@github.com:${{ github.repository }}.git
 
-      # Get APP_NAME from Variables
-      - name: Get APP_NAME from Variables
+      # Get APP_NAME
+      - name: Get APP_NAME
         run: |
           echo "APP_NAME:               ${{ vars.APP_NAME }}"
+
+      # Setup SSH Deploy Key
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_DEPLOY_KEY }}
 
       # Echo the new version number
       - name: Echo the version number
@@ -268,15 +294,6 @@ jobs:
         run: |
           make upload PYPI_USER_AGENT=${{ secrets.PYPI_USER_AGENT }}
 
-#       # If uploads are successful, and the VERSION file has changed, tag the
-#       # codebase and push the code and tags to the repository
-#       - name: Tag and push
-#         run: |
-#           git pull || true
-#           git tag -a v${VERSION} -m "Version v${VERSION}"
-#           git push origin v${VERSION}
-#           git push || true
-#           sleep 5
   create-release:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -291,11 +308,19 @@ jobs:
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'david@hooton.org'
+          # Configure git to use SSH instead of HTTPS
+          git remote set-url origin git@github.com:${{ github.repository }}.git
 
-      # Get APP_NAME from Variables
-      - name: Get APP_NAME from Variables
+      # Get APP_NAME
+      - name: Get APP_NAME
         run: |
           echo "APP_NAME:               ${{ vars.APP_NAME }}"
+
+      # Setup SSH Deploy Key
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_DEPLOY_KEY }}
 
       # Echo the new version number
       - name: Echo the version number

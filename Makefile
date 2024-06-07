@@ -60,6 +60,8 @@ uninstall:
 
 # Run tests
 test:
+	@echo "Installing test requirements..."
+	make install
 	@echo "Running unit tests..."
 	pytest -v --disable-warnings tests/
 
