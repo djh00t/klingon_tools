@@ -78,5 +78,5 @@
       "flags": "gu"
     }
   },
-  "base_branches": ["dev"]
+  "base_branches": ["main"]
 }

@@ -5,11 +5,10 @@ on:
     branches-ignore:
       - main
       - master
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-    
+
 jobs:
-  create-draft-pr:
+  create-pr:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -21,20 +20,26 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git config --global init.defaultBranch main
 
-      - name: Create or update draft PR
+      - name: Generate PR title and body using GitHub Copilot
+        id: copilot_pr
+        run: |
+          echo "title=$(copilot-pr-title)" >> $GITHUB_ENV
+          echo "body=$(copilot-pr-body)" >> $GITHUB_ENV
+
+      - name: Create or update PR
         id: create_pr
         uses: peter-evans/create-pull-request@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: 'chore: update draft PR'
+          commit-message: 'chore: update PR'
           branch: ${{ github.ref }}
-          title: 'Draft PR for ${{ github.ref }}'
-          body: 'This is a draft PR for the branch ${{ github.ref }}. It will be updated with each push to this branch.'
-          draft: true
+          title: ${{ env.title }}
+          body: ${{ env.body }}
+          draft: false
 
   update-release-notes:
     runs-on: ubuntu-latest
-    needs: create-draft-pr
+    needs: create-pr
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -44,14 +49,11 @@ jobs:
         uses: release-drafter/release-drafter@v5
         with:
           config-name: .github/workflows/release_configuration_complex.json
-
-      - name: Update draft release notes
-        run: |
-          gh release create draft --notes "${{ steps.release_notes.outputs.notes }}" --target ${{ github.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   run-tests:
+    needs: [create-pr, update-release-notes]
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -70,14 +72,3 @@ jobs:
         run: |
           pytest
 
-  merge-pr:
-    runs-on: ubuntu-latest
-    needs: run-tests
-    if: github.event.pull_request.draft == false && success()
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Merge PR
-        run: |
-          gh pr merge ${{ github.event.pull_request.number }} --merge
