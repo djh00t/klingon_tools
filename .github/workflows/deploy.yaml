@@ -1,13 +1,12 @@
 name: Deploy to TestPyPI and PyPI
 
 on:
-  pull_request:
-    types: [closed]
-    branches: [main]
+  push:
+    branches:
+      - main
 
 jobs:
   deploy:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -27,50 +26,52 @@ jobs:
         run: |
           pip install pytest
 
-      - name: Configure Git
-        run: |
-          git config --global user.name 'GitHub Actions'
-          git config --global user.email 'actions@github.com'
-          git config --global init.defaultBranch main
-
       - name: Increment version
+        id: version
         run: |
           export VERSION=$(cat VERSION)
           export NEW_VERSION=$(echo $VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
           echo $NEW_VERSION > VERSION
           sed -i "s/version=\"[0-9]*\.[0-9]*\.[0-9]*\"/version=\"$NEW_VERSION\"/" setup.py
-          git checkout -b update-version-${NEW_VERSION}
-          git add VERSION setup.py
-          git commit -m "chore: bump version to $NEW_VERSION"
-          git push origin update-version-${NEW_VERSION}
+          echo "::set-output name=new_version::$NEW_VERSION"
 
-      - name: Create PR for version update
+      - name: Create Version Update PR
         uses: peter-evans/create-pull-request@v3
+        id: create_pr
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: 'chore: bump version to $NEW_VERSION'
-          branch: update-version-${NEW_VERSION}
-          title: "chore: bump version to $NEW_VERSION"
-          body: "This PR bumps the version to $NEW_VERSION."
+          commit-message: 'chore: bump version to ${{ steps.version.outputs.new_version }}'
+          branch: update-version-${{ steps.version.outputs.new_version }}
+          title: "chore: bump version to ${{ steps.version.outputs.new_version }}"
+          body: "This PR bumps the version to ${{ steps.version.outputs.new_version }}."
+          
+      - name: Approve PR
+        if: success() && github.event_name == 'push'
+        uses: octokit/request-action@v5.x
+        with:
+          route: PUT /repos/${{ github.repository }}/pulls/${{ steps.create_pr.outputs.number }}/reviews
+          token: ${{ secrets.GITHUB_TOKEN }}
+          reviewers: username-of-your-approver
+          event: APPROVE
 
       - name: Build and test
-        if: github.event.pull_request.merged == true
+        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
         run: |
           python setup.py sdist bdist_wheel
           pip install .
           make test
 
       - name: Deploy to TestPyPI
-        if: github.event.pull_request.merged == true
+        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
         run: |
           twine upload --repository-url https://test.pypi.org/legacy/ dist/* -u ${{ secrets.TEST_PYPI_USER_AGENT }}
 
       - name: Test from TestPyPI
-        if: github.event.pull_request.merged == true
+        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
         run: |
           pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple my-package
 
       - name: Deploy to PyPI
-        if: success() && github.event.pull_request.merged == true
+        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
         run: |
           twine upload dist/* -u ${{ secrets.PYPI_USER_AGENT }}
