@@ -18,7 +18,7 @@
 
 name: CI
 
-# Controls when the action will run. 
+# Controls when the action will run.
 on:
   # Triggers the workflow on push or pull request events but only for the main
   # branch and not for VERSION file changes
@@ -74,7 +74,7 @@ jobs:
           fi
           echo "PYPI_TEST_VERSION=$PYPI_TEST_VERSION" >> $GITHUB_ENV
           echo "PYPI_TEST_VERSION:            $PYPI_TEST_VERSION"
-      
+
       # Get PyPI Production Version Number
       - name: Get PyPI Production Version Number
         run: |
@@ -91,14 +91,14 @@ jobs:
           export VERSION=$(cat VERSION)
           echo "CURRENT VERSION:                $VERSION"
           echo "CURRENT_VERSION=$VERSION" >> $GITHUB_ENV
-      
+
       # Find highest pypi version number
       - name: Find highest pypi version number
         run: |
           export HIGHEST_VERSION=$(echo -e "$VERSION\n$PYPI_TEST_VERSION\n$PYPI_PRODUCTION_VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
           echo "HIGHEST_VERSION:                $HIGHEST_VERSION"
           echo "HIGHEST_VERSION=$HIGHEST_VERSION" >> $GITHUB_ENV
-      
+
       # Determine the highest version number and increment it by 0.0.1
       - name: Determine and increment version number
         run: |
@@ -177,7 +177,7 @@ jobs:
           fi
           echo "PYPI_TEST_VERSION=$PYPI_TEST_VERSION" >> $GITHUB_ENV
           echo "PYPI_TEST_VERSION:            $PYPI_TEST_VERSION"
-      
+
       # Get PyPI Production Version Number
       - name: Get PyPI Production Version Number
         run: |
@@ -194,14 +194,14 @@ jobs:
           export VERSION=$(cat VERSION)
           echo "CURRENT VERSION:                $VERSION"
           echo "CURRENT_VERSION=$VERSION" >> $GITHUB_ENV
-      
+
       # Find highest pypi version number
       - name: Find highest pypi version number
         run: |
           export HIGHEST_VERSION=$(echo -e "$VERSION\n$PYPI_TEST_VERSION\n$PYPI_PRODUCTION_VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
           echo "HIGHEST_VERSION:                $HIGHEST_VERSION"
           echo "HIGHEST_VERSION=$HIGHEST_VERSION" >> $GITHUB_ENV
-      
+
       # Determine the highest version number and increment it by 0.0.1
       - name: Determine and increment version number
         run: |
@@ -250,7 +250,7 @@ jobs:
           else
             echo "requirements.txt is missing, skipping installation"
           fi
-      
+
       # Builds the package and runs tests
       - name: Build and test
         run: |
@@ -284,7 +284,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: 3.x
-          
+
       # Install dependencies
       - name: Install dependencies
         run: |
@@ -318,7 +318,7 @@ jobs:
           fi
           echo "PYPI_TEST_VERSION=$PYPI_TEST_VERSION" >> $GITHUB_ENV
           echo "PYPI_TEST_VERSION:            $PYPI_TEST_VERSION"
-      
+
       # Get PyPI Production Version Number
       - name: Get PyPI Production Version Number
         run: |
@@ -335,14 +335,14 @@ jobs:
           export VERSION=$(cat VERSION)
           echo "CURRENT VERSION:                $VERSION"
           echo "CURRENT_VERSION=$VERSION" >> $GITHUB_ENV
-      
+
       # Find highest pypi version number
       - name: Find highest pypi version number
         run: |
           export HIGHEST_VERSION=$(echo -e "$VERSION\n$PYPI_TEST_VERSION\n$PYPI_PRODUCTION_VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
           echo "HIGHEST_VERSION:                $HIGHEST_VERSION"
           echo "HIGHEST_VERSION=$HIGHEST_VERSION" >> $GITHUB_ENV
-      
+
       # Determine the highest version number and increment it by 0.0.1
       - name: Determine and increment version number
         run: |

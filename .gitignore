@@ -213,3 +213,4 @@ domainsearch/*.csv
 
 # Ignore deploy keys
 *-deploy-key*
+merman.md

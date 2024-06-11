@@ -542,8 +542,8 @@ function handle_changed_files() {
         # Make sure the changes are safe to push with pre-commit
         # Process each changed file individually
         for FILE in "${CHANGED_FILES[@]}"; do
-            if [ "$ENCRYPT_SECRETS" == "true" ] && [ "$NO_ENCRYPT" != "true" ]; then
-                "$ROOT_DIR/scripts/encrypt" "$ROOT_DIR/$FILE"
+            if [ "$ENCRYPT_SECRETS" == "true" ]; then
+                "$ROOT_DIR/scripts/encrypt-decrypt.sh" "$ROOT_DIR/$FILE"
             fi
             git add "$ROOT_DIR/$FILE"
             run_precommit_all
