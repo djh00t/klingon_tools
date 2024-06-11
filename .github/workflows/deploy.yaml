@@ -49,19 +49,14 @@ jobs:
         if: success() && github.event_name == 'push'
         uses: octokit/request-action@v2.x
         with:
-          route: PUT /repos/${{ github.repository }}/pulls/${{ steps.create_pr.outputs.number }}/reviews
-          owner: djh00t
-          repo: klingon_tools
-          mediaType: |
-            format: json
+          route: PUT /repos/${{ github.repository }}/pulls/${{ steps.create_pr.outputs.number }}/reviews/approvals
+          headers: |
+            Authorization: token ${{ secrets.GITHUB_TOKEN }}
+            Accept: application/vnd.github.v3+json
           body: |
             {
               "event": "APPROVE"
             }
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
 
       - name: Build and test
         if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
