@@ -30,6 +30,10 @@ jobs:
         uses: peter-evans/create-pull-request@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          merge-method: squash
+          merge-commit-message: "PR from ${{ github.ref }}"
+          merge-commit-title: "chore: update PR"
+          merge-commit-body: "This PR was automatically created by GitHub Actions."
           commit-message: 'chore: update PR'
           branch: ${{ github.ref }}
           title: 'PR from ${{ github.ref }}'

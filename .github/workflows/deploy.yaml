@@ -31,51 +31,59 @@ jobs:
         run: |
           export VERSION=$(cat VERSION)
           export NEW_VERSION=$(echo $VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
+          PYPI_VERSION=$(curl -s https://pypi.org/pypi/klingon_tools/json | jq -r .info.version)
+          TEST_PYPI_VERSION=$(curl -s https://test.pypi.org/pypi/klingon_tools/json | jq -r .info.version)
+          HIGHEST_VERSION=$(echo -e "$NEW_VERSION\n$PYPI_VERSION\n$TEST_PYPI_VERSION" | sort -V | tail -n 1)
+          if [ "$HIGHEST_VERSION" != "$NEW_VERSION" ]; then
+            NEW_VERSION=$(echo $HIGHEST_VERSION | awk -F. '{print $1"."$2"."$3+1}')
+          fi
           echo $NEW_VERSION > VERSION
           sed -i "s/version=\"[0-9]*\.[0-9]*\.[0-9]*\"/version=\"$NEW_VERSION\"/" setup.py
           echo "::set-output name=new_version::$NEW_VERSION"
 
-      - name: Create Version Update PR
-        uses: peter-evans/create-pull-request@v3
+      - name: Create and Merge Version Update PR
+        uses: peter-evans/create-pull-request@v6
         id: create_pr
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          merge-method: squash
+          merge-commit-message: "chore: bump version to ${{ steps.version.outputs.new_version }}"
+          merge-commit-title: "Version bump to ${{ steps.version.outputs.new_version }}"
+          merge-commit-body: "This PR was automatically created by GitHub Actions."
           commit-message: 'chore: bump version to ${{ steps.version.outputs.new_version }}'
           branch: update-version-${{ steps.version.outputs.new_version }}
           title: "chore: bump version to ${{ steps.version.outputs.new_version }}"
           body: "This PR bumps the version to ${{ steps.version.outputs.new_version }}."
-          
-      - name: Approve PR
-        if: success() && github.event_name == 'push'
-        uses: octokit/request-action@v2.x
-        with:
-          route: PUT /repos/${{ github.repository }}/pulls/${{ steps.create_pr.outputs.number }}/reviews/approvals
-          headers: |
-            Authorization: token ${{ secrets.GITHUB_TOKEN }}
-            Accept: application/vnd.github.v3+json
-          body: |
-            {
-              "event": "APPROVE"
-            }
 
-      - name: Build and test
-        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+      - name: Merge PR
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr_number = ${{ steps.create_pr.outputs.pull_request_number }};
+            await github.pulls.merge({
+              pull_number: pr_number,
+              merge_method: 'squash'
+            });
+
+      - name: Delete branch
+        run: |
+          git push origin --delete update-version-${{ steps.version.outputs.new_version }}
+
+      - name: Build and Test
         run: |
           python setup.py sdist bdist_wheel
           pip install .
           make test
 
       - name: Deploy to TestPyPI
-        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
         run: |
           twine upload --repository-url https://test.pypi.org/legacy/ dist/* -u ${{ secrets.TEST_PYPI_USER_AGENT }}
 
       - name: Test from TestPyPI
-        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
         run: |
           pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple my-package
 
       - name: Deploy to PyPI
-        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
         run: |
           twine upload dist/* -u ${{ secrets.PYPI_USER_AGENT }}
