@@ -50,7 +50,7 @@ class LogTools:
 
         Args:
             name (str, optional): A custom name for the command. Defaults to None.
-        
+
         Example Usage:
 
         ```python
