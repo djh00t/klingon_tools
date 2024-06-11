@@ -47,12 +47,21 @@ jobs:
           
       - name: Approve PR
         if: success() && github.event_name == 'push'
-        uses: octokit/request-action@v5.x
+        uses: octokit/request-action@v2.x
         with:
           route: PUT /repos/${{ github.repository }}/pulls/${{ steps.create_pr.outputs.number }}/reviews
-          token: ${{ secrets.GITHUB_TOKEN }}
-          reviewers: username-of-your-approver
-          event: APPROVE
+          owner: djh00t
+          repo: klingon_tools
+          mediaType: |
+            format: json
+          body: |
+            {
+              "event": "APPROVE"
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
 
       - name: Build and test
         if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
