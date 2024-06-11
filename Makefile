@@ -102,6 +102,6 @@ update-version:
 generate-pyproject:
 	@echo "[build-system]" > pyproject.toml
 	@echo "requires = ['setuptools', 'wheel']" >> pyproject.toml
-	@echo "build-backend = 'setuptools.build_meta'" >> pyproject.toml
+	@echo "build-backend = 'setuptools.build_meta'" >> pyproject.toml``````````````````````````````````````````````````
 
 .PHONY: clean check-packages sdist wheel upload-test upload install uninstall test update-version generate-pyproject gh-actions
