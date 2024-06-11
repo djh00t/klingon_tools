@@ -66,8 +66,8 @@ test:
 	pytest -v --disable-warnings tests/
 
 
-## update-version: Read the version number from VERSION file and save it as 
-## CURRENT_VERSION variable it will look like A.B.C Increment the third (C) 
+## update-version: Read the version number from VERSION file and save it as
+## CURRENT_VERSION variable it will look like A.B.C Increment the third (C)
 ## number by 1 and write it back to the VERSION file. Validate that the new
 ## version number is valid and echo it to console then commit it to git and
 ## push to origin. Confirm that VERSION and setup.py are in sync.
@@ -75,6 +75,17 @@ update-version:
 	@CURRENT_VERSION=$$(cat VERSION); \
 	echo "Current version is:		$$CURRENT_VERSION"; \
 	NEW_VERSION=$$(awk -F. '{print $$1"."$$2"."$$3+1}' VERSION); \
+	PYPI_VERSION=$$(curl -s https://pypi.org/pypi/$(APP_NAME)/json | jq -r .info.version); \
+	TEST_PYPI_VERSION=$$(curl -s https://test.pypi.org/pypi/$(APP_NAME)/json | jq -r .info.version); \
+	HIGHEST_VERSION=$$(echo -e "$$NEW_VERSION\n$$PYPI_VERSION\n$$TEST_PYPI_VERSION" | sort -V | tail -n 1); \
+	if [ "$$HIGHEST_VERSION" != "$$NEW_VERSION" ]; then \
+		NEW_VERSION=$$(echo $$HIGHEST_VERSION | awk -F. '{print $$1"."$$2"."$$3+1}'); \
+	fi; \
+	echo $$NEW_VERSION > VERSION; \
+	sed -i "s/version=\"[0-9]*\.[0-9]*\.[0-9]*\"/version=\"$$NEW_VERSION\"/" setup.py; \
+	git add VERSION setup.py; \
+	git commit -m "Bump version to $$NEW_VERSION"; \
+	git push origin main; \
 	echo $$NEW_VERSION > VERSION; \
 	echo "New version is:			$$NEW_VERSION"; \
 	sed -i "s/version=\"[0-9]*\.[0-9]*\.[0-9]*\"/version=\"$$NEW_VERSION\"/" setup.py; \
@@ -93,5 +104,4 @@ generate-pyproject:
 	@echo "requires = ['setuptools', 'wheel']" >> pyproject.toml
 	@echo "build-backend = 'setuptools.build_meta'" >> pyproject.toml
 
-
-.PHONY: clean check-packages sdist wheel upload-test upload install uninstall test update-version generate-pyproject
+.PHONY: clean check-packages sdist wheel upload-test upload install uninstall test update-version generate-pyproject gh-actions
