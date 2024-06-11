@@ -61,7 +61,7 @@ uninstall:
 # Run tests
 test:
 	@echo "Installing test requirements..."
-	make install
+	pip install -r requirements.txt
 	@echo "Running unit tests..."
 	pytest -v --disable-warnings tests/
 
