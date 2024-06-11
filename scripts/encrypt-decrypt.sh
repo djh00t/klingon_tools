@@ -44,6 +44,16 @@ if [ -z "$ARGS_SCRIPT" ]; then
     exit 1
 fi
 
+# Load .pushrc configuration
+PUSH_CONFIG_FILE="$ROOT_DIR/.pushrc"
+if [ -f "$PUSH_CONFIG_FILE" ]; then
+    . "$PUSH_CONFIG_FILE"
+else
+    echo "Error: Configuration file .pushrc not found."
+    exit 1
+fi
+
+
 # Get the age public key
 KEY_AGE_PUBLIC=$(cat $ROOT_DIR/.age.pub)
 # Get the age private key

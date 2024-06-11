@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Path to the pre-commit hook executable for forbid-secrets
-FORBID_SECRETS_PATH=$(command -v forbid-secrets)  # Adjust this as necessary
+echo "Running forbid-secrets-wrapper.sh"
+echo "Files to process: $@"
 
-# Run forbid-secrets and capture its exit code
-$FORBID_SECRETS_PATH "$@"
+# Run pre-commit hook for forbid-secrets and capture its exit code
+pre-commit run forbid_secrets --files "$@"
 EXIT_CODE=$?
 
 # Check if forbid-secrets failed
@@ -19,7 +19,7 @@ if [ $EXIT_CODE -ne 0 ]; then
   done
 
   # Optionally, retry forbid-secrets or handle the error as needed
-  # $FORBID_SECRETS_PATH "$@"
+  # pre-commit run forbid_secrets --files "$@"
 fi
 
 exit $EXIT_CODE
