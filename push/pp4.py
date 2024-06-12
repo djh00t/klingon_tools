@@ -126,9 +126,11 @@ def git_de_stage_files(repo):
 # Stage the file, get the diff, and return a commit message
 def git_stage_diff(file_name, repo):
     # Stage the file
+    logger.info(f"Staging file: {file_name}")
     repo.index.add([file_name])
 
     # Get the diff
+    logger.info(f"Getting diff for file: {file_name}")
     diff = repo.git.diff("HEAD", file_name)
 
     # Submit the diff to generate_commit_message
@@ -157,11 +159,11 @@ def git_stage_diff(file_name, repo):
 
 
 def git_pre_commit(file_name, commit_message, repo):
+    # Run pre-commit hooks on the file
+    logger.info(f"Running pre-commit hooks on file: {file_name}")
+
     # Reset the attempt counter
     attempt = 0
-
-    logger.debug(f"Running pre-commit hooks on file: {file_name}")
-    logger.debug(f"Commit message: {commit_message}")
 
     # Loop through the pre-commit hooks until they pass or fail after LOOP_MAX_PRE_COMMIT attempts
     while attempt < LOOP_MAX_PRE_COMMIT:
@@ -192,9 +194,6 @@ def git_pre_commit(file_name, commit_message, repo):
         result = subprocess.CompletedProcess(
             process.args, process.returncode, "".join(stdout), "".join(stderr)
         )
-
-        logger.info(f"Pre-commit hooks result for {file_name}: {result.returncode}")
-        logger.info(f"Pre-commit hooks result: {result}")
 
         if "files were modified by this hook" in result.stdout:
             print(
