@@ -308,9 +308,15 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
 handler = logging.StreamHandler(sys.stdout)
 handler.setLevel(logging.DEBUG if args.debug else logging.INFO)
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+formatter = logging.Formatter(
+    "%(asctime)s %(hostname)s %(name)s: %(levelname)s %(message)s"
+)
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+
+# Suppress httpx INFO messages
+httpx_logger = logging.getLogger("httpx")
+httpx_logger.setLevel(logging.WARNING)
 
 # Check if pre-commit is installed. If not, install it.
 try:
