@@ -194,19 +194,19 @@ def git_pre_commit(file_name, commit_message, repo):
         )
 
         if "files were modified by this hook" in result.stdout:
-            print(
-                f"Files were modified by pre-commit hooks for {file_name}. Re-staging and retrying commit."
+            logger.info(
+                f"{file_name} was modified by pre-commit. Re-staging file and retrying."
             )
             repo.index.add([file_name])
             attempt += 1
             if attempt == LOOP_MAX_PRE_COMMIT:
-                print(
+                logger.error(
                     f"Pre-commit hooks failed for {file_name} after {LOOP_MAX_PRE_COMMIT} attempts. Exiting script."
                 )
                 sys.exit(1)
         elif result.returncode == 0:
             # Pre-commit hooks passed
-            logger.info(f"Pre-commit hooks passed for {file_name}.")
+            logger.info(f"Pre-commit completed for {file_name}.")
 
             # Commit the file
             logger.info(f"Committing file: {file_name}")
@@ -402,7 +402,7 @@ for file in untracked_files + modified_files:
 
     # STEP 8.1.2: Run pre-commit over the file, re-staging and retrying until it fixes
     # any issues and passes or fails after LOOP_MAX_PRE_COMMIT attempts
-    logger.info(f"Running pre-commit hooks on file: {file}")
+    logger.info(f"Running pre-commit on: {file}\n")
     git_pre_commit(file, commit_message, repo)
 
     # STEP 8.1.3: Exit if args.oneshot is set otherwise continue processing
