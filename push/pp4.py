@@ -152,16 +152,14 @@ def git_stage_diff(file_name, repo):
     commit_message = response.choices[0].message.content.strip()
 
     # Log the generated commit message
-    logger.info(f"Generated commit message:\n\n{commit_message}\n\n")
+    logger.info(f"Generated commit message:\n\n{commit_message}\n")
 
     # Return the commit message
     return commit_message
 
 
+# Run pre-commit hooks on the file
 def git_pre_commit(file_name, commit_message, repo):
-    # Run pre-commit hooks on the file
-    logger.info(f"Running pre-commit hooks on file: {file_name}")
-
     # Reset the attempt counter
     attempt = 0
 
@@ -223,7 +221,8 @@ def git_commit_file(file_name, commit_message, repo):
     # Commit the file
     repo.index.commit(commit_message)
 
-    print(f"Committed file(s): {file_name}")
+    # If the commit was successful, log the commit message
+    logger.info(f"Committed file: {file_name} OK")
 
 
 def log_git_stats():
