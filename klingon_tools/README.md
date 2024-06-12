@@ -5,109 +5,287 @@ The `klingon_tools` Python library provides utilities for running and logging sh
 ## Features
 
 - **LogTools**: A utility for running and logging shell commands and their exit codes in a user-friendly manner.
+  - **styles**: Customize the appearance of log output using simple to
+    configure and manage styles.
+  - **log_message**: Logs a message with a given category.
+  - **method_state**: Logs the state of a method with a given style, status, and reason.
+  - **command_state**: Logs the state of a shell command with a given style, status, and reason.
 
 ## Installation
 
 To install the `klingon_tools` library, you can use pip:
 
 ```sh
+
 pip install klingon_tools
+
 ```
 
-## Usage
+## Class - LogTools
 
-### LogTools
+The `LogTools` class provides three static methods:
 
-The `LogTools` class provides static methods `method_state` and `command_state` to run shell commands and log their output.
+ - `log_message` - logs a message with a given category using all green text
+   for INFO, yellow for WARNING, and red for ERROR.
+ - `method_state` - a decorator that logs the state of a method with a given style, status, and reason.
+ - `command_state` - run shell commands and log their output consistently.
 
-#### Methods
+### Styles
 
-##### `method_state(name=None)`
+The `LogTools` class supports two built-in styles for logging messages. The
+following styles are available:
 
-A decorator to run and log shell commands.
+ - **default**: The default style with simple text formatting.
+ - **pre-commit**: A style that mimics the output format of pre-commit hooks.
 
-###### Args:
-- `name` (str, optional): A custom name for the command. Defaults to `None`.
+**default**
 
-###### Example Usage
+```plaintext
+
+Running Install numpy...                                               Passed
+Running Install with warning...                          (out of disk)Warning
+Running Install with error...                                   (failed)Error
+
+```
+
+**pre-commit**
+
+<pre>
+
+Running Install numpy.................................................<span style="color: green;">Passed</span>
+Running Install with warning............................(out of disk)<span style="color: yellow;">Warning</span>
+Running Install with error.....................................(failed)<span style="color: red;">Error</span>
+
+</pre>
+
+### Method - `log_message`
+
+Drop-in replacement for the classic python logging library. Is focussed on user
+experience and simplicity rather than system logging.
+
+The `log_message` method has three static methods:
+ - `info`
+   - log message in default text color
+   - status in `green`
+   - default status is `OK`
+ - `warning`
+   - log message in default text color
+   - status in `yellow`
+   - default status is `WARNING`
+ - `error`
+   - log message in default text color
+   - status in `red`
+   - default status is `ERROR`
+
+#### Args:
+ - `message` (str): The message to log. Can be provided as a positional or keyword argument.
+ - `category` (str, optional): The category of the message. Defaults to "INFO"
+   but generally not used if log_message is called with the appropriate
+   category method i.e. `LogTools.log_message.info("message")`
+ - `style` (str, optional): The style of the log output. Defaults to "default".
+ - `status` (str, optional): The status message to log on the far right. Defaults to "OK".
+ - `reason` (str, optional): The reason for the status message, displayed in
+   round brackets just to left of `status`. Defaults to None.
+
+#### Example Usage
 
 ```python
+
+from klingon_tools.logtools import LogTools
+
+logger = LogTools.log_message
+
+logger.info("Installing catapult")
+logger.warning("Low disk space")
+logger.error("Installation failed")
+
+```
+
+#### Expected Output
+
+<pre>
+
+Running Installing catapult...                                               <span style="color: green;">OK</span>
+Running Low disk space...                                                    <span style="color: yellow;">WARNING</span>
+Running Installation failed...                                               <span style="color: red;">ERROR</span>
+
+</pre>
+
+
+### Method - `method_state(message=None, style="default", status="OK", reason=None)`
+
+`method_state` is a decorator that logs the state of a method with a given
+style, status, and reason. This is useful for providing user friendly logging
+where system style logging is too much or likely to cause confusion for the
+reader.
+
+#### Args:
+  - `message` (str): The message to log. Can be provided as a positional or keyword argument.
+  - `style` (str, optional): The style of the log output. Defaults to "default".
+  - `status` (str, optional): The status message to log on the far right. Defaults to "OK".
+  - `reason` (str, optional): The reason for the status message, displayed in
+  round brackets just to left of `status`. Defaults to None.
+
+#### Example with Styles
+
+**Default Style**
+
+```python
+
 from klingon_tools.logtools import LogTools
 
 log_tools = LogTools(debug=True)
 
-@log_tools.method_state(name="Install numpy")
+@log_tools.method_state(message="Install numpy", style="default")
 def install_numpy():
     return "PIP_ROOT_USER_ACTION=ignore pip install -q numpy"
 
 install_numpy()
+
 ```
 
-Expected output:
+**Expected output**
 
-```plaintext
-Running Install numpy...                                               OK
-```
+<pre>
 
-##### `command_state(commands)`
+Running Install numpy...                                                     <span style="color: green;">OK</span>
 
-Runs a list of shell commands and logs their output.
+</pre>
 
-###### Args:
-- `command` (str): The shell command to run.
-- `name` (str, optional): A custom name for the command. Defaults to `None`.
-
-###### Example Usage
+**Pre-commit Style**
 
 ```python
+
 from klingon_tools.logtools import LogTools
+
+log_tools = LogTools(debug=True)
+
+@log_tools.method_state(message="Install numpy", style="pre-commit", status="Passed", reason="All tests passed")
+def install_numpy():
+    return "PIP_ROOT_USER_ACTION=ignore pip install -q numpy"
+
+install_numpy()
+
+```
+
+**Expected Output**
+
+<pre>
+
+Running Install numpy.................................................<span style="color: green;">Passed</span>
+
+</pre>
+
+### Method - `command_state(commands, style="default", status="Passed", reason=None)`
+
+`command_state` runs a list of shell commands and logs their output. This is useful for providing user-friendly logging for shell commands.
+
+#### Args:
+  - `commands` (list of tuples): Each tuple contains (command, name).
+  - `style` (str, optional): The style of the log output. Defaults to "default".
+  - `status` (str, optional): The status message to log on the far right. Defaults to "Passed".
+  - `reason` (str, optional): The reason for the status message, displayed in round brackets just to the left of `status`. Defaults to None.
+
+#### Example with Styles
+
+**Default Style**
+
+```python
+
+from klingon_tools.logtools import LogTools
+
+log_tools = LogTools(debug=True)
 
 commands = [
     ("PIP_ROOT_USER_ACTION=ignore pip install -q numpy", "Install numpy"),
     ("echo 'Hello, World!'", "Print Hello World")
 ]
+
 log_tools.command_state(commands)
+
 ```
 
-Expected output:
+**Expected output**
 
-```plaintext
-Running Install numpy...                                               OK
-```
+<pre>
 
-### `log_message(message, category="INFO")`
+Running Install numpy...                                                     <span style="color: green;">Passed</span>
+Running Print Hello World...                                                 <span style="color: green;">Passed</span>
 
-Logs a message with a given category.
+</pre>
 
-###### Args:
-- `message` (str): The message to log.
-- `category` (str, optional): The category of the message. Defaults to `"INFO"`.
-
-###### Example Usage
+**Pre-commit Style**
 
 ```python
+
 from klingon_tools.logtools import LogTools
 
-LogTools.log_message("This is an info message", "INFO")
-LogTools.log_message("This is a warning message", "WARNING")
-LogTools.log_message("This is an error message", "ERROR")
+log_tools = LogTools(debug=True)
+
+commands = [
+    ("PIP_ROOT_USER_ACTION=ignore pip install -q numpy", "Install numpy"),
+    ("echo 'Hello, World!'", "Print Hello World")
+]
+
+log_tools.command_state(commands, style="pre-commit", status="Passed", reason="All tests passed")
+
 ```
 
-Expected output:
+**Expected Output**
 
-```plaintext
-This is an info message
-This is a warning message
-This is an error message
+<pre>
+
+Running Install numpy.................................................<span style="color: green;">Passed</span>
+Running Print Hello World.............................................<span style="color: green;">Passed</span>
+
+</pre>
+
+## Advanced Usage - Custom Templates
+
+The `LogTools` class allows you to set a custom template for log messages. This can be useful if you want to standardize the format of your log messages across different parts of your application.
+
+### Setting a Custom Template
+
+To set a custom template, use the `set_template` class method. The template should be a string with placeholders for `message`, `category`, `style`, and `status`.
+
+#### Example
+
+```python
+
+from klingon_tools.logtools import LogTools
+
+# Set a custom template
+LogTools.set_template("Category: {category} - Message: {message} - Status: {status}")
+
+# Use log_message with the template
+logger = LogTools.log_message
+logger.info("Installing catapult")
+logger.warning("Low disk space")
+logger.error("Installation failed")
+
 ```
+
+**Expected Output**
+
+<pre>
+
+Category: INFO - Message: Installing catapult - Status: <span style="color: green;">OK</span>
+Category: WARNING - Message: Low disk space - Status: <span style="color: yellow;">Warning</span>
+Category: ERROR - Message: Installation failed - Status: <span style="color: red;">Error</span>
+
+</pre>
 
 ## Debug Mode
 
 To enable debug mode, set the `DEBUG` flag to `True`:
 
 ```python
+
 log_tools = LogTools(debug=True)
+
 ```
+
+In debug mode, additional information such as command output and error messages will be printed to the console.
 
 ## Contributing
 
