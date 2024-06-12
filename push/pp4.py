@@ -152,7 +152,7 @@ def git_stage_diff(file_name, repo):
     commit_message = response.choices[0].message.content.strip()
 
     # Log the generated commit message
-    logger.info(f"Generated commit message:\n{commit_message}")
+    logger.info(f"Generated commit message:\n\n{commit_message}\n\n")
 
     # Return the commit message
     return commit_message
