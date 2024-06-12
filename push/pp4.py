@@ -303,6 +303,14 @@ parser.add_argument(
 # Parse script arguments
 args = parser.parse_args()
 
+
+# Custom logging filter to add hostname to log records
+class HostnameFilter(logging.Filter):
+    def filter(self, record):
+        record.hostname = os.uname()[1]
+        return True
+
+
 # Setup logger
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
