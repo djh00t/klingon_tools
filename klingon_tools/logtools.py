@@ -89,22 +89,22 @@ class LogTools:
 
             self.logger.log(level, msg, *args, **kwargs)
 
-        def debug(self, msg, *args, **kwargs):
+        def debug(self, msg=None, *args, **kwargs):
             self._log(logging.DEBUG, msg, *args, **kwargs)
 
-        def info(self, msg, *args, **kwargs):
+        def info(self, msg=None, *args, **kwargs):
             self._log(logging.INFO, msg, *args, **kwargs)
 
-        def warning(self, msg, *args, **kwargs):
+        def warning(self, msg=None, *args, **kwargs):
             self._log(logging.WARNING, msg, *args, **kwargs)
 
-        def error(self, msg, *args, **kwargs):
+        def error(self, msg=None, *args, **kwargs):
             self._log(logging.ERROR, msg, *args, **kwargs)
 
-        def critical(self, msg, *args, **kwargs):
+        def critical(self, msg=None, *args, **kwargs):
             self._log(logging.CRITICAL, msg, *args, **kwargs)
 
-        def exception(self, msg, *args, exc_info=True, **kwargs):
+        def exception(self, msg=None, *args, exc_info=True, **kwargs):
             self._log(logging.ERROR, msg, exc_info=exc_info, *args, **kwargs)
 
         def log(self, level, msg, *args, **kwargs):
