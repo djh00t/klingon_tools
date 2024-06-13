@@ -12,6 +12,7 @@ from openai import OpenAI
 import os
 import atexit
 import signal
+import textwrap
 from klingon_tools import LogTools
 
 # Initialize the logger
@@ -146,7 +147,7 @@ def git_stage_diff(file_name, repo):
     repo.index.add([file_name])
 
     # Get the list of staged files
-    staged_files = repo.git.diff('--cached', '--name-only').splitlines()
+    staged_files = repo.git.diff("--cached", "--name-only").splitlines()
 
     # Print the filenames of all staged files
     logger.info(
