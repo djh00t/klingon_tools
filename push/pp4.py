@@ -424,27 +424,46 @@ if untracked_files:
     logger.info(f"There are {len(untracked_files)} untracked files to process.")
     logger.info(f"There are {len(modified_files)} modified files to process.")
 
-# STEP 8.1: Loop through untracked_files and modified and process them
-for file in untracked_files + modified_files:
-    # STEP 8.1.1: Stage file, get the diff and return a commit message
+# STEP 8: Process files based on the --file-name argument
+if args.file_name:
+    # Process only the specified file
+    file = args.file_name
     logger.info(
-        message="Processing file:",
+        message="Processing single file:",
         status=f"{file}",
     )
     commit_message = git_stage_diff(file, repo)
-
-    # STEP 8.1.2: Run pre-commit over the file, re-staging and retrying until it fixes
-    # any issues and passes or fails after LOOP_MAX_PRE_COMMIT attempts
     logger.info(message="Running pre-commit on:", status=f"{file}")
     logger.info(message=79 * "-", status="")
     git_pre_commit(file, commit_message, repo)
+else:
+    # Process untracked & modified files
+    if untracked_files:
+        logger.info(f"There are {len(untracked_files)} untracked files to process.")
+    if modified_files:
+        logger.info(f"There are {len(modified_files)} modified files to process.")
 
-    # STEP 8.1.3: Exit if args.oneshot is set otherwise continue processing
-    # untracked files
-    if args.oneshot:
-        logger.info("Oneshot mode enabled. Exiting script.")
-        logger.info(message=79 * "=", status="")
-        break
+    # Loop through untracked_files and modified and process them
+    for file in untracked_files + modified_files:
+        # STEP 8.1.1: Stage file, get the diff and return a commit message
+        logger.info(
+            message="Processing file:",
+            status=f"{file}",
+        )
+        commit_message = git_stage_diff(file, repo)
+
+        # STEP 8.1.2: Run pre-commit over the file, re-staging and retrying until it fixes
+        # any issues and passes or fails after LOOP_MAX_PRE_COMMIT attempts
+        logger.info(message="Running pre-commit on:", status=f"{file}")
+        logger.info(message=79 * "-", status="")
+        git_pre_commit(file, commit_message, repo)
+
+        # STEP 8.1.3: Exit if args.oneshot is set otherwise continue processing
+        # untracked files
+        if args.oneshot:
+            logger.info("Oneshot mode enabled. Exiting script.")
+            logger.info(message=79 * "=", status="")
+            break
 
 # Say bye bye
 logger.info(message="All files processed. Exiting script.", status="")
