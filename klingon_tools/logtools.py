@@ -69,14 +69,6 @@ class LogTools:
         """
         self.default_style = style
 
-    def set_default_style(self, style):
-        """Sets the default style for log messages.
-
-        Args:
-            style (str): The style to use for log messages.
-        """
-        self.default_style = style
-
     class LogMessage:
         """Handles logging messages with a given severity, style, status, and reason.
 
@@ -102,16 +94,11 @@ class LogTools:
             **kwargs,
         ):
             if style is None:
-                style = self.logger.parent.default_style if hasattr(self.logger.parent, 'default_style') else "default"
-            self,
-            level,
-            msg=None,
-            style="default",
-            status="OK",
-            reason=None,
-            *args,
-            **kwargs,
-        ):
+                style = (
+                    self.logger.parent.default_style
+                    if hasattr(self.logger.parent, "default_style")
+                    else "default"
+                )
             if "message" in kwargs:
                 msg = kwargs.pop("message")
             if LogTools.template:
