@@ -129,8 +129,8 @@ class LogTools:
                 padding = 80 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}{' ' * padding}{status}"
             else:
-                padding = 80 - len(f"{msg} {status}") - emoji_adjustment
-                msg = f"{msg}...{' ' * padding}{status}"
+                padding = 77 - len(f"{msg} {status}") - emoji_adjustment
+                msg = f"{msg}... {' ' * padding}{status}"
 
             if not (
                 msg.strip().startswith("=" * 70) or msg.strip().startswith("-" * 70)
