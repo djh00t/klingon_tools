@@ -97,7 +97,8 @@ The `log_message` class provides methods for logging messages with different sev
 
 from klingon_tools.logtools import LogTools
 
-logger = LogTools.log_message
+log_tools = LogTools()
+logger = log_tools.log_message
 
 logger.info("Installing catapult")
 logger.warning("Low disk space")
