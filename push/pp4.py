@@ -420,7 +420,7 @@ if args.repo_path == ".":  # Default path
     # Get the top-level directory of the git repository
     repo_path = git_get_toplevel()
     if repo_path:
-        logger.info(message="Git top-level directory", status=f"{repo_path}")
+        logger.debug(message="Git top-level directory", status=f"{repo_path}")
     else:
         logger.error(
             "No git repository found. Please create a new local git repository and push it to a remote repository, clone an existing remote repository to the current directory, or take an existing remote repository and make the current directory its local repository including all history, adding any local files to the repository."
