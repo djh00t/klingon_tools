@@ -126,10 +126,10 @@ class LogTools:
                 padding = 78 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}{'.' * padding}{status}"
             elif style == "basic":
-                padding = 78 - len(f"Running {msg} {status}") - emoji_adjustment
-                msg = f"Running {msg}{' ' * padding}{status}"
-            else:
                 padding = 78 - len(f"{msg} {status}") - emoji_adjustment
+                msg = f"{msg}{' ' * padding}{status}"
+            else:
+                padding = 78 - len(f"{msg}... {status}") - emoji_adjustment
                 msg = f"{msg}{' ' * padding}{status}"
 
             if not (
