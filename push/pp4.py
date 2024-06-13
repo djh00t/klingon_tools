@@ -484,11 +484,11 @@ if args.file_name:
     # Process only the specified file
     file = args.file_name
     logger.info(
-        message="Processing single file:",
+        message="Processing single file",
         status=f"{file}",
     )
     commit_message = git_stage_diff(file, repo)
-    logger.info(message="Running pre-commit on:", status=f"{file}")
+    logger.info(message="Running pre-commit on", status=f"{file}")
     git_pre_commit(file, commit_message, repo)
 else:
     # Loop through untracked_files and modified and process them
@@ -496,14 +496,14 @@ else:
         # STEP 8.1.1: Stage file, get the diff and return a commit message
         logger.info(message=80 * "-", status="")
         logger.info(
-            message="Processing file:",
+            message="",
             status=f"{file}",
         )
         commit_message = git_stage_diff(file, repo)
 
         # STEP 8.1.2: Run pre-commit over the file, re-staging and retrying until it fixes
         # any issues and passes or fails after LOOP_MAX_PRE_COMMIT attempts
-        logger.info(message="Running pre-commit on:", status=f"{file}")
+        logger.info(message="Running pre-commit on", status=f"{file}")
         logger.info(message=80 * "-", status="")
         git_pre_commit(file, commit_message, repo)
 
