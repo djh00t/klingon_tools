@@ -34,7 +34,9 @@ class LogTools:
     BOLD_RED = "\033[1;31m"
     RESET = "\033[0m"
     logger = logging.getLogger(__name__)
-    logging.basicConfig(level=logging.INFO)  # Default logging level
+    logging.basicConfig(
+        level=logging.INFO, format="%(message)s"
+    )  # Default logging level without prefix
 
     template = None
 
@@ -59,6 +61,14 @@ class LogTools:
         # Set the class-level template for log messages
         cls.template = template
 
+    def set_default_style(self, style):
+        """Sets the default style for log messages.
+
+        Args:
+            style (str): The style to use for log messages.
+        """
+        self.default_style = style
+
     class LogMessage:
         """Handles logging messages with a given severity, style, status, and reason.
 
@@ -68,29 +78,34 @@ class LogTools:
         Args:
             name (str): The name of the logger.
         """
+
         # Initialize the logger with the given name
         def __init__(self, name):
             self.logger = logging.getLogger(name)
 
         def _log(
-            self, level, msg=None, style="default", status="OK", reason=None, *args, **kwargs
+            self,
+            level,
+            msg=None,
+            style="default",
+            status="OK",
+            reason=None,
+            *args,
+            **kwargs,
         ):
-            if 'message' in kwargs:
-                msg = kwargs.pop('message')
+            if "message" in kwargs:
+                msg = kwargs.pop("message")
             if LogTools.template:
                 msg = LogTools.template.format(message=msg, style=style, status=status)
 
             if style == "pre-commit":
-                msg = f"{msg}.................................................{status}"
+                padding = 80 - len(f"{msg} {status}")
+                msg = f"{msg}{'.' * padding}{status}"
             elif style == "basic":
-                padding = 77 - len(f"Running {msg} {status}")
+                padding = 80 - len(f"Running {msg} {status}")
                 msg = f"Running {msg}{' ' * padding}{status}"
-                padding = 77 - len(f"{msg} {status}")
-                msg = f"{msg}{' ' * padding}{status}"
             else:
-                padding = 77 - len(f"{msg} {status}")
-                msg = f"{msg}{' ' * padding}{status}"
-                padding = 77 - len(f"{msg} {status}")
+                padding = 80 - len(f"{msg} {status}")
                 msg = f"{msg}{' ' * padding}{status}"
 
             self.logger.log(level, msg, *args, **kwargs)
