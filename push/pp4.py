@@ -67,7 +67,7 @@ def git_get_toplevel():
         return toplevel_dir
     except (InvalidGitRepositoryError, NoSuchPathError) as e:
         # Handle cases where the directory is not a Git repository or the path is invalid
-        logger.error(f" Error: {e}")
+        logger.error(f"Error: {e}")
         return None
 
 
@@ -386,20 +386,20 @@ try:
         stderr=subprocess.PIPE,
     )
     logger.info(message=80 * "=", status="")
-    logger.info(" pre-commit is already installed.")
+    logger.info("pre-commit is already installed.")
 
 except subprocess.CalledProcessError:
-    logger.info(" pre-commit is not installed. Installing...")
+    logger.info("pre-commit is not installed. Installing...")
     subprocess.run([sys.executable, "-m", "pip", "install", "pre-commit"], check=True)
     subprocess.run(["pre-commit", "install"], check=True)
-    logger.info(" pre-commit has been installed and hooks are set up.")
+    logger.info("pre-commit has been installed and hooks are set up.")
 
 # Define DEBUG variable
 DEBUG = args.debug
 
 # Enable debug mode if required
 if DEBUG:
-    logger.info(" Debug mode is enabled.")
+    logger.info("Debug mode is enabled.")
     # logging.basicConfig(level=logging.DEBUG)
 
 # Discover the current git repository path. If no git repository is found
@@ -510,7 +510,7 @@ else:
         # STEP 8.1.3: Exit if args.oneshot is set otherwise continue processing
         # untracked files
         if args.oneshot:
-            logger.info(" Oneshot mode enabled. Exiting script.")
+            logger.info("Oneshot mode enabled. Exiting script.")
             logger.info(message=80 * "=", status="")
             break
 
