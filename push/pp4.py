@@ -221,11 +221,13 @@ def git_pre_commit(file_name, commit_message, repo):
         if "files were modified by this hook" in result.stdout:
             logger.info(
                 message="File modified by pre-commit:",
-                status=f"{file_name}",
+                status=f"⚠️",
             )
             logger.info(
-                message="Re-staging file for pre-commit:",
+                message="Re-staging for pre-commit:",
+                status=f"{file_name}",
             )
+            logger.info(message=80 * "-", status="")
             repo.index.add([file_name])
             attempt += 1
             if attempt == LOOP_MAX_PRE_COMMIT:
@@ -235,8 +237,10 @@ def git_pre_commit(file_name, commit_message, repo):
                 sys.exit(1)
         elif result.returncode == 0:
             # Pre-commit hooks passed
+            logger.info(message=80 * "-", status="")
             logger.info(
                 message="Pre-commit completed",
+                status="✅",
             )
 
             # Commit the file
