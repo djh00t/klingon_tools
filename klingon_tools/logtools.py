@@ -147,13 +147,18 @@ class LogTools:
             elif style == "default" and status == "":
                 padding = 77 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}{' ' * padding}{status}"
+            elif style == "default":
                 padding = 77 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}... {' ' * padding}{status}"
 
-            if not (
-                msg.strip().startswith("=" * 70) or msg.strip().startswith("-" * 70)
-            ):
-                msg = "" + msg
+            else:
+                padding = 77 - len(f"{msg} {status}") - emoji_adjustment
+                msg = f"{msg}... {' ' * padding}{status}"
+
+            # if not (
+            #    msg.strip().startswith("=" * 70) or msg.strip().startswith("-" * 70)
+            # ):
+            #    msg = "" + msg
             self.logger.log(level, msg, *args, **kwargs)
 
         def debug(self, msg=None, *args, **kwargs):
