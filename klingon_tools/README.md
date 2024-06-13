@@ -51,9 +51,9 @@ following styles are available:
 
 ```plaintext
 
-Running Install numpy...                                               Passed
-Running Install with warning...                          (out of disk)Warning
-Running Install with error...                                   (failed)Error
+Running Install numpy...                                                 Passed
+Running Install with warning...                            (out of disk)Warning
+Running Install with error...                                     (failed)Error
 
 ```
 
@@ -61,9 +61,9 @@ Running Install with error...                                   (failed)Error
 
 ```plaintext
 
-Running Install numpy OK
-Running Install with warning (out of disk)Warning
-Running Install with error (failed)Error
+Running Install numpy                                                        OK
+Running Install with warning & reason                      (out of disk)Warning
+Running Install with error & reason                               (failed)Error
 
 ```
 
@@ -71,9 +71,9 @@ Running Install with error (failed)Error
 
 <pre>
 
-Running Install numpy.....................................................<span style="color: green;">OK</span>
-Running Install with warning............................(out of disk)<span style="color: yellow;">Warning</span>
-Running Install with error.....................................(failed)<span style="color: red;">Error</span>
+Running Install numpy........................................................<span style="color: green;">OK</span>
+Running Install with warning...............................(out of disk)<span style="color: yellow;">Warning</span>
+Running Install with error........................................(failed)<span style="color: red;">Error</span>
 
 </pre>
 
