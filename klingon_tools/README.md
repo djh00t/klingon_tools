@@ -11,7 +11,7 @@ easier to automate tasks and handle errors.
   codes in a user-friendly manner.
   - **styles**: Customize the appearance of log output using simple to
     configure and manage styles.
-  - **log_message**: Logs a message with a given priority.
+  - **log_message**: Logs a message with a given severity.
   - **method_state**: Logs the state of a method with a given style, status,
     and reason.
   - **command_state**: Logs the state of a shell command with a given style,
@@ -32,7 +32,7 @@ pip install klingon_tools
 The `LogTools` class provides methods for logging messages, decorating methods,
 and running shell commands:
 
- - `log_message` - logs a message with a given priority using a specific status
+ - `log_message` - logs a message with a given severity using a specific status
   name and color. for INFO, yellow for WARNING, and red for ERROR.
  - `method_state` - a decorator that logs the state of a method with a given
    style, status, and reason.
@@ -90,7 +90,7 @@ The `log_message` class provides methods for logging messages with different sev
  - `critical`: Logs a message with CRITICAL level.
  - `exception`: Logs an exception message.
 
-| Priority Level | Color  | Default Status | Description |
+| Severity Level | Color  | Default Status | Description |
 |----------------|--------|-------------|---------------|
 | INFO           | <span style="color: green;">Green</span>  | OK | Informational message |
 | WARNING        | Yellow | WARNING | Warning message |
