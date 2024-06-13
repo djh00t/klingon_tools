@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# pp4.py
+
 import logging
 import git
 from git.exc import InvalidGitRepositoryError, NoSuchPathError
@@ -8,6 +12,14 @@ from openai import OpenAI
 import os
 import atexit
 import signal
+from klingon_tools import LogTools
+
+# Initialize the logger
+log_tools = LogTools()
+logger = log_tools.log_message
+
+# Set the global log message style
+log_tools.set_default_style("pre-commit")
 
 # Initialize the OpenAI API client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -16,7 +28,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 LOOP_MAX_PRE_COMMIT = 5
 deleted_files = []
 untracked_files = []
-staged_not_committed = []
+staged_files = []
 committed_not_pushed = []
 
 # AI System Prompt Template
@@ -54,19 +66,19 @@ def git_get_toplevel():
         return toplevel_dir
     except (InvalidGitRepositoryError, NoSuchPathError) as e:
         # Handle cases where the directory is not a Git repository or the path is invalid
-        print(f"Error: {e}")
+        logger.error(f"Error: {e}")
         return None
 
 
 def git_get_status(repo):
-    global deleted_files, untracked_files, modified_files, staged_not_committed, committed_not_pushed
+    global deleted_files, untracked_files, modified_files, staged_files, committed_not_pushed
 
     # Get the current status of the working directory
     untracked_files = repo.untracked_files
     modified_files = [
         item.a_path for item in repo.index.diff(None) if item.change_type == "M"
     ]
-    staged_not_committed = [item.a_path for item in repo.index.diff("HEAD")]
+    staged_files = [item.a_path for item in repo.index.diff("HEAD")]
     committed_not_pushed = [
         item.a_path for item in repo.head.commit.diff("origin/main")
     ]
@@ -77,7 +89,7 @@ def git_get_status(repo):
 
 def git_commit_deletes(repo):
     # Check if there are any deleted files to commit
-    if deleted_files or staged_not_committed:
+    if deleted_files:
         # Combine deleted files and staged deleted files
         all_deleted_files = list(
             set(
@@ -91,7 +103,7 @@ def git_commit_deletes(repo):
         )
 
         # Log the deleted files
-        logger.info(f" There are {len(all_deleted_files)} deleted files.")
+        logger.info(f"There are {len(all_deleted_files)} deleted files.")
         logger.debug(f"Deleted files: {all_deleted_files}")
 
         for file in all_deleted_files:
@@ -106,31 +118,42 @@ def git_commit_deletes(repo):
         logger.info(
             f"Committed {len(all_deleted_files)} deleted files with message: '{commit_message}'."
         )
-    else:
-        logger.info("No deleted files to commit.")
 
 
-# Loop through all staged_not_committed files and de-stage them
-def git_de_stage_files(repo):
-    # Loop through all files in staged_not_committed & de-stage them
-    for file in staged_not_committed:
+# Loop through all staged_files files and de-stage them
+def git_unstage_files(repo):
+    # Loop through all files in staged_files & de-stage them
+    for file in staged_files:
         try:
-            if file in repo.index.entries:
-                repo.index.remove([file], force=True)
-            else:
-                logger.warning(f"File {file} not found in index, skipping de-stage.")
+            repo.git.reset(file)
+            logger.info(
+                message="Un-staging file:",
+                status=f"{file}",
+            )
         except git.exc.GitCommandError as e:
-            logger.error(f"Error de-staging file {file}: {e}")
+            logger.error(
+                message="Error un-staging file:",
+                status=f"{file}",
+            )
+            logger.exception(
+                message=f"{e}",
+            )
 
 
 # Stage the file, get the diff, and return a commit message
 def git_stage_diff(file_name, repo):
     # Stage the file
-    logger.info(f"Staging file: {file_name}")
+    logger.info(
+        message="Staging file:",
+        status=f"{file_name}",
+    )
     repo.index.add([file_name])
 
     # Get the diff
-    logger.info(f"Getting diff for file: {file_name}")
+    logger.info(
+        message="Getting diff for file:",
+        status=f"{file_name}",
+    )
     diff = repo.git.diff("HEAD", file_name)
 
     # Submit the diff to generate_commit_message
@@ -152,7 +175,9 @@ def git_stage_diff(file_name, repo):
     commit_message = response.choices[0].message.content.strip()
 
     # Log the generated commit message
-    logger.info(f"Generated commit message:\n\n{commit_message}\n")
+    logger.info(message=79 * "-", status="")
+    logger.info(message=f"Generated commit message:\n\n{commit_message}\n", status="")
+    logger.info(message=79 * "-", status="")
 
     # Return the commit message
     return commit_message
@@ -206,10 +231,11 @@ def git_pre_commit(file_name, commit_message, repo):
                 sys.exit(1)
         elif result.returncode == 0:
             # Pre-commit hooks passed
-            logger.info(f"Pre-commit completed for {file_name}.")
+            logger.info(
+                message="Pre-commit completed",
+            )
 
             # Commit the file
-            logger.info(f"Committing file: {file_name}")
             git_commit_file(file_name, commit_message, repo)
             break  # Break out of the loop once the file is committed
 
@@ -222,27 +248,32 @@ def git_commit_file(file_name, commit_message, repo):
     repo.index.commit(commit_message)
 
     # If the commit was successful, log the commit message
-    logger.info(f"Committed file: {file_name} OK")
+    logger.info(message="File committed")
 
 
 def log_git_stats():
-    logger.info(79 * "=")
+    logger.info(message=79 * "-", status="")
     logger.info(
-        f"Deleted files:                                                  {len(deleted_files)}"
+        message="Deleted files:",
+        status=f"{len(deleted_files)}",
     )
     logger.info(
-        f"Untracked files:                                                {len(untracked_files)}"
+        message="Untracked files:",
+        status=f"{len(untracked_files)}",
     )
     logger.info(
-        f"Modified files:                                                 {len(modified_files)}"
+        message="Modified files:",
+        status=f"{len(modified_files)}",
     )
     logger.info(
-        f"Staged files:                                                   {len(staged_not_committed)}"
+        message="Staged files:",
+        status=f"{len(staged_files)}",
     )
     logger.info(
-        f"Committed not pushed files:                                     {len(committed_not_pushed)}"
+        message="Committed not pushed files:",
+        status=f"{len(committed_not_pushed)}",
     )
-    logger.info(79 * "=")
+    logger.info(message=79 * "-", status="")
 
 
 def generate_commit_message(diff):
@@ -268,19 +299,6 @@ def cleanup_lock_file():
         logger.info("Cleaned up .lock file.")
 
 
-# Register the cleanup function to be called on script exit
-atexit.register(cleanup_lock_file)
-
-
-# Set up signal handling to call the cleanup function on termination signals
-def handle_signal(signum, frame):
-    cleanup_lock_file()
-    sys.exit(1)
-
-
-signal.signal(signal.SIGINT, handle_signal)  # Handle Ctrl + C
-signal.signal(signal.SIGTERM, handle_signal)  # Handle termination signals
-
 parser = argparse.ArgumentParser(
     description="Git repository status checker and deleter committer."
 )
@@ -303,28 +321,6 @@ parser.add_argument(
 # Parse script arguments
 args = parser.parse_args()
 
-# Setup logger
-logger = logging.getLogger()
-
-
-# Define the custom logging filter to add hostname to log records
-class HostnameFilter(logging.Filter):
-    def filter(self, record):
-        record.hostname = os.uname()[1]
-        return True
-
-
-# Apply the custom logging filter to the logger
-logger.addFilter(HostnameFilter())
-logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.DEBUG if args.debug else logging.INFO)
-formatter = logging.Formatter(
-    "%(asctime)s %(hostname)s %(name)s: %(levelname)s %(message)s"
-)
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-
 # Suppress httpx INFO messages
 httpx_logger = logging.getLogger("httpx")
 httpx_logger.setLevel(logging.WARNING)
@@ -337,6 +333,7 @@ try:
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
+    logger.info(message=79 * "=", status="")
     logger.info("pre-commit is already installed.")
 
 except subprocess.CalledProcessError:
@@ -351,7 +348,7 @@ DEBUG = args.debug
 # Enable debug mode if required
 if DEBUG:
     logger.info("Debug mode is enabled.")
-    logging.basicConfig(level=logging.DEBUG)
+    # logging.basicConfig(level=logging.DEBUG)
 
 # Discover the current git repository path. If no git repository is found
 # exit the script with an error message and instructions on how to:
@@ -360,6 +357,7 @@ if DEBUG:
 #   c) take an existing remote repository and make the current directory
 #   its local repository including all history, adding any local files to
 #   the repository.
+global repo_path
 if args.repo_path == ".":  # Default path
     # Get the top-level directory of the git repository
     repo_path = git_get_toplevel()
@@ -370,9 +368,24 @@ if args.repo_path == ".":  # Default path
             "No git repository found. Please create a new local git repository and push it to a remote repository, clone an existing remote repository to the current directory, or take an existing remote repository and make the current directory its local repository including all history, adding any local files to the repository."
         )
         sys.exit(1)
+else:
+    repo_path = args.repo_path
 
 # Initialize the repository
 repo = git.Repo(repo_path)
+
+# Register the cleanup function to be called on script exit
+atexit.register(cleanup_lock_file)
+
+
+# Set up signal handling to call the cleanup function on termination signals
+def handle_signal(signum, frame):
+    cleanup_lock_file()
+    sys.exit(1)
+
+
+signal.signal(signal.SIGINT, handle_signal)  # Handle Ctrl + C
+signal.signal(signal.SIGTERM, handle_signal)  # Handle termination signals
 
 # STEP 1: Discover current repository state
 git_get_status(repo)
@@ -385,7 +398,7 @@ git_commit_deletes(repo)
 
 # STEP 4: De-stage any staged but not committed files so they can be
 # handled in the same manner as untracked files
-git_de_stage_files(repo)
+git_unstage_files(repo)
 
 # STEP 5: Discover current repository state again
 git_get_status(repo)
@@ -398,11 +411,11 @@ if deleted_files:
     )
     sys.exit(1)
 
-# STEP 7: Ensure that there are no remaining staged_not_committed files, if
+# STEP 7: Ensure that there are no remaining staged_files files, if
 # there are log an error and exit the script
-if staged_not_committed:
+if staged_files:
     logger.error(
-        "There are still staged files that need to be committed.\nStaged files: {staged_not_committed}"
+        "There are still staged files that need to be committed.\nStaged files: {staged_files}"
     )
     sys.exit(1)
 
@@ -414,16 +427,25 @@ if untracked_files:
 # STEP 8.1: Loop through untracked_files and modified and process them
 for file in untracked_files + modified_files:
     # STEP 8.1.1: Stage file, get the diff and return a commit message
-    logger.info(f"Processing file: {file}")
+    logger.info(
+        message="Processing file:",
+        status=f"{file}",
+    )
     commit_message = git_stage_diff(file, repo)
 
     # STEP 8.1.2: Run pre-commit over the file, re-staging and retrying until it fixes
     # any issues and passes or fails after LOOP_MAX_PRE_COMMIT attempts
-    logger.info(f"Running pre-commit on: {file}\n")
+    logger.info(message="Running pre-commit on:", status=f"{file}")
+    logger.info(message=79 * "-", status="")
     git_pre_commit(file, commit_message, repo)
 
     # STEP 8.1.3: Exit if args.oneshot is set otherwise continue processing
     # untracked files
     if args.oneshot:
         logger.info("Oneshot mode enabled. Exiting script.")
+        logger.info(message=79 * "=", status="")
         break
+
+# Say bye bye
+logger.info(message="All files processed. Exiting script.", status="")
+logger.info(message=79 * "=", status="")
