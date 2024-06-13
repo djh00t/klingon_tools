@@ -175,9 +175,9 @@ def git_stage_diff(file_name, repo):
     commit_message = response.choices[0].message.content.strip()
 
     # Log the generated commit message
-    logger.info(message=79 * "-", status="")
+    logger.info(message=80 * "-", status="")
     logger.info(message=f"Generated commit message:\n\n{commit_message}\n", status="")
-    logger.info(message=79 * "-", status="")
+    logger.info(message=80 * "-", status="")
 
     # Return the commit message
     return commit_message
@@ -258,7 +258,7 @@ def git_commit_file(file_name, commit_message, repo):
 
 
 def log_git_stats():
-    logger.info(message=79 * "-", status="")
+    logger.info(message=80 * "-", status="")
     logger.info(
         message="Deleted files:",
         status=f"{len(deleted_files)}",
@@ -279,7 +279,7 @@ def log_git_stats():
         message="Committed not pushed files:",
         status=f"{len(committed_not_pushed)}",
     )
-    logger.info(message=79 * "-", status="")
+    logger.info(message=80 * "-", status="")
 
 
 def generate_commit_message(diff):
@@ -339,7 +339,7 @@ try:
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    logger.info(message=79 * "=", status="")
+    logger.info(message=80 * "=", status="")
     logger.info("pre-commit is already installed.")
 
 except subprocess.CalledProcessError:
@@ -440,7 +440,7 @@ if args.file_name:
     )
     commit_message = git_stage_diff(file, repo)
     logger.info(message="Running pre-commit on:", status=f"{file}")
-    logger.info(message=79 * "-", status="")
+    logger.info(message=80 * "-", status="")
     git_pre_commit(file, commit_message, repo)
 else:
     # Process untracked & modified files
@@ -461,16 +461,16 @@ else:
         # STEP 8.1.2: Run pre-commit over the file, re-staging and retrying until it fixes
         # any issues and passes or fails after LOOP_MAX_PRE_COMMIT attempts
         logger.info(message="Running pre-commit on:", status=f"{file}")
-        logger.info(message=79 * "-", status="")
+        logger.info(message=80 * "-", status="")
         git_pre_commit(file, commit_message, repo)
 
         # STEP 8.1.3: Exit if args.oneshot is set otherwise continue processing
         # untracked files
         if args.oneshot:
             logger.info("Oneshot mode enabled. Exiting script.")
-            logger.info(message=79 * "=", status="")
+            logger.info(message=80 * "=", status="")
             break
 
 # Say bye bye
 logger.info(message="All files processed. Exiting script.", status="😀 ")
-logger.info(message=79 * "=", status="")
+logger.info(message=80 * "=", status="")
