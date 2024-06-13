@@ -220,7 +220,11 @@ def git_pre_commit(file_name, commit_message, repo):
 
         if "files were modified by this hook" in result.stdout:
             logger.info(
-                f"{file_name} was modified by pre-commit. Re-staging file and retrying."
+                message="File modified by pre-commit:",
+                status=f"{file_name}",
+            )
+            logger.info(
+                message="Re-staging file for pre-commit:",
             )
             repo.index.add([file_name])
             attempt += 1
