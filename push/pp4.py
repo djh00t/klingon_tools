@@ -510,10 +510,10 @@ else:
         # STEP 8.1.3: Exit if args.oneshot is set otherwise continue processing
         # untracked files
         if args.oneshot:
-            logger.info("Oneshot mode enabled. Exiting script.")
+            logger.info("Oneshot mode enabled - exiting script")
             logger.info(message=80 * "=", status="")
-            break
+            exit(0)
 
 # Say bye bye
-logger.info(message="All files processed. Exiting script.", status="😀")
+logger.info(message="All files processed - exiting script", status="😀")
 logger.info(message=80 * "=", status="")
