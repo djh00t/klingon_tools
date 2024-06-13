@@ -137,9 +137,8 @@ class LogTools:
                 )
                 else 0
             )
-            if msg.strip().startswith("=" * 70) or msg.strip().startswith("-" * 70):
-                status = ""
-                padding = 79 - len(f"{msg} {status}") - emoji_adjustment
+            if style == "pre-commit":
+                padding = 80 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}{'.' * padding}{status}"
             elif style == "basic":
                 padding = 80 - len(f"{msg} {status}") - emoji_adjustment
