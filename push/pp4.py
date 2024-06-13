@@ -201,10 +201,16 @@ def git_stage_diff(file_name, repo):
     # Get the commit message from the response
     commit_message = response.choices[0].message.content.strip()
 
-    # Wrap the commit message so it doesn't exceed 78 characters
+    # Wrap the commit message so it doesn't exceed 78 characters and add a leading space
     commit_message = "\n".join(
         [
-            line if len(line) <= 78 else "\n".join(textwrap.wrap(line, 78))
+            (
+                " " + line
+                if len(line) <= 78
+                else "\n".join(
+                    " " + wrapped_line for wrapped_line in textwrap.wrap(line, 78)
+                )
+            )
             for line in commit_message.split("\n")
         ]
     )
@@ -478,7 +484,7 @@ if args.file_name:
     # Process only the specified file
     file = args.file_name
     logger.info(
-        message=" Processing single file:",
+        message="Processing single file:",
         status=f"{file}",
     )
     commit_message = git_stage_diff(file, repo)
@@ -490,7 +496,7 @@ else:
         # STEP 8.1.1: Stage file, get the diff and return a commit message
         logger.info(message=80 * "-", status="")
         logger.info(
-            message=" Processing file:",
+            message="Processing file:",
             status=f"{file}",
         )
         commit_message = git_stage_diff(file, repo)
