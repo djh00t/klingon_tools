@@ -69,6 +69,17 @@ class LogTools:
         """
         self.default_style = style
 
+    def __init__(self, debug=False):
+        """Initializes LogTools with an optional debug flag.
+
+        Args:
+            debug (bool): Flag to enable debug mode. Defaults to False.
+        """
+        # Initialize the logger and set the debug flag
+        self.DEBUG = debug
+        self.log_message = LogTools.LogMessage(__name__, self)
+        self.logger = logging.getLogger(__name__)
+
     class LogMessage:
         """Handles logging messages with a given severity, style, status, and reason.
 
@@ -80,8 +91,9 @@ class LogTools:
         """
 
         # Initialize the logger with the given name
-        def __init__(self, name):
+        def __init__(self, name, parent):
             self.logger = logging.getLogger(name)
+            self.parent = parent
 
         def _log(
             self,
@@ -93,12 +105,10 @@ class LogTools:
             *args,
             **kwargs,
         ):
-            if style is None:
-                style = (
-                    self.logger.parent.default_style
-                    if hasattr(self.logger.parent, "default_style")
-                    else "default"
-                )
+            if style is None and hasattr(self.parent, "default_style"):
+                style = self.parent.default_style
+            elif style is None:
+                style = "default"
             if "message" in kwargs:
                 msg = kwargs.pop("message")
             if LogTools.template:
