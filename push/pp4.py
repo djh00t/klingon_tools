@@ -405,8 +405,8 @@ DEBUG = args.debug
 
 # Enable debug mode if required
 if DEBUG:
-    logger.info("Debug mode is enabled.")
-    # logging.basicConfig(level=logging.DEBUG)
+    logger.info(message="Debug mode is enabled.", status="🐛")
+    logger.basicConfig(level=logging.DEBUG)
 
 # Discover the current git repository path. If no git repository is found
 # exit the script with an error message and instructions on how to:
@@ -420,10 +420,10 @@ if args.repo_path == ".":  # Default path
     # Get the top-level directory of the git repository
     repo_path = git_get_toplevel()
     if repo_path:
-        logger.info(f"Git top-level directory: {repo_path}")
+        logger.info(message="Git top-level directory", status=f"{repo_path}")
     else:
         logger.error(
-            " No git repository found. Please create a new local git repository and push it to a remote repository, clone an existing remote repository to the current directory, or take an existing remote repository and make the current directory its local repository including all history, adding any local files to the repository."
+            "No git repository found. Please create a new local git repository and push it to a remote repository, clone an existing remote repository to the current directory, or take an existing remote repository and make the current directory its local repository including all history, adding any local files to the repository."
         )
         sys.exit(1)
 else:
