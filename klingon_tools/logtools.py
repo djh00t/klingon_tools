@@ -126,8 +126,12 @@ class LogTools:
                 )
             if "message" in kwargs:
                 msg = kwargs.pop("message")
-            if LogTools.template:
-                msg = LogTools.template.format(message=msg, style=style, status=status)
+            if reason:
+                msg = f"{msg} ({reason})"
+            if self.parent.template:
+                msg = self.parent.template.format(
+                    message=msg, style=style, status=status
+                )
 
             emoji_adjustment = (
                 1
