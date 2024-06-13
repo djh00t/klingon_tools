@@ -11,7 +11,7 @@ easier to automate tasks and handle errors.
   codes in a user-friendly manner.
   - **styles**: Customize the appearance of log output using simple to
     configure and manage styles.
-  - **log_message**: Logs a message with a given category.
+  - **log_message**: Logs a message with a given priority.
   - **method_state**: Logs the state of a method with a given style, status,
     and reason.
   - **command_state**: Logs the state of a shell command with a given style,
@@ -32,7 +32,7 @@ pip install klingon_tools
 The `LogTools` class provides methods for logging messages, decorating methods,
 and running shell commands:
 
- - `log_message` - logs a message with a given severity using a specific status
+ - `log_message` - logs a message with a given priority using a specific status
   name and color. for INFO, yellow for WARNING, and red for ERROR.
  - `method_state` - a decorator that logs the state of a method with a given
    style, status, and reason.
@@ -90,7 +90,7 @@ The `log_message` class provides methods for logging messages with different sev
  - `critical`: Logs a message with CRITICAL level.
  - `exception`: Logs an exception message.
 
-| Severity Level | Color  | Default Status | Description |
+| Priority Level | Color  | Default Status | Description |
 |----------------|--------|-------------|---------------|
 | INFO           | <span style="color: green;">Green</span>  | OK | Informational message |
 | WARNING        | Yellow | WARNING | Warning message |
@@ -101,9 +101,9 @@ The `log_message` class provides methods for logging messages with different sev
 
 #### Args:
  - `message` (str): The message to log. Can be provided as a positional or keyword argument.
- - `category` (str, optional): The category of the message. Defaults to "INFO"
+ - `priority` (str, optional): The priority of the message. Defaults to "INFO"
    but generally not used if log_message is called with the appropriate
-   category method i.e. `LogTools.log_message.info("message")`
+   priority method i.e. `LogTools.log_message.info("message")`
  - `style` (str, optional): The style of the log output. Defaults to "default".
  - `status` (str, optional): The status message to log on the far right. Defaults to "OK".
  - `reason` (str, optional): The reason for the status message, displayed in
@@ -302,7 +302,7 @@ To set a custom template, use the `set_template` class method. The template shou
 from klingon_tools.logtools import LogTools
 
 # Set a custom template
-LogTools.set_template("Category: {category} - Message: {message} - Status: {status}")
+LogTools.set_template("Priority: {priority} - Message: {message} - Status: {status}")
 
 # Use log_message with the template
 logger = LogTools.log_message
@@ -316,9 +316,9 @@ logger.error("Installation failed")
 
 <pre>
 
-Category: INFO - Message: Installing catapult - Status: OK
-Category: WARNING - Message: Low disk space - Status: WARNING
-Category: ERROR - Message: Installation failed - Status: ERROR
+Priority: INFO - Message: Installing catapult - Status: OK
+Priority: WARNING - Message: Low disk space - Status: WARNING
+Priority: ERROR - Message: Installation failed - Status: ERROR
 
 </pre>
 
