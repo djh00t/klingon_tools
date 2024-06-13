@@ -455,6 +455,8 @@ class LogTools:
                 if reason:
                     formatted_message += f"({reason})"
                 formatted_message += status
+            elif style == "basic":
+                print(f"Running {display_message} {status}")
             else:
                 formatted_message += line + "\n"
 
