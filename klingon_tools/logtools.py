@@ -135,7 +135,7 @@ class LogTools:
             if not (
                 msg.strip().startswith("=" * 70) or msg.strip().startswith("-" * 70)
             ):
-                msg = " " + msg
+                msg = "" + msg
             self.logger.log(level, msg, *args, **kwargs)
 
         def debug(self, msg=None, *args, **kwargs):
