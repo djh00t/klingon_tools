@@ -73,8 +73,10 @@ class LogTools:
             self.logger = logging.getLogger(name)
 
         def _log(
-            self, level, msg, style="default", status="OK", reason=None, *args, **kwargs
+            self, level, msg=None, style="default", status="OK", reason=None, *args, **kwargs
         ):
+            if 'message' in kwargs:
+                msg = kwargs.pop('message')
             # Apply the template if set
             # Format the message based on the style
             if LogTools.template:

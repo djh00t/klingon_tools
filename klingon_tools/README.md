@@ -96,7 +96,7 @@ severities, each of which have their own default color and status labels:
 
 #### Args:
  - `message` (str): The message to log. Can be provided as a positional or keyword argument.
- - `priority` (str, optional): The priority of the message. Defaults to "INFO"
+ - `severity` (str, optional): The severity of the message. Defaults to "INFO"
    but generally not used if log_message is called with the appropriate
    priority method i.e. `LogTools.log_message.info("message")`
  - `style` (str, optional): The style of the log output. Defaults to "default".
