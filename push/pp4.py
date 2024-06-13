@@ -142,19 +142,42 @@ def git_unstage_files(repo):
 
 # Stage the file, get the diff, and return a commit message
 def git_stage_diff(file_name, repo):
-    # Stage the file
-    logger.info(
-        message="Staging file:",
-        status=f"{file_name}",
-    )
+    # Stage the file, even if it already staged
     repo.index.add([file_name])
 
-    # Get the diff
+    # Print the filenames of all staged files
     logger.info(
-        message="Getting diff for file:",
-        status=f"{file_name}",
+        message="Staged files:",
+        status=f"{repo.index.entries.keys()}",
     )
+
+    # If staging the file worked and it is not in modified_files or untracked_files, log success, otherwise log error
+    if file_name in repo.index.entries.keys() and file_name not in modified_files and file_name not in untracked_files:
+        logger.info(
+            message="Staging file",
+            status="✅",
+        )
+    else:
+        logger.error(
+            message="Failed to stage file",
+            status="❌",
+        )
+        sys.exit(1)
+
+    # Get the diff
     diff = repo.git.diff("HEAD", file_name)
+
+    # If diff was successful, log success, otherwise log error
+    if diff:
+        logger.info(
+            message="Diff generated",
+            status="✅",
+        )
+    else:
+        logger.error(
+            message="Failed to generate diff",
+            status="❌",
+        )
 
     # Submit the diff to generate_commit_message
     commit_message = generate_commit_message(diff)
@@ -173,6 +196,14 @@ def git_stage_diff(file_name, repo):
 
     # Get the commit message from the response
     commit_message = response.choices[0].message.content.strip()
+
+    # Wrap the commit message so it doesn't exceed 72 characters
+    commit_message = "\n".join(
+        [
+            line if len(line) <= 72 else "\n".join(textwrap.wrap(line, 72))
+            for line in commit_message.split("\n")
+        ]
+    )
 
     # Log the generated commit message
     logger.info(message=80 * "-", status="")
@@ -448,7 +479,7 @@ if args.file_name:
     )
     commit_message = git_stage_diff(file, repo)
     logger.info(message="Running pre-commit on:", status=f"{file}")
-    logger.info(message=80 * "-", status="")
+    # logger.info(message=80 * "-", status="")
     git_pre_commit(file, commit_message, repo)
 else:
     # Process untracked & modified files
@@ -460,6 +491,7 @@ else:
     # Loop through untracked_files and modified and process them
     for file in untracked_files + modified_files:
         # STEP 8.1.1: Stage file, get the diff and return a commit message
+        logger.info(message=80 * "-", status="")
         logger.info(
             message="Processing file:",
             status=f"{file}",
