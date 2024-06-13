@@ -1,15 +1,21 @@
 # klingon_tools
 
-The `klingon_tools` Python library provides utilities for running and logging shell commands in a user-friendly manner. This library is designed to simplify the process of executing shell commands and capturing their output, making it easier to automate tasks and handle errors.
+The `klingon_tools` Python library provides utilities for running and logging
+shell commands in a user-friendly manner. This library is designed to simplify
+the process of executing shell commands and capturing their output, making it
+easier to automate tasks and handle errors.
 
 ## Features
 
-- **LogTools**: A utility for running and logging shell commands and their exit codes in a user-friendly manner.
+- **LogTools**: A utility for running and logging shell commands and their exit
+  codes in a user-friendly manner.
   - **styles**: Customize the appearance of log output using simple to
     configure and manage styles.
   - **log_message**: Logs a message with a given category.
-  - **method_state**: Logs the state of a method with a given style, status, and reason.
-  - **command_state**: Logs the state of a shell command with a given style, status, and reason.
+  - **method_state**: Logs the state of a method with a given style, status,
+    and reason.
+  - **command_state**: Logs the state of a shell command with a given style,
+    status, and reason.
 
 ## Installation
 
@@ -23,12 +29,13 @@ pip install klingon_tools
 
 ## Class - LogTools
 
-The `LogTools` class provides methods for logging messages, decorating methods, and running shell commands:
+The `LogTools` class provides methods for logging messages, decorating methods,
+and running shell commands:
 
  - `log_message` - logs a message with a given severity using a specific status
-  name and color.
-   for INFO, yellow for WARNING, and red for ERROR.
- - `method_state` - a decorator that logs the state of a method with a given style, status, and reason.
+  name and color. for INFO, yellow for WARNING, and red for ERROR.
+ - `method_state` - a decorator that logs the state of a method with a given
+   style, status, and reason.
  - `command_state` - run shell commands and log their output consistently.
 
 ### Styles
