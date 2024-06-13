@@ -104,14 +104,15 @@ class LogTools:
             if LogTools.template:
                 msg = LogTools.template.format(message=msg, style=style, status=status)
 
+            emoji_adjustment = 1 if any(char in status for char in "😀😁😂🤣😃😄😅😆😉😊😋😎😍😘😗😙😚🙂🤗🤔🤐😐😑😶😏😣😥😮🤐😯😪😫😴😌😛😜😝🤤😒😓😔😕🙃🤑😲☹🙁😖😞😟😤😢😭😦😧😨😩🤯😬😰😱😳🤪😵😡😠🤬😷🤒🤕🤢🤮🤧😇🤠🤡🤥🤫🤭🧐🤓😈👿👹👺💀👻👽👾🤖💩😺😸😹😻😼😽🙀😿😾") else 0
             if style == "pre-commit":
-                padding = 80 - len(f"{msg} {status}")
+                padding = 80 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}{'.' * padding}{status}"
             elif style == "basic":
-                padding = 80 - len(f"Running {msg} {status}")
+                padding = 80 - len(f"Running {msg} {status}") - emoji_adjustment
                 msg = f"Running {msg}{' ' * padding}{status}"
             else:
-                padding = 80 - len(f"{msg} {status}")
+                padding = 80 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}{' ' * padding}{status}"
 
             self.logger.log(level, msg, *args, **kwargs)
