@@ -37,6 +37,7 @@ The `LogTools` class supports two built-in styles for logging messages. The
 following styles are available:
 
  - **default**: The default style with simple text formatting.
+ - **basic**: A simple style without ellipses and right-aligned status with spaces.
  - **pre-commit**: A style that mimics the output format of pre-commit hooks.
 
 **default**
@@ -46,6 +47,16 @@ following styles are available:
 Running Install numpy...                                               Passed
 Running Install with warning...                          (out of disk)Warning
 Running Install with error...                                   (failed)Error
+
+```
+
+**basic**
+
+```plaintext
+
+Running Install numpy OK
+Running Install with warning (out of disk)Warning
+Running Install with error (failed)Error
 
 ```
 
@@ -154,6 +165,30 @@ install_numpy()
 <pre>
 
 Running Install numpy...                                                     <span style="color: green;">OK</span>
+
+</pre>
+
+**Basic Style**
+
+```python
+
+from klingon_tools.logtools import LogTools
+
+log_tools = LogTools(debug=True)
+
+@log_tools.method_state(message="Install numpy", style="basic", status="OK")
+def install_numpy():
+    return "PIP_ROOT_USER_ACTION=ignore pip install -q numpy"
+
+install_numpy()
+
+```
+
+**Expected output**
+
+<pre>
+
+Running Install numpy OK
 
 </pre>
 
