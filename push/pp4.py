@@ -386,13 +386,19 @@ try:
         stderr=subprocess.PIPE,
     )
     logger.info(message=80 * "=", status="")
-    logger.info("pre-commit is already installed.")
+    logger.info(
+        message="Checking for software requirements",
+        status="✅",
+    )
 
 except subprocess.CalledProcessError:
-    logger.info("pre-commit is not installed. Installing...")
+    logger.warning(message="pre-commit is not installed.", status="Installing")
     subprocess.run([sys.executable, "-m", "pip", "install", "pre-commit"], check=True)
     subprocess.run(["pre-commit", "install"], check=True)
-    logger.info("pre-commit has been installed and hooks are set up.")
+    logger.info(
+        message="pre-commit has been installed and hooks are set up.",
+        status="✅",
+    )
 
 # Define DEBUG variable
 DEBUG = args.debug
