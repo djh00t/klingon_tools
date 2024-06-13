@@ -466,5 +466,5 @@ else:
             break
 
 # Say bye bye
-logger.info(message="All files processed. Exiting script.", status="")
+logger.info(message="All files processed. Exiting script.", status="😀")
 logger.info(message=79 * "=", status="")
