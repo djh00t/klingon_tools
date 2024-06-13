@@ -67,7 +67,7 @@ def git_get_toplevel():
         return toplevel_dir
     except (InvalidGitRepositoryError, NoSuchPathError) as e:
         # Handle cases where the directory is not a Git repository or the path is invalid
-        logger.error(f"Error: {e}")
+        logger.error(f" Error: {e}")
         return None
 
 
@@ -380,20 +380,20 @@ try:
         stderr=subprocess.PIPE,
     )
     logger.info(message=80 * "=", status="")
-    logger.info("pre-commit is already installed.")
+    logger.info(" pre-commit is already installed.")
 
 except subprocess.CalledProcessError:
-    logger.info("pre-commit is not installed. Installing...")
+    logger.info(" pre-commit is not installed. Installing...")
     subprocess.run([sys.executable, "-m", "pip", "install", "pre-commit"], check=True)
     subprocess.run(["pre-commit", "install"], check=True)
-    logger.info("pre-commit has been installed and hooks are set up.")
+    logger.info(" pre-commit has been installed and hooks are set up.")
 
 # Define DEBUG variable
 DEBUG = args.debug
 
 # Enable debug mode if required
 if DEBUG:
-    logger.info("Debug mode is enabled.")
+    logger.info(" Debug mode is enabled.")
     # logging.basicConfig(level=logging.DEBUG)
 
 # Discover the current git repository path. If no git repository is found
@@ -408,10 +408,10 @@ if args.repo_path == ".":  # Default path
     # Get the top-level directory of the git repository
     repo_path = git_get_toplevel()
     if repo_path:
-        logger.info(f"Git top-level directory: {repo_path}")
+        logger.info(f" Git top-level directory: {repo_path}")
     else:
         logger.error(
-            "No git repository found. Please create a new local git repository and push it to a remote repository, clone an existing remote repository to the current directory, or take an existing remote repository and make the current directory its local repository including all history, adding any local files to the repository."
+            " No git repository found. Please create a new local git repository and push it to a remote repository, clone an existing remote repository to the current directory, or take an existing remote repository and make the current directory its local repository including all history, adding any local files to the repository."
         )
         sys.exit(1)
 else:
@@ -467,51 +467,51 @@ if staged_files:
 
 # STEP 8: Process untracked & modified files
 if untracked_files:
-    logger.info(f"There are {len(untracked_files)} untracked files to process.")
-    logger.info(f"There are {len(modified_files)} modified files to process.")
+    logger.info(f" There are {len(untracked_files)} untracked files to process.")
+    logger.info(f" There are {len(modified_files)} modified files to process.")
 
 # STEP 8: Process files based on the --file-name argument
 if args.file_name:
     # Process only the specified file
     file = args.file_name
     logger.info(
-        message="Processing single file:",
+        message=" Processing single file:",
         status=f"{file}",
     )
     commit_message = git_stage_diff(file, repo)
-    logger.info(message="Running pre-commit on:", status=f"{file}")
+    logger.info(message=" Running pre-commit on:", status=f"{file}")
     # logger.info(message=80 * "-", status="")
     git_pre_commit(file, commit_message, repo)
 else:
     # Process untracked & modified files
     if untracked_files:
-        logger.info(f"There are {len(untracked_files)} untracked files to process.")
+        logger.info(f" There are {len(untracked_files)} untracked files to process.")
     if modified_files:
-        logger.info(f"There are {len(modified_files)} modified files to process.")
+        logger.info(f" There are {len(modified_files)} modified files to process.")
 
     # Loop through untracked_files and modified and process them
     for file in untracked_files + modified_files:
         # STEP 8.1.1: Stage file, get the diff and return a commit message
         logger.info(message=80 * "-", status="")
         logger.info(
-            message="Processing file:",
+            message=" Processing file:",
             status=f"{file}",
         )
         commit_message = git_stage_diff(file, repo)
 
         # STEP 8.1.2: Run pre-commit over the file, re-staging and retrying until it fixes
         # any issues and passes or fails after LOOP_MAX_PRE_COMMIT attempts
-        logger.info(message="Running pre-commit on:", status=f"{file}")
+        logger.info(message=" Running pre-commit on:", status=f"{file}")
         logger.info(message=80 * "-", status="")
         git_pre_commit(file, commit_message, repo)
 
         # STEP 8.1.3: Exit if args.oneshot is set otherwise continue processing
         # untracked files
         if args.oneshot:
-            logger.info("Oneshot mode enabled. Exiting script.")
+            logger.info(" Oneshot mode enabled. Exiting script.")
             logger.info(message=80 * "=", status="")
             break
 
 # Say bye bye
-logger.info(message="All files processed. Exiting script.", status="😀")
+logger.info(message=" All files processed. Exiting script.", status="😀")
 logger.info(message=80 * "=", status="")
