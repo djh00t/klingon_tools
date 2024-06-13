@@ -61,12 +61,21 @@ class LogTools:
         # Set the class-level template for log messages
         cls.template = template
 
+    VALID_STYLES = ["default", "pre-commit", "basic"]
+
     def set_default_style(self, style):
         """Sets the default style for log messages.
 
         Args:
             style (str): The style to use for log messages.
+
+        Raises:
+            ValueError: If the provided style is not valid.
         """
+        if style not in self.VALID_STYLES:
+            raise ValueError(
+                f"Invalid style '{style}'. Valid styles are: {', '.join(self.VALID_STYLES)}"
+            )
         self.default_style = style
 
     def __init__(self, debug=False):
@@ -105,10 +114,16 @@ class LogTools:
             *args,
             **kwargs,
         ):
-            if style is None and hasattr(self.parent, "default_style"):
-                style = self.parent.default_style
-            elif style is None:
-                style = "default"
+            if style is None:
+                style = (
+                    self.parent.default_style
+                    if hasattr(self.parent, "default_style")
+                    else "default"
+                )
+            if style not in self.parent.VALID_STYLES:
+                raise ValueError(
+                    f"Invalid style '{style}'. Valid styles are: {', '.join(self.parent.VALID_STYLES)}"
+                )
             if "message" in kwargs:
                 msg = kwargs.pop("message")
             if LogTools.template:
@@ -122,7 +137,8 @@ class LogTools:
                 )
                 else 0
             )
-            if style == "pre-commit":
+            if msg.strip().startswith("=" * 70) or msg.strip().startswith("-" * 70):
+                status = ""
                 padding = 79 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}{'.' * padding}{status}"
             elif style == "basic":
