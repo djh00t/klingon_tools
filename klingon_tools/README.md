@@ -23,7 +23,7 @@ pip install klingon_tools
 
 ## Class - LogTools
 
-The `LogTools` class provides three static methods:
+The `LogTools` class provides methods for logging messages, decorating methods, and running shell commands:
 
  - `log_message` - logs a message with a given category using all green text
    for INFO, yellow for WARNING, and red for ERROR.
@@ -52,7 +52,7 @@ Running Install with error...                                   (failed)Error
 
 <pre>
 
-Running Install numpy.................................................<span style="color: green;">Passed</span>
+Running Install numpy.................................................Passed
 Running Install with warning............................(out of disk)<span style="color: yellow;">Warning</span>
 Running Install with error.....................................(failed)<span style="color: red;">Error</span>
 
@@ -63,19 +63,13 @@ Running Install with error.....................................(failed)<span sty
 Drop-in replacement for the classic python logging library. Is focussed on user
 experience and simplicity rather than system logging.
 
-The `log_message` method has three static methods:
- - `info`
-   - log message in default text color
-   - status in `green`
-   - default status is `OK`
- - `warning`
-   - log message in default text color
-   - status in `yellow`
-   - default status is `WARNING`
- - `error`
-   - log message in default text color
-   - status in `red`
-   - default status is `ERROR`
+The `log_message` class provides methods for logging messages with different severity levels:
+ - `info`: Logs a message with INFO level.
+ - `warning`: Logs a message with WARNING level.
+ - `error`: Logs a message with ERROR level.
+ - `debug`: Logs a message with DEBUG level.
+ - `critical`: Logs a message with CRITICAL level.
+ - `exception`: Logs an exception message.
 
 #### Args:
  - `message` (str): The message to log. Can be provided as a positional or keyword argument.
@@ -99,20 +93,26 @@ logger.info("Installing catapult")
 logger.warning("Low disk space")
 logger.error("Installation failed")
 
+logger = LogTools.log_message
+
+logger.info("Installing catapult")
+logger.warning("Low disk space")
+logger.error("Installation failed")
+
 ```
 
 #### Expected Output
 
 <pre>
 
-Running Installing catapult...                                               <span style="color: green;">OK</span>
-Running Low disk space...                                                    <span style="color: yellow;">WARNING</span>
-Running Installation failed...                                               <span style="color: red;">ERROR</span>
+Running Installing catapult...                                               OK
+Running Low disk space...                                                    WARNING
+Running Installation failed...                                               ERROR
 
 </pre>
 
 
-### Method - `method_state(message=None, style="default", status="OK", reason=None)`
+### Method - `method_state(self, message=None, style="default", status="OK", reason=None)`
 
 `method_state` is a decorator that logs the state of a method with a given
 style, status, and reason. This is useful for providing user friendly logging
@@ -136,7 +136,7 @@ from klingon_tools.logtools import LogTools
 
 log_tools = LogTools(debug=True)
 
-@log_tools.method_state(message="Install numpy", style="default")
+@log_tools.method_state(message="Install numpy", style="default", status="OK")
 def install_numpy():
     return "PIP_ROOT_USER_ACTION=ignore pip install -q numpy"
 
@@ -148,7 +148,7 @@ install_numpy()
 
 <pre>
 
-Running Install numpy...                                                     <span style="color: green;">OK</span>
+Running Install numpy...                                                     OK
 
 </pre>
 
@@ -160,7 +160,7 @@ from klingon_tools.logtools import LogTools
 
 log_tools = LogTools(debug=True)
 
-@log_tools.method_state(message="Install numpy", style="pre-commit", status="Passed", reason="All tests passed")
+@log_tools.method_state(message="Install numpy", style="pre-commit", status="Passed")
 def install_numpy():
     return "PIP_ROOT_USER_ACTION=ignore pip install -q numpy"
 
@@ -176,7 +176,7 @@ Running Install numpy.................................................<span styl
 
 </pre>
 
-### Method - `command_state(commands, style="default", status="Passed", reason=None)`
+### Method - `command_state(self, commands, style="default", status="Passed", reason=None)`
 
 `command_state` runs a list of shell commands and logs their output. This is useful for providing user-friendly logging for shell commands.
 
@@ -201,7 +201,7 @@ commands = [
     ("echo 'Hello, World!'", "Print Hello World")
 ]
 
-log_tools.command_state(commands)
+log_tools.command_state(commands, style="default", status="Passed")
 
 ```
 
@@ -209,8 +209,8 @@ log_tools.command_state(commands)
 
 <pre>
 
-Running Install numpy...                                                     <span style="color: green;">Passed</span>
-Running Print Hello World...                                                 <span style="color: green;">Passed</span>
+Running Install numpy...                                                     Passed
+Running Print Hello World...                                                 Passed
 
 </pre>
 
@@ -227,7 +227,7 @@ commands = [
     ("echo 'Hello, World!'", "Print Hello World")
 ]
 
-log_tools.command_state(commands, style="pre-commit", status="Passed", reason="All tests passed")
+log_tools.command_state(commands, style="pre-commit", status="Passed")
 
 ```
 
@@ -235,8 +235,8 @@ log_tools.command_state(commands, style="pre-commit", status="Passed", reason="A
 
 <pre>
 
-Running Install numpy.................................................<span style="color: green;">Passed</span>
-Running Print Hello World.............................................<span style="color: green;">Passed</span>
+Running Install numpy.................................................Passed
+Running Print Hello World.............................................Passed
 
 </pre>
 
@@ -246,7 +246,7 @@ The `LogTools` class allows you to set a custom template for log messages. This 
 
 ### Setting a Custom Template
 
-To set a custom template, use the `set_template` class method. The template should be a string with placeholders for `message`, `category`, `style`, and `status`.
+To set a custom template, use the `set_template` class method. The template should be a string with placeholders for `message`, `style`, and `status`.
 
 #### Example
 
@@ -269,9 +269,9 @@ logger.error("Installation failed")
 
 <pre>
 
-Category: INFO - Message: Installing catapult - Status: <span style="color: green;">OK</span>
-Category: WARNING - Message: Low disk space - Status: <span style="color: yellow;">Warning</span>
-Category: ERROR - Message: Installation failed - Status: <span style="color: red;">Error</span>
+Category: INFO - Message: Installing catapult - Status: OK
+Category: WARNING - Message: Low disk space - Status: WARNING
+Category: ERROR - Message: Installation failed - Status: ERROR
 
 </pre>
 
