@@ -83,7 +83,8 @@ class LogTools:
             # Format the message based on the style
             if style == "pre-commit":
                 msg = f"{msg}.................................................{status}"
-            elif style == "default":
+            elif style == "basic":
+                msg = f"Running {msg} {status}"
                 msg = f"Running {msg}... {status}"
 
             self.logger.log(level, msg, *args, **kwargs)
@@ -338,7 +339,8 @@ class LogTools:
             if style == "pre-commit":
                 display_name = self._format_pre_commit(display_name, status, reason)
                 print(display_name, end="")
-            else:
+            elif style == "basic":
+                print(f"Running {display_name} {status}")
                 print(f"Running {display_name}... " + " " * padding, end="")
 
             # Capture stdout and stderr to handle command output
