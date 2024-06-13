@@ -60,7 +60,7 @@ class LogTools:
         cls.template = template
 
     class LogMessage:
-        """Handles logging messages with a given priority, style, status, and reason.
+        """Handles logging messages with a given severity, style, status, and reason.
 
         This class provides methods to log messages with different severity levels
         (info, warning, error, etc.) and supports custom templates for log messages.
