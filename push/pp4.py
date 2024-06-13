@@ -494,7 +494,7 @@ else:
     # Loop through untracked_files and modified and process them
     for file in untracked_files + modified_files:
         # STEP 8.1.1: Stage file, get the diff and return a commit message
-        logger.info(message=80 * "-", status="")
+        # logger.info(message=80 * "-", status="")
         logger.info(
             message="Processing file",
             status=f"{file}",
