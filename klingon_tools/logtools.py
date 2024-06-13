@@ -77,17 +77,17 @@ class LogTools:
         ):
             if 'message' in kwargs:
                 msg = kwargs.pop('message')
-            # Apply the template if set
-            # Format the message based on the style
             if LogTools.template:
                 msg = LogTools.template.format(message=msg, style=style, status=status)
 
-            # Format the message based on the style
             if style == "pre-commit":
                 msg = f"{msg}.................................................{status}"
             elif style == "basic":
                 padding = 77 - len(f"Running {msg} {status}")
                 msg = f"Running {msg}{' ' * padding}{status}"
+            else:
+                padding = 77 - len(f"{msg} {status}")
+                msg = f"{msg}{' ' * padding}{status}"
 
             self.logger.log(level, msg, *args, **kwargs)
 
