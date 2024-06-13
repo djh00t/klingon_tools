@@ -105,7 +105,7 @@ class LogTools:
                 msg = LogTools.template.format(message=msg, style=style, status=status)
 
             emoji_adjustment = (
-                1
+                2
                 if any(
                     char in status
                     for char in "✅🛑🚫‼️❗️❌⚠️😀😁😂🤣😃😄😅😆😉😊😋😎😍😘😗😙😚🙂🤗🤔🤐😐😑😶😏😣😥😮🤐😯😪😫😴😌😛😜😝🤤😒😓😔😕🙃🤑😲☹🙁😖😞😟😤😢😭😦😧😨😩🤯😬😰😱😳🤪😵😡😠🤬😷🤒🤕🤢🤮🤧😇🤠🤡🤥🤫🤭🧐🤓😈👿👹👺💀👻👽👾🤖💩😺😸😹😻😼😽🙀😿😾"
@@ -122,7 +122,9 @@ class LogTools:
                 padding = 80 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}{' ' * padding}{status}"
 
-            if not (msg.strip().startswith("=" * 70) or msg.strip().startswith("-" * 70)):
+            if not (
+                msg.strip().startswith("=" * 70) or msg.strip().startswith("-" * 70)
+            ):
                 msg = " " + msg
             self.logger.log(level, msg, *args, **kwargs)
 
