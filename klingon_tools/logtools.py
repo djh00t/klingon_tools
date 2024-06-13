@@ -129,7 +129,7 @@ class LogTools:
                 padding = 80 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}{' ' * padding}{status}"
             else:
-                padding = 79 - len(f"{msg}... {status}") - emoji_adjustment
+                padding = 80 - len(f"{msg}... {status}") - emoji_adjustment
                 msg = f"{msg}{' ' * padding}{status}"
 
             if not (
