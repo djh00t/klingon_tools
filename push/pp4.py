@@ -145,14 +145,17 @@ def git_stage_diff(file_name, repo):
     # Stage the file, even if it already staged
     repo.index.add([file_name])
 
+    # Get the list of staged files
+    staged_files = repo.git.diff('--cached', '--name-only').splitlines()
+
     # Print the filenames of all staged files
     logger.info(
         message="Staged files:",
-        status=f"{repo.index.entries.keys()}",
+        status=f"{staged_files}",
     )
 
-    # If staging the file worked and it is not in modified_files or untracked_files, log success, otherwise log error
-    if file_name in repo.index.entries.keys() and file_name not in modified_files and file_name not in untracked_files:
+    # If staging the file worked and it is in the list of staged files, log success, otherwise log error
+    if file_name in staged_files:
         logger.info(
             message="Staging file",
             status="✅",
