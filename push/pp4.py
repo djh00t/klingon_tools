@@ -20,7 +20,7 @@ log_tools = LogTools()
 logger = log_tools.log_message
 
 # Set the global log message style
-log_tools.set_default_style("pre-commit")
+log_tools.set_default_style("basic")
 
 # Initialize the OpenAI API client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
