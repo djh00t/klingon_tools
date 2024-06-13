@@ -263,7 +263,7 @@ def git_pre_commit(file_name, commit_message, repo):
             logger.info(message=80 * "-", status="")
             logger.info(
                 message="File modified by pre-commit, restaging",
-                status=f" ❗️",
+                status=f"❗️",
             )
             logger.info(message=80 * "-", status="")
             repo.index.add([file_name])
@@ -414,7 +414,7 @@ if args.repo_path == ".":  # Default path
     # Get the top-level directory of the git repository
     repo_path = git_get_toplevel()
     if repo_path:
-        logger.info(f" Git top-level directory: {repo_path}")
+        logger.info(f"Git top-level directory: {repo_path}")
     else:
         logger.error(
             " No git repository found. Please create a new local git repository and push it to a remote repository, clone an existing remote repository to the current directory, or take an existing remote repository and make the current directory its local repository including all history, adding any local files to the repository."
@@ -473,9 +473,9 @@ if staged_files:
 
 # STEP 8: Process untracked & modified files
 if untracked_files:
-    logger.info(f" There are {len(untracked_files)} untracked files to process.")
+    logger.info(f"There are {len(untracked_files)} untracked files to process.")
     logger.info(
-        message=f" There are {len(modified_files)} modified files to process.",
+        message=f"There are {len(modified_files)} modified files to process.",
         status="✅",
     )
 
