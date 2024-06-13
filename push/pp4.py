@@ -245,10 +245,16 @@ def git_commit_file(file_name, commit_message, repo):
     repo.index.add([file_name])
 
     # Commit the file
-    repo.index.commit(commit_message)
-
-    # If the commit was successful, log the commit message
-    logger.info(message="File committed")
+    try:
+        repo.index.commit(commit_message)
+        # If the commit was successful, log the commit message
+        logger.info(
+            message="File committed",
+            status="✅",
+        )
+    except Exception as e:
+        # Log an error if the commit fails
+        logger.error(message="Failed to commit file", status="❌", reason=str(e))
 
 
 def log_git_stats():
