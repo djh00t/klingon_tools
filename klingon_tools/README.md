@@ -82,22 +82,17 @@ Running Install with error.....................................(failed)<span sty
 Drop-in replacement for the classic python logging library. Is focussed on user
 experience and simplicity rather than system logging.
 
-The `log_message` class provides methods for logging messages with different severity levels:
- - `info`: Logs a message with INFO level.
- - `warning`: Logs a message with WARNING level.
- - `error`: Logs a message with ERROR level.
- - `debug`: Logs a message with DEBUG level.
- - `critical`: Logs a message with CRITICAL level.
- - `exception`: Logs an exception message.
+The `log_message` class provides methods for logging messages with different
+severities, each of which have their own default color and status labels:
 
-| Severity Level | Color  | Default Status | Description |
+| Severity | Color  | Status | Description |
 |----------------|--------|-------------|---------------|
 | INFO           | <span style="color: green;">Green</span>  | OK | Informational message |
-| WARNING        | Yellow | WARNING | Warning message |
-| ERROR          | Red    | ERROR | Error message |
-| DEBUG          | Blue   | DEBUG | Debugging message |
-| CRITICAL       | Red (Bold) | CRITICAL | Critical message |
-| EXCEPTION      | Orange | EXCEPTION | Exception message |
+| WARNING        | <span style="color: yellow;">Yellow</span> | WARNING | Warning message |
+| ERROR          | <span style="color: red;">Red</span>    | ERROR | Error message |
+| DEBUG          | <span style="color: cyan;">Cyan</span>   | DEBUG | Debugging message |
+| CRITICAL       | <span style="color: red; font-weight: bold;">Red (Bold)</span> | CRITICAL | Critical message |
+| EXCEPTION      | <span style="color: orange;">Orange</span> | EXCEPTION | Exception message |
 
 #### Args:
  - `message` (str): The message to log. Can be provided as a positional or keyword argument.
