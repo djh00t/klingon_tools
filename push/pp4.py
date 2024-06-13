@@ -150,7 +150,7 @@ def git_stage_diff(file_name, repo):
     staged_files = repo.git.diff("--cached", "--name-only").splitlines()
 
     # Print the filenames of all staged files
-    logger.info(
+    logger.debug(
         message="Staged files:",
         status=f"{staged_files}",
     )
@@ -201,10 +201,10 @@ def git_stage_diff(file_name, repo):
     # Get the commit message from the response
     commit_message = response.choices[0].message.content.strip()
 
-    # Wrap the commit message so it doesn't exceed 72 characters
+    # Wrap the commit message so it doesn't exceed 78 characters
     commit_message = "\n".join(
         [
-            line if len(line) <= 72 else "\n".join(textwrap.wrap(line, 72))
+            line if len(line) <= 78 else "\n".join(textwrap.wrap(line, 78))
             for line in commit_message.split("\n")
         ]
     )
@@ -254,13 +254,10 @@ def git_pre_commit(file_name, commit_message, repo):
         )
 
         if "files were modified by this hook" in result.stdout:
+            logger.info(message=80 * "-", status="")
             logger.info(
-                message="File modified by pre-commit:",
-                status=f"⚠️",
-            )
-            logger.info(
-                message="Re-staging for pre-commit:",
-                status=f"{file_name}",
+                message="File modified by pre-commit, restaging",
+                status=f"❗️",
             )
             logger.info(message=80 * "-", status="")
             repo.index.add([file_name])
