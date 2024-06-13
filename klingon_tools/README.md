@@ -316,9 +316,9 @@ logger.error("Installation failed")
 
 <pre>
 
-Priority: INFO - Message: Installing catapult - Status: OK
-Priority: WARNING - Message: Low disk space - Status: WARNING
-Priority: ERROR - Message: Installation failed - Status: ERROR
+Severity: INFO - Message: Installing catapult - Status: OK
+Severity: WARNING - Message: Low disk space - Status: WARNING
+Severity: ERROR - Message: Installation failed - Status: ERROR
 
 </pre>
 
