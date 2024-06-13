@@ -84,8 +84,8 @@ class LogTools:
             if style == "pre-commit":
                 msg = f"{msg}.................................................{status}"
             elif style == "basic":
-                msg = f"Running {msg} {status}"
-                msg = f"Running {msg}... {status}"
+                padding = 77 - len(f"Running {msg} {status}")
+                msg = f"Running {msg}{' ' * padding}{status}"
 
             self.logger.log(level, msg, *args, **kwargs)
 
@@ -232,11 +232,10 @@ class LogTools:
                         )
                         if style == "pre-commit":
                             print(f"{color}{status}{LogTools.RESET}")
-                        else:
+                        elif style == "basic":
+                            padding = 77 - len(f"Running {display_message} {status}")
                             print(
-                                f"\rRunning {display_message}... "
-                                + " " * padding
-                                + f"{color}{status}{LogTools.RESET}"
+                                f"\rRunning {display_message}{' ' * padding}{color}{status}{LogTools.RESET}"
                             )
                         if self.DEBUG and stdout:
                             print(
@@ -269,11 +268,10 @@ class LogTools:
                     # Handle exceptions and log errors
                     if style == "pre-commit":
                         print(f"{LogTools.BOLD_RED}{status}{LogTools.RESET}")
-                    else:
+                    elif style == "basic":
+                        padding = 77 - len(f"Running {display_message} {status}")
                         print(
-                            f"\rRunning {display_message}... "
-                            + " " * padding
-                            + f"{LogTools.BOLD_RED}ERROR{LogTools.RESET}"
+                            f"\rRunning {display_message}{' ' * padding}{LogTools.BOLD_RED}ERROR{LogTools.RESET}"
                         )
                     stderr = sys.stderr.getvalue()
                     if self.DEBUG and stderr:
@@ -340,8 +338,8 @@ class LogTools:
                 display_name = self._format_pre_commit(display_name, status, reason)
                 print(display_name, end="")
             elif style == "basic":
-                print(f"Running {display_name} {status}")
-                print(f"Running {display_name}... " + " " * padding, end="")
+                padding = 77 - len(f"Running {display_name} {status}")
+                print(f"Running {display_name}{' ' * padding}{status}")
 
             # Capture stdout and stderr to handle command output
             old_stdout = sys.stdout
@@ -393,11 +391,10 @@ class LogTools:
                 else:
                     if style == "pre-commit":
                         print(f"{LogTools.BOLD_RED}{status}{LogTools.RESET}")
-                    else:
+                    elif style == "basic":
+                        padding = 77 - len(f"Running {display_name} {status}")
                         print(
-                            f"\rRunning {display_name}... "
-                            + " " * padding
-                            + f"{LogTools.BOLD_RED}ERROR{LogTools.RESET}"
+                            f"\rRunning {display_name}{' ' * padding}{LogTools.BOLD_RED}ERROR{LogTools.RESET}"
                         )
                     if self.DEBUG and stderr:
                         self.log_message.info(f"ERROR DEBUG:\n{stdout}")
