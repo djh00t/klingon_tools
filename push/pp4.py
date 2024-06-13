@@ -468,7 +468,10 @@ if staged_files:
 # STEP 8: Process untracked & modified files
 if untracked_files:
     logger.info(f" There are {len(untracked_files)} untracked files to process.")
-    logger.info(f" There are {len(modified_files)} modified files to process.")
+    logger.info(
+        message=f" There are {len(modified_files)} modified files to process.",
+        status="✅",
+    )
 
 # STEP 8: Process files based on the --file-name argument
 if args.file_name:
@@ -480,15 +483,8 @@ if args.file_name:
     )
     commit_message = git_stage_diff(file, repo)
     logger.info(message=" Running pre-commit on:", status=f"{file}")
-    # logger.info(message=80 * "-", status="")
     git_pre_commit(file, commit_message, repo)
 else:
-    # Process untracked & modified files
-    if untracked_files:
-        logger.info(f" There are {len(untracked_files)} untracked files to process.")
-    if modified_files:
-        logger.info(f" There are {len(modified_files)} modified files to process.")
-
     # Loop through untracked_files and modified and process them
     for file in untracked_files + modified_files:
         # STEP 8.1.1: Stage file, get the diff and return a commit message
