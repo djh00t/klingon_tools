@@ -328,6 +328,22 @@ def log_git_stats():
     logger.info(message=80 * "-", status="")
 
 
+def git_push(repo):
+    # Push the changes to the remote repository
+    try:
+        repo.git.push()
+        logger.info(
+            message="Pushed changes to remote repository",
+            status="✅",
+        )
+    except Exception as e:
+        logger.error(
+            message="Failed to push changes to remote repository",
+            status="❌",
+            reason=str(e),
+        )
+
+
 def generate_commit_message(diff):
     role_user_content = role_user_content_template.format(diff=diff)
 
@@ -496,6 +512,7 @@ if args.file_name:
     commit_message = git_stage_diff(file, repo)
     logger.info(message="Running pre-commit on", status=f"{file}")
     git_pre_commit(file, commit_message, repo)
+    git_push(repo)
 else:
     # Loop through untracked_files and modified and process them
     for file in untracked_files + modified_files:
@@ -512,6 +529,7 @@ else:
         logger.info(message="Running pre-commit on", status=f"{file}")
         logger.info(message=80 * "-", status="")
         git_pre_commit(file, commit_message, repo)
+        git_push(repo)
 
         # STEP 8.1.3: Exit if args.oneshot is set otherwise continue processing
         # untracked files
