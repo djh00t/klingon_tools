@@ -43,7 +43,7 @@ and running shell commands:
 The `LogTools` class supports two built-in styles for logging messages. The
 following styles are available:
 
- - **default**: The default style with simple text formatting.
+ - **default**: The default style with simple text formatting and right-aligned status with spaces.
  - **basic**: A simple style without ellipses and right-aligned status with spaces.
  - **pre-commit**: A style that mimics the output format of pre-commit hooks.
 

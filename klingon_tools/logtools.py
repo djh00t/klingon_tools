@@ -85,7 +85,11 @@ class LogTools:
             elif style == "basic":
                 padding = 77 - len(f"Running {msg} {status}")
                 msg = f"Running {msg}{' ' * padding}{status}"
+                padding = 77 - len(f"{msg} {status}")
+                msg = f"{msg}{' ' * padding}{status}"
             else:
+                padding = 77 - len(f"{msg} {status}")
+                msg = f"{msg}{' ' * padding}{status}"
                 padding = 77 - len(f"{msg} {status}")
                 msg = f"{msg}{' ' * padding}{status}"
 
