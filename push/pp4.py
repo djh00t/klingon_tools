@@ -128,12 +128,12 @@ def git_unstage_files(repo):
         try:
             repo.git.reset(file)
             logger.info(
-                message="Un-staging file:",
+                message="Un-staging file",
                 status=f"{file}",
             )
         except git.exc.GitCommandError as e:
             logger.error(
-                message="Error un-staging file:",
+                message="Error un-staging file",
                 status=f"{file}",
             )
             logger.exception(
@@ -151,7 +151,7 @@ def git_stage_diff(file_name, repo):
 
     # Print the filenames of all staged files
     logger.debug(
-        message="Staged files:",
+        message="Staged files",
         status=f"{staged_files}",
     )
 
@@ -306,23 +306,23 @@ def git_commit_file(file_name, commit_message, repo):
 def log_git_stats():
     logger.info(message=80 * "-", status="")
     logger.info(
-        message="Deleted files:",
+        message="Deleted files",
         status=f"{len(deleted_files)}",
     )
     logger.info(
-        message="Untracked files:",
+        message="Untracked files",
         status=f"{len(untracked_files)}",
     )
     logger.info(
-        message="Modified files:",
+        message="Modified files",
         status=f"{len(modified_files)}",
     )
     logger.info(
-        message="Staged files:",
+        message="Staged files",
         status=f"{len(staged_files)}",
     )
     logger.info(
-        message="Committed not pushed files:",
+        message="Committed not pushed files",
         status=f"{len(committed_not_pushed)}",
     )
     logger.info(message=80 * "-", status="")
@@ -496,7 +496,7 @@ else:
         # STEP 8.1.1: Stage file, get the diff and return a commit message
         logger.info(message=80 * "-", status="")
         logger.info(
-            message="",
+            message="Processing file",
             status=f"{file}",
         )
         commit_message = git_stage_diff(file, repo)
