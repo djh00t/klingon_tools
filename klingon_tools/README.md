@@ -25,7 +25,8 @@ pip install klingon_tools
 
 The `LogTools` class provides methods for logging messages, decorating methods, and running shell commands:
 
- - `log_message` - logs a message with a given category using all green text
+ - `log_message` - logs a message with a given severity using a specific status
+  name and color.
    for INFO, yellow for WARNING, and red for ERROR.
  - `method_state` - a decorator that logs the state of a method with a given style, status, and reason.
  - `command_state` - run shell commands and log their output consistently.
@@ -52,7 +53,7 @@ Running Install with error...                                   (failed)Error
 
 <pre>
 
-Running Install numpy.................................................Passed
+Running Install numpy.....................................................<span style="color: green;">OK</span>
 Running Install with warning............................(out of disk)<span style="color: yellow;">Warning</span>
 Running Install with error.....................................(failed)<span style="color: red;">Error</span>
 
@@ -70,6 +71,15 @@ The `log_message` class provides methods for logging messages with different sev
  - `debug`: Logs a message with DEBUG level.
  - `critical`: Logs a message with CRITICAL level.
  - `exception`: Logs an exception message.
+
+| Severity Level | Color  | Default Status | Description |
+|----------------|--------|-------------|---------------|
+| INFO           | <span style="color: green;">Green</span>  | OK | Informational message |
+| WARNING        | Yellow | WARNING | Warning message |
+| ERROR          | Red    | ERROR | Error message |
+| DEBUG          | Blue   | DEBUG | Debugging message |
+| CRITICAL       | Red (Bold) | CRITICAL | Critical message |
+| EXCEPTION      | Orange | EXCEPTION | Exception message |
 
 #### Args:
  - `message` (str): The message to log. Can be provided as a positional or keyword argument.
@@ -93,21 +103,15 @@ logger.info("Installing catapult")
 logger.warning("Low disk space")
 logger.error("Installation failed")
 
-logger = LogTools.log_message
-
-logger.info("Installing catapult")
-logger.warning("Low disk space")
-logger.error("Installation failed")
-
 ```
 
 #### Expected Output
 
 <pre>
 
-Running Installing catapult...                                               OK
-Running Low disk space...                                                    WARNING
-Running Installation failed...                                               ERROR
+Running Installing catapult...                                               <span style="color: green;">OK</span>
+Running Low disk space...                                                    <span style="color: yellow;">WARNING</span>
+Running Installation failed...                                               <span style="color: red;">ERROR</span>
 
 </pre>
 
@@ -148,7 +152,7 @@ install_numpy()
 
 <pre>
 
-Running Install numpy...                                                     OK
+Running Install numpy...                                                     <span style="color: green;">OK</span>
 
 </pre>
 
@@ -209,8 +213,8 @@ log_tools.command_state(commands, style="default", status="Passed")
 
 <pre>
 
-Running Install numpy...                                                     Passed
-Running Print Hello World...                                                 Passed
+Running Install numpy...                                                     <span style="color: green;">Passed</span>
+Running Print Hello World...                                                 <span style="color: green;">Passed</span>
 
 </pre>
 
@@ -227,7 +231,7 @@ commands = [
     ("echo 'Hello, World!'", "Print Hello World")
 ]
 
-log_tools.command_state(commands, style="pre-commit", status="Passed")
+log_tools.command_state(commands, style="pre-commit", status="OK")
 
 ```
 
@@ -235,8 +239,8 @@ log_tools.command_state(commands, style="pre-commit", status="Passed")
 
 <pre>
 
-Running Install numpy.................................................Passed
-Running Print Hello World.............................................Passed
+Running Install numpy.................................................<span style="color: green;">OK</span>
+Running Print Hello World.............................................<span style="color: green;">OK</span>
 
 </pre>
 
