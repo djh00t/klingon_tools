@@ -144,7 +144,9 @@ class LogTools:
             elif style == "basic":
                 padding = 80 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}{' ' * padding}{status}"
-            else:
+            elif style == "default" and status == "":
+                padding = 77 - len(f"{msg} {status}") - emoji_adjustment
+                msg = f"{msg}{' ' * padding}{status}"
                 padding = 77 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}... {' ' * padding}{status}"
 
