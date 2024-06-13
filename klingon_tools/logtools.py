@@ -113,13 +113,13 @@ class LogTools:
                 else 0
             )
             if style == "pre-commit":
-                padding = 79 - len(f"{msg} {status}") - emoji_adjustment
+                padding = 78 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}{'.' * padding}{status}"
             elif style == "basic":
-                padding = 79 - len(f"Running {msg} {status}") - emoji_adjustment
+                padding = 78 - len(f"Running {msg} {status}") - emoji_adjustment
                 msg = f"Running {msg}{' ' * padding}{status}"
             else:
-                padding = 79 - len(f"{msg} {status}") - emoji_adjustment
+                padding = 78 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}{' ' * padding}{status}"
 
             if not (
