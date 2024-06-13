@@ -283,6 +283,8 @@ def git_pre_commit(file_name, commit_message, repo):
 
             # Commit the file
             git_commit_file(file_name, commit_message, repo)
+            # Push the changes to the remote repository
+            git_push(repo)
             break  # Break out of the loop once the file is committed
 
 
@@ -331,7 +333,7 @@ def log_git_stats():
 def git_push(repo):
     # Push the changes to the remote repository
     try:
-        repo.git.push()
+        repo.remotes.origin.push()
         logger.info(
             message="Pushed changes to remote repository",
             status="✅",
@@ -529,7 +531,6 @@ else:
         logger.info(message="Running pre-commit on", status=f"{file}")
         logger.info(message=80 * "-", status="")
         git_pre_commit(file, commit_message, repo)
-        git_push(repo)
 
         # STEP 8.1.3: Exit if args.oneshot is set otherwise continue processing
         # untracked files
