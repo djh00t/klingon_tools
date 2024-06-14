@@ -88,6 +88,14 @@ class LogTools:
         self.DEBUG = debug
         self.log_message = LogTools.LogMessage(__name__, self)
         self.logger = logging.getLogger(__name__)
+        if self.DEBUG:
+            self.configure_logging()
+
+    def configure_logging(self):
+        """Configures the logging level to DEBUG."""
+        logging.basicConfig(level=logging.DEBUG)
+        self.logger.setLevel(logging.DEBUG)
+        self.log_message.setLevel(logging.DEBUG)
 
     class LogMessage:
         """Handles logging messages with a given severity, style, status, and reason.
