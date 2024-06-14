@@ -75,13 +75,25 @@ def git_get_status(repo):
     global deleted_files, untracked_files, modified_files, staged_files, committed_not_pushed
 
     # Get the current status of the working directory
+    current_branch = repo.active_branch
+    print(f"Current branch: {current_branch}")
+    print(f"Current branch: {current_branch}")
+    print(f"Current branch: {current_branch}")
+    print(f"Current branch: {current_branch}")
+    print(f"Current branch: {current_branch}")
+    print(f"Current branch: {current_branch}")
+    print(f"Current branch: {current_branch}")
+    print(f"Current branch: {current_branch}")
+    deleted_files = [
+        item.a_path for item in repo.index.diff(None) if item.change_type == "D"
+    ]
     untracked_files = repo.untracked_files
     modified_files = [
         item.a_path for item in repo.index.diff(None) if item.change_type == "M"
     ]
     staged_files = [item.a_path for item in repo.index.diff("HEAD")]
     committed_not_pushed = []
-    committed_not_pushed = []
+
     try:
         for item in repo.head.commit.diff("origin/main"):
             if hasattr(item, "a_blob") and hasattr(item, "b_blob"):
@@ -90,9 +102,6 @@ def git_get_status(repo):
         logger.error(f"Error processing diff-tree output: {e}")
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
-    deleted_files = [
-        item.a_path for item in repo.index.diff(None) if item.change_type == "D"
-    ]
 
 
 def git_commit_deletes(repo):
