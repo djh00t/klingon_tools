@@ -271,7 +271,7 @@ def git_pre_commit(file_name, commit_message, repo):
             logger.info(message=80 * "-", status="")
             logger.info(
                 message="File modified by pre-commit, restaging",
-                status=f"❗️",
+                status=f"🔄",
             )
             logger.info(message=80 * "-", status="")
             repo.index.add([file_name])
