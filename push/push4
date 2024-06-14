@@ -314,7 +314,20 @@ def git_pre_commit(file_name: str, repo: Repo) -> bool:
 
 
 # Function to commit a file
-def git_commit_file(file_name, commit_message, repo):
+def git_commit_file(file_name: str, commit_message: str, repo: Repo) -> None:
+    """Commits a file with a given commit message.
+
+    This function stages the specified file in the repository and commits it with the provided commit message.
+    It handles exceptions for commit errors and logs the results.
+
+    Args:
+        file_name (str): The name of the file to be committed.
+        commit_message (str): The commit message to use for the commit.
+        repo (Repo): The git.Repo object representing the repository.
+
+    Returns:
+        None
+    """
     repo.index.add([file_name])
 
     try:
@@ -327,7 +340,15 @@ def git_commit_file(file_name, commit_message, repo):
 
 
 # Function to log git statistics
-def log_git_stats():
+def log_git_stats() -> None:
+    """Logs git statistics.
+
+    This function logs the number of deleted, untracked, modified, and staged files,
+    as well as the number of committed but not pushed files.
+
+    Returns:
+        None
+    """
     logger.info(message=80 * "-", status="")
     logger.info(message="Deleted files", status=f"{len(deleted_files)}")
     logger.info(message="Untracked files", status=f"{len(untracked_files)}")
@@ -340,7 +361,18 @@ def log_git_stats():
 
 
 # Function to push changes to remote repository
-def git_push(repo):
+def git_push(repo: Repo) -> None:
+    """Pushes changes to the remote repository.
+
+    This function pushes the committed changes to the remote repository.
+    It handles exceptions for push errors and logs the results.
+
+    Args:
+        repo (Repo): The git.Repo object representing the repository.
+
+    Returns:
+        None
+    """
     try:
         repo.remotes.origin.push()
         logger.info(message="Pushed changes to remote repository", status="✅")
@@ -353,7 +385,19 @@ def git_push(repo):
 
 
 # Function to generate commit message
-def generate_commit_message(diff):
+def generate_commit_message(diff: str) -> str:
+    """Generates a commit message using OpenAI API based on the provided diff.
+
+    This function uses the OpenAI API to generate a commit message that accurately
+    describes the changes in the provided diff. The commit message follows the
+    Conventional Commits standard.
+
+    Args:
+        diff (str): The diff of the staged changes.
+
+    Returns:
+        str: The generated commit message.
+    """
     role_user_content = role_user_content_template.format(diff=diff)
 
     response = client.chat.completions.create(
