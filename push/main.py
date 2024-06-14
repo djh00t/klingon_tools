@@ -107,13 +107,14 @@ def startup_tasks() -> None:
     logging.getLogger("httpx").setLevel(logging.WARNING)
 
     if args.debug:
-        log_tools.set_default_style("default")
+        log_tools.set_default_style("pre-commit")
         logger.setLevel(logging.DEBUG)
 
     check_software_requirements()
 
     user_name, user_email = get_git_user_info()
-    logger.info(f"Using git user name: {user_name} and email: {user_email}")
+    logger.info(message="Using git user name:", status=f"{user_name}")
+    logger.info(message="Using git user email:", status=f"{user_email}")
 
     global repo_path
     repo_path = args.repo_path
