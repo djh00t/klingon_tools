@@ -34,7 +34,7 @@ committed_not_pushed = []
 
 # AI System Prompt Template
 role_system_content = """
-Generate a commit message based solely on the staged diffs provided, ensuring accuracy and relevance to the actual changes.
+Generate a commit message based solely on the staged diffs provided, ensshsuring accuracy and relevance to the actual changes.
 Avoid adding speculative or unnecessary footers, such as references to non-existent issues. You must adhere to the conventional commits standard. The commit message should:
 - Clearly specify the type of change (feat, fix, build, etc.).
 - Clearly specify the scope of change.
