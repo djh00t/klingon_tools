@@ -413,14 +413,29 @@ def generate_commit_message(diff: str) -> str:
 
 
 # Function to cleanup .lock file
-def cleanup_lock_file():
+def cleanup_lock_file() -> None:
+    """Cleans up the .lock file in the git repository.
+
+    This function removes the .lock file if it exists in the git repository.
+
+    Returns:
+        None
+    """
     lock_file_path = os.path.join(repo_path, ".git", "index.lock")
     if os.path.exists(lock_file_path):
         os.remove(lock_file_path)
         logger.info("Cleaned up .lock file.")
 
 
-def check_software_requirements():
+def check_software_requirements() -> None:
+    """Checks and installs required software.
+
+    This function checks if pre-commit is installed and installs it if not.
+    It logs the results of the checks and installations.
+
+    Returns:
+        None
+    """
     # Check and install pre-commit if not already installed
     try:
         subprocess.run(
@@ -442,7 +457,19 @@ def check_software_requirements():
 
 
 # Function to process a single file
-def workflow_process_file(file_name, repo):
+def workflow_process_file(file_name: str, repo: Repo) -> None:
+    """Processes a single file through the workflow.
+
+    This function stages the specified file, generates a commit message, runs pre-commit hooks,
+    commits the file if pre-commit hooks pass, and pushes the changes to the remote repository.
+
+    Args:
+        file_name (str): The name of the file to be processed.
+        repo (Repo): The git.Repo object representing the repository.
+
+    Returns:
+        None
+    """
 
     # Generate commit message
     commit_message = git_stage_diff(file_name, repo)
@@ -483,7 +510,15 @@ def workflow_process_file(file_name, repo):
 
 
 # Run startup maintenance tasks
-def startup_tasks():
+def startup_tasks() -> None:
+    """Runs startup maintenance tasks.
+
+    This function parses arguments, checks software requirements, initializes the git repository,
+    gets git status, logs statistics, and cleans up the .lock file.
+
+    Returns:
+        None
+    """
     # Argument parsing
     parser = argparse.ArgumentParser(
         description="Git repository status checker and committer."
