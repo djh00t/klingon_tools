@@ -1,10 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import os
 import sys
 import argparse
 import logging
 import subprocess
 from git import Repo
-from git_utils import (
+from push.git_tools import (
     git_get_toplevel,
     get_git_user_info,
     git_get_status,
@@ -17,8 +19,8 @@ from git_utils import (
     git_push,
     cleanup_lock_file,
 )
-from openai_utils import generate_commit_message
-from logging_utils import logger, log_tools
+from push.openai_tools import generate_commit_message
+from push.logger import logger
 
 deleted_files = []
 untracked_files = []
