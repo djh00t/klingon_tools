@@ -4,6 +4,11 @@ setup(
     name="klingon_tools",
     version="0.0.30",  # This line will be updated dynamically by the Makefile
     packages=find_packages(),
+    entry_points={
+        "console_scripts": [
+            "push=klingon_tools.push:main",
+        ],
+    },
     install_requires=[
         # No external dependencies required
     ],
@@ -19,5 +24,5 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires=">=3.6",
 )
