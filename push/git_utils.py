@@ -223,8 +223,9 @@ def git_push(repo: Repo) -> None:
         current_branch = repo.active_branch.name
 
         # Check for unstaged changes and stash them if any
-        if repo.is_dirty(untracked_files=True):
-            repo.git.stash("save", "Auto stash before rebase")
+        stash_needed = repo.is_dirty(untracked_files=True)
+        if stash_needed:
+            repo.git.stash("save", "--include-untracked", "Auto stash before rebase")
 
         # Rebase the current branch on top of the remote branch
         repo.git.rebase(f"origin/{current_branch}")
@@ -233,8 +234,16 @@ def git_push(repo: Repo) -> None:
         repo.remotes.origin.push()
 
         # Apply the stashed changes back if they were stashed
-        if repo.git.stash("list"):
-            repo.git.stash("pop")
+        if stash_needed:
+            try:
+                repo.git.stash("pop")
+            except GitCommandError as e:
+                logger.error(
+                    message="Failed to apply stashed changes",
+                    status="❌",
+                    reason=str(e),
+                )
+                # If there are conflicts, you can handle them here or manually resolve them
 
         logger.info(message="Pushed changes to remote repository", status="✅")
     except GitCommandError as e:
