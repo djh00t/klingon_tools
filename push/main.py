@@ -81,7 +81,7 @@ def workflow_process_file(file_name: str, repo: Repo) -> None:
         sys.exit(1)
 
     if args.debug:
-        logger.debug(message=f"Debug mode enabled:", status="🐞")
+        logger.debug(message=f"Debug mode enabled", status="🐞 ")
         git_get_status(repo)
         log_git_stats()
 
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     # If no file selector arguments exist
     else:
         # Log processing mode
-        logger.info("Batch mode enabled", status="📦")
+        logger.info("Batch mode enabled", status="📦 ")
 
         # Unstage any staged files
         git_unstage_files(repo)
