@@ -1,5 +1,49 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+push4
+
+This script automates the process of staging, committing, and pushing changes to a git repository.
+It uses the OpenAI API to generate commit messages based on the diffs of staged changes, ensuring
+that commit messages are accurate and follow the Conventional Commits standard. The script also
+handles pre-commit hooks, logging, and various git operations such as un-staging files, committing
+deleted files, and pushing changes to the remote repository.
+
+Modules:
+    os: Provides a way of using operating system dependent functionality.
+    sys: Provides access to some variables used or maintained by the interpreter.
+    argparse: Provides a way to handle command-line arguments.
+    logging: Provides a way to configure and use loggers.
+    subprocess: Allows you to spawn new processes, connect to their input/output/error pipes, and obtain their return codes.
+    signal: Provides mechanisms to use signal handlers.
+    textwrap: Provides a way to format text by wrapping lines.
+    typing: Provides runtime support for type hints.
+    git: Provides GitPython, a python library used to interact with Git repositories.
+    openai: Provides the OpenAI API client.
+    klingon_tools: Provides custom logging tools.
+
+Constants:
+    LOOP_MAX_PRE_COMMIT (int): The maximum number of attempts for running pre-commit hooks.
+
+Functions:
+    git_get_toplevel() -> Optional[Repo]: Initializes a git repository object and returns the top-level directory.
+    git_get_status(repo: Repo) -> None: Retrieves the current status of the git repository.
+    git_commit_deletes(repo: Repo) -> None: Commits deleted files in the given repository.
+    git_unstage_files(repo: Repo) -> None: Unstages all staged files in the given repository.
+    git_stage_diff(file_name: str, repo: Repo) -> str: Stages a file, generates a diff, and returns a commit message.
+    git_pre_commit(file_name: str, repo: Repo) -> bool: Runs pre-commit hooks on a file.
+    git_commit_file(file_name: str, commit_message: str, repo: Repo) -> None: Commits a file with a given commit message.
+    log_git_stats() -> None: Logs git statistics.
+    git_push(repo: Repo) -> None: Pushes changes to the remote repository.
+    generate_commit_message(diff: str) -> str: Generates a commit message using OpenAI API based on the provided diff.
+    cleanup_lock_file() -> None: Cleans up the .lock file in the git repository.
+    check_software_requirements() -> None: Checks and installs required software.
+    workflow_process_file(file_name: str, repo: Repo) -> None: Processes a single file through the workflow.
+    startup_tasks() -> None: Runs startup maintenance tasks.
+
+Usage:
+    Run the script with appropriate command-line arguments to automate git operations.
+"""
 
 import os
 import sys
@@ -15,7 +59,7 @@ from git import (
     InvalidGitRepositoryError,
     NoSuchPathError,
     exc as git_exc,
-)  # Import git module
+)
 from openai import OpenAI
 from klingon_tools import LogTools
 
