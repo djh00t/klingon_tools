@@ -82,7 +82,9 @@ def git_get_status(repo):
     staged_files = [item.a_path for item in repo.index.diff("HEAD")]
     try:
         committed_not_pushed = [
-            item.a_path for item in repo.head.commit.diff("origin/main")
+            item.a_path
+            for item in repo.head.commit.diff("origin/main")
+            if item.a_blob and item.b_blob
         ]
     except ValueError as e:
         logger.error(f"Error processing diff-tree output: {e}")
