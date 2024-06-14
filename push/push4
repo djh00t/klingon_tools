@@ -104,7 +104,18 @@ def git_get_status(repo):
 
 # Function to commit deleted files
 def git_commit_deletes(repo):
+    """
+    Commits deleted files in the given repository.
+
+    Args:
+        repo: The repository object.
+
+    Returns:
+        None
+    """
+    # Check if deleted_files is not empty
     if deleted_files:
+        # Merge deleted_files with deleted files in the working tree
         all_deleted_files = list(
             set(
                 deleted_files
@@ -115,12 +126,16 @@ def git_commit_deletes(repo):
                 ]
             )
         )
+        # Log the number of deleted files
         logger.info(message=f"Deleted files", status=f"{len(all_deleted_files)}")
+        # Log debug details showing all deleted file names
         logger.debug(message=f"Deleted files: {all_deleted_files}", status="🐞")
 
+        # Remove deleted files from the index
         for file in all_deleted_files:
             repo.index.remove([file], working_tree=True)
 
+        # Commit deleted files
         commit_message = "Committing deleted files"
         repo.index.commit(commit_message)
 
@@ -128,6 +143,9 @@ def git_commit_deletes(repo):
             message=f"Committed {len(all_deleted_files)} deleted files",
             status="✅",
         )
+
+        # Push changes to remote repository
+        git_push(repo)
 
 
 # Function to unstage all staged files
