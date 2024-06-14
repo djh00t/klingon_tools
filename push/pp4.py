@@ -76,14 +76,6 @@ def git_get_status(repo):
 
     # Get the current status of the working directory
     current_branch = repo.active_branch
-    print(f"Current branch: {current_branch}")
-    print(f"Current branch: {current_branch}")
-    print(f"Current branch: {current_branch}")
-    print(f"Current branch: {current_branch}")
-    print(f"Current branch: {current_branch}")
-    print(f"Current branch: {current_branch}")
-    print(f"Current branch: {current_branch}")
-    print(f"Current branch: {current_branch}")
     deleted_files = [
         item.a_path for item in repo.index.diff(None) if item.change_type == "D"
     ]
@@ -95,7 +87,7 @@ def git_get_status(repo):
     committed_not_pushed = []
 
     try:
-        for item in repo.head.commit.diff("origin/main"):
+        for item in repo.head.commit.diff(f"origin/{current_branch}"):
             if hasattr(item, "a_blob") and hasattr(item, "b_blob"):
                 committed_not_pushed.append(item.a_path)
     except ValueError as e:
