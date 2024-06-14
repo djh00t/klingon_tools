@@ -63,7 +63,18 @@ def git_get_toplevel() -> Optional[Repo]:
 
 
 # Function to get git repository status
-def git_get_status(repo):
+def git_get_status(repo: Repo) -> None:
+    """Retrieves the current status of the git repository.
+
+    This function populates global lists for deleted, untracked, modified, and staged files,
+    as well as committed but not pushed files. It handles errors for diff-tree processing.
+
+    Args:
+        repo (Repo): The git.Repo object representing the repository.
+
+    Returns:
+        None
+    """
     global deleted_files, untracked_files, modified_files, staged_files, committed_not_pushed
 
     # Get current git branch
