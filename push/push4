@@ -333,11 +333,12 @@ def workflow_process_file(file_name, repo):
         # Exit script with errorlevel 1
         sys.exit(1)
 
-    # Get git status
-    git_get_status(repo)
+    if args.debug:
+        # Get git status
+        git_get_status(repo)
 
-    # Display git statistics
-    log_git_stats()
+        # Display git statistics
+        log_git_stats()
 
 
 # Run startup maintenance tasks
