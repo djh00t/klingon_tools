@@ -1,0 +1,450 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import os
+import sys
+import argparse
+import logging
+import subprocess
+import signal
+import textwrap
+import git
+from git import (
+    Repo,
+    InvalidGitRepositoryError,
+    NoSuchPathError,
+    exc as git_exc,
+)  # Import git module
+from openai import OpenAI
+from klingon_tools import LogTools
+
+# Initialize logging
+log_tools = LogTools()
+logger = log_tools.log_message
+log_tools.set_default_style("default")
+
+# Initialize OpenAI API client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# Constants
+LOOP_MAX_PRE_COMMIT = 5
+
+# AI Templates
+role_system_content = """
+Generate a commit message based solely on the staged diffs provided, ensuring accuracy and relevance to the actual changes.
+Avoid speculative or unnecessary footers, such as references to non-existent issues. Follow the Conventional Commits standard.
+"""
+
+role_user_content_template = """
+Generate a git commit message based on these diffs:
+\"{diff}\"
+"""
+
+
+# Function to get git repository top level directory
+def git_get_toplevel():
+    try:
+        # Initialize the repository object, searching parent directories
+        repo = Repo(".", search_parent_directories=True)
+        # Get the top-level directory
+        toplevel_dir = repo.git.rev_parse("--show-toplevel")
+        return repo  # Return the git.Repo object
+    except (InvalidGitRepositoryError, NoSuchPathError) as e:
+        # Handle cases where the directory is not a Git repository or the path is invalid
+        logger.error(f"Error: {e}")
+        return None  # Return None or handle error accordingly
+
+
+# Function to get git repository status
+def git_get_status(repo):
+    global deleted_files, untracked_files, modified_files, staged_files, committed_not_pushed
+
+    current_branch = repo.active_branch
+    deleted_files = [
+        item.a_path for item in repo.index.diff(None) if item.change_type == "D"
+    ]
+    untracked_files = repo.untracked_files
+    modified_files = [
+        item.a_path for item in repo.index.diff(None) if item.change_type == "M"
+    ]
+    staged_files = [item.a_path for item in repo.index.diff("HEAD")]
+    committed_not_pushed = []
+
+    try:
+        for item in repo.head.commit.diff(f"origin/{current_branch}"):
+            if hasattr(item, "a_blob") and hasattr(item, "b_blob"):
+                committed_not_pushed.append(item.a_path)
+    except ValueError as e:
+        logger.error(f"Error processing diff-tree output: {e}")
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+
+
+# Function to commit deleted files
+def git_commit_deletes(repo):
+    if deleted_files:
+        all_deleted_files = list(
+            set(
+                deleted_files
+                + [
+                    item.a_path
+                    for item in repo.index.diff("HEAD")
+                    if item.change_type == "D"
+                ]
+            )
+        )
+        logger.info(f"There are {len(all_deleted_files)} deleted files.")
+        logger.debug(f"Deleted files: {all_deleted_files}")
+
+        for file in all_deleted_files:
+            repo.index.remove([file], working_tree=True)
+
+        commit_message = "Committing deleted files"
+        repo.index.commit(commit_message)
+
+        logger.info(
+            f"Committed {len(all_deleted_files)} deleted files with message: '{commit_message}'."
+        )
+
+
+# Function to unstage files
+def git_unstage_files(repo):
+    for file in staged_files:
+        try:
+            repo.git.reset(file)
+            logger.info(message="Un-staging file", status=f"{file}")
+        except git_exc.GitCommandError as e:
+            logger.error(message="Error un-staging file", status=f"{file}")
+            logger.exception(message=f"{e}")
+
+
+# Function to stage a file, get diff, and return commit message
+def git_stage_diff(file_name, repo):
+    repo.index.add([file_name])
+    staged_files = repo.git.diff("--cached", "--name-only").splitlines()
+    logger.debug(message="Staged files", status=f"{staged_files}")
+
+    if file_name in staged_files:
+        logger.info(message="Staging file", status="✅")
+    else:
+        logger.error(message="Failed to stage file", status="❌")
+        sys.exit(1)
+
+    diff = repo.git.diff("HEAD", file_name)
+    if diff:
+        logger.info(message="Diff generated", status="✅")
+    else:
+        logger.error(message="Failed to generate diff", status="❌")
+
+    commit_message = generate_commit_message(diff)
+    role_user_content = role_user_content_template.format(diff=diff)
+
+    response = client.chat.completions.create(
+        messages=[
+            {"role": "system", "content": role_system_content},
+            {"role": "user", "content": role_user_content},
+        ],
+        model="gpt-3.5-turbo",
+    )
+
+    commit_message = response.choices[0].message.content.strip()
+    commit_message = "\n".join(
+        [
+            (
+                " " + line
+                if len(line) <= 78
+                else "\n".join(
+                    " " + wrapped_line for wrapped_line in textwrap.wrap(line, 78)
+                )
+            )
+            for line in commit_message.split("\n")
+        ]
+    )
+
+    logger.info(message=80 * "-", status="")
+    logger.info(message=f"Generated commit message:\n\n{commit_message}\n", status="")
+    logger.info(message=80 * "-", status="")
+
+    return commit_message
+
+
+# Function to handle pre-commit hooks
+def git_pre_commit(file_name, repo):
+    attempt = 0
+
+    while attempt < LOOP_MAX_PRE_COMMIT:
+        env = os.environ.copy()
+        env["PYTHONUNBUFFERED"] = "1"
+
+        process = subprocess.Popen(
+            ["pre-commit", "run", "--files", file_name],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env=env,
+        )
+
+        stdout, stderr = [], []
+
+        for line in process.stdout:
+            sys.stdout.write(line)
+            stdout.append(line)
+
+        for line in process.stderr:
+            sys.stderr.write(line)
+            stderr.append(line)
+
+        process.wait()
+        result = subprocess.CompletedProcess(
+            process.args, process.returncode, "".join(stdout), "".join(stderr)
+        )
+
+        if "files were modified by this hook" in result.stdout:
+            logger.info(message=80 * "-", status="")
+            logger.info(message="File modified by pre-commit, restaging", status=f"🔄")
+            logger.info(message=80 * "-", status="")
+            repo.index.add([file_name])
+            attempt += 1
+            if attempt == LOOP_MAX_PRE_COMMIT:
+                logger.error(
+                    f"Pre-commit hooks failed for {file_name} after {LOOP_MAX_PRE_COMMIT} attempts. Exiting script."
+                )
+                sys.exit(1)
+        elif result.returncode == 0:
+            logger.info(message=80 * "-", status="")
+            logger.info(message="Pre-commit completed", status="✅")
+            return True  # Indicate success
+            break
+
+    return False  # Indicate failure
+
+
+# Function to commit a file
+def git_commit_file(file_name, commit_message, repo):
+    repo.index.add([file_name])
+
+    try:
+        repo.index.commit(commit_message)
+        logger.info(message="File committed", status="✅")
+    except Exception as e:
+        logger.error(message="Failed to commit file", status="❌", reason=str(e))
+
+
+# Function to log git statistics
+def log_git_stats():
+    logger.info(message=80 * "-", status="")
+    logger.info(message="Deleted files", status=f"{len(deleted_files)}")
+    logger.info(message="Untracked files", status=f"{len(untracked_files)}")
+    logger.info(message="Modified files", status=f"{len(modified_files)}")
+    logger.info(message="Staged files", status=f"{len(staged_files)}")
+    logger.info(
+        message="Committed not pushed files", status=f"{len(committed_not_pushed)}"
+    )
+    logger.info(message=80 * "-", status="")
+
+
+# Function to push changes to remote repository
+def git_push(repo):
+    try:
+        repo.remotes.origin.push()
+        logger.info(message="Pushed changes to remote repository", status="✅")
+    except Exception as e:
+        logger.error(
+            message="Failed to push changes to remote repository",
+            status="❌",
+            reason=str(e),
+        )
+
+
+# Function to generate commit message
+def generate_commit_message(diff):
+    role_user_content = role_user_content_template.format(diff=diff)
+
+    response = client.chat.completions.create(
+        messages=[
+            {"role": "system", "content": role_system_content},
+            {"role": "user", "content": role_user_content},
+        ],
+        model="gpt-3.5-turbo",
+    )
+
+    commit_message = response.choices[0].message.content.strip()
+    return commit_message
+
+
+# Function to cleanup .lock file
+def cleanup_lock_file():
+    lock_file_path = os.path.join(repo_path, ".git", "index.lock")
+    if os.path.exists(lock_file_path):
+        os.remove(lock_file_path)
+        logger.info("Cleaned up .lock file.")
+
+
+def check_software_requirements():
+    # Check and install pre-commit if not already installed
+    try:
+        subprocess.run(
+            ["pre-commit", "--version"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        logger.info(message="Checking for software requirements", status="✅")
+    except subprocess.CalledProcessError:
+        logger.warning(message="pre-commit is not installed.", status="Installing")
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "pre-commit"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        logger.info(message="Installed pre-commit", status="✅")
+
+
+# Function to process a single file
+def workflow_process_file(file_name, repo):
+
+    # Generate commit message
+    commit_message = git_stage_diff(file_name, repo)
+
+    # Run pre-commit hooks
+    success = git_pre_commit(file_name, repo)
+
+    # Commit file if pre-commit hooks pass
+    if success:
+        # Commit file
+        git_commit_file(file_name, commit_message, repo)
+
+        # Push changes to remote repository
+        git_push(repo)
+
+    # Exit script if pre-commit hooks fail
+    else:
+        logger.error(
+            message="Pre-commit hooks failed. Exiting script.",
+            status="❌",
+        )
+        # Get git status
+        git_get_status(repo)
+
+        # Display git statistics
+        log_git_stats()
+
+        # Exit script with errorlevel 1
+        sys.exit(1)
+
+    # Get git status
+    git_get_status(repo)
+
+    # Display git statistics
+    log_git_stats()
+
+
+# Run startup maintenance tasks
+def startup_tasks():
+    # Argument parsing
+    parser = argparse.ArgumentParser(
+        description="Git repository status checker and committer."
+    )
+    parser.add_argument(
+        "--repo-path", type=str, default=".", help="Path to the git repository"
+    )
+    parser.add_argument("--debug", action="store_true", help="Enable debug mode")
+    parser.add_argument("--file-name", type=str, help="File name to stage and commit")
+    parser.add_argument(
+        "--oneshot",
+        action="store_true",
+        help="Process and commit only one file then exit",
+    )
+    global args
+    args = parser.parse_args()
+
+    # Suppress httpx INFO messages
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+
+    # Set log level to debug if --debug is enabled
+    if args.debug:
+        log_tools.set_default_style("default")
+        logger.setLevel(logging.DEBUG)
+
+    # Check software requirements
+    check_software_requirements()
+
+    # Git repository path
+    global repo_path
+    repo_path = args.repo_path
+
+    # Change directory to repo path
+    os.chdir(repo_path)
+
+    # Initialize repository
+    global repo
+    repo = git_get_toplevel()
+
+    # Validate repo path
+    if repo is None:
+        logger.error("Failed to initialize git repository.")
+        sys.exit(1)
+
+    # Get git status
+    git_get_status(repo)
+
+    # Display git statistics
+    log_git_stats()
+
+    # Clean up .lock file
+    cleanup_lock_file()
+
+
+# Run startup tasks
+startup_tasks()
+
+# If --file-name is provided
+if args.file_name:
+    # Set file name
+    file = args.file_name
+
+    # Log processing mode
+    logger.info(message="Processing single file", status=f"{file}")
+
+    # Process File
+    workflow_process_file(file, repo)
+
+# If --oneshot is provided
+elif args.oneshot:
+    # Merge untracked and modified files
+    files_to_process = untracked_files + modified_files
+
+    # Get first file in files_to_process
+    file = files_to_process[0]
+
+    # Make sure that there are files to process
+    if not files_to_process:
+        logger.info("No untracked or modified files to process.")
+    else:
+        # Log processing mode
+        logger.info(message="Processing first file", status=f"{file}")
+
+        # Process File
+        workflow_process_file(file, repo)
+
+# If no file selector arguments exist
+else:
+    # Unstage any staged but not committed files
+    git_unstage_files(repo)
+
+    # Commit deleted files
+    git_commit_deletes(repo)
+
+    # Process untracked and modified files
+    for file in untracked_files + modified_files:
+
+        # Process file
+        workflow_process_file(file, repo)
+
+# Log script completion
+logger.info(
+    message="All files processed. Script completed successfully.",
+    status="🚀 ",
+)
+logger.info(message=80 * "=", status="")
