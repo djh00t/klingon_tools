@@ -80,9 +80,13 @@ def git_get_status(repo):
         item.a_path for item in repo.index.diff(None) if item.change_type == "M"
     ]
     staged_files = [item.a_path for item in repo.index.diff("HEAD")]
-    committed_not_pushed = [
-        item.a_path for item in repo.head.commit.diff("origin/main")
-    ]
+    try:
+        committed_not_pushed = [
+            item.a_path for item in repo.head.commit.diff("origin/main")
+        ]
+    except ValueError as e:
+        logger.error(f"Error processing diff-tree output: {e}")
+        committed_not_pushed = []
     deleted_files = [
         item.a_path for item in repo.index.diff(None) if item.change_type == "D"
     ]
