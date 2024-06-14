@@ -81,6 +81,7 @@ def git_get_status(repo):
     ]
     staged_files = [item.a_path for item in repo.index.diff("HEAD")]
     committed_not_pushed = []
+    committed_not_pushed = []
     try:
         for item in repo.head.commit.diff("origin/main"):
             if hasattr(item, "a_blob") and hasattr(item, "b_blob"):
