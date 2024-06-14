@@ -3,7 +3,13 @@ import sys
 import subprocess
 from typing import Optional
 import git
-from git import Repo, InvalidGitRepositoryError, NoSuchPathError, exc as git_exc
+from git import (
+    Repo,
+    GitCommandError,
+    InvalidGitRepositoryError,
+    NoSuchPathError,
+    exc as git_exc,
+)
 from logging_utils import logger
 
 LOOP_MAX_PRE_COMMIT = 5
@@ -210,11 +216,36 @@ def log_git_stats() -> None:
 def git_push(repo: Repo) -> None:
     """Pushes changes to the remote repository."""
     try:
+        # Fetch the latest changes from the remote repository
+        repo.remotes.origin.fetch()
+
+        # Get the current branch name
+        current_branch = repo.active_branch.name
+
+        # Check for unstaged changes and stash them if any
+        if repo.is_dirty(untracked_files=True):
+            repo.git.stash("save", "Auto stash before rebase")
+
+        # Rebase the current branch on top of the remote branch
+        repo.git.rebase(f"origin/{current_branch}")
+
+        # Push the changes to the remote repository
         repo.remotes.origin.push()
+
+        # Apply the stashed changes back if they were stashed
+        if repo.git.stash("list"):
+            repo.git.stash("pop")
+
         logger.info(message="Pushed changes to remote repository", status="✅")
-    except Exception as e:
+    except GitCommandError as e:
         logger.error(
             message="Failed to push changes to remote repository",
+            status="❌",
+            reason=str(e),
+        )
+    except Exception as e:
+        logger.error(
+            message="An unexpected error occurred",
             status="❌",
             reason=str(e),
         )
