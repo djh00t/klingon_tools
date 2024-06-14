@@ -156,14 +156,14 @@ class LogTools:
                 padding = 80 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}{' ' * padding}{status}"
             elif style == "default" and status == "":
-                padding = 77 - len(f"{msg} {status}") - emoji_adjustment
+                padding = 76 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}{' ' * padding}{status}"
             elif style == "default":
-                padding = 77 - len(f"{msg} {status}") - emoji_adjustment
+                padding = 76 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}... {' ' * padding}{status}"
 
             else:
-                padding = 77 - len(f"{msg} {status}") - emoji_adjustment
+                padding = 76 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}... {' ' * padding}{status}"
             self.logger.log(level, msg, *args, **kwargs)
 
