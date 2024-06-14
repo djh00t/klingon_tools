@@ -1,0 +1,202 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import os
+import sys
+import subprocess
+import argparse
+import logging
+from git import Repo
+from signal import signal, SIGINT
+from time import sleep
+
+# Constants
+LOOP_MAX_PRE_COMMIT = 3  # Maximum attempts to run pre-commit hooks
+LOG_FILE = "git_auto_commit.log"
+
+# Initialize logger
+logging.basicConfig(
+    filename=LOG_FILE,
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger()
+
+
+# Function to initialize Git repository
+def initialize_git_repo():
+    try:
+        repo = Repo(os.getcwd())
+        return repo
+    except Exception as e:
+        logger.error(f"Failed to initialize Git repository: {e}")
+        sys.exit(1)
+
+
+# Function to check and install pre-commit
+def check_install_pre_commit():
+    try:
+        subprocess.check_call(["pre-commit", "--version"])
+        logger.info("pre-commit already installed.")
+    except subprocess.CalledProcessError:
+        logger.info("Installing pre-commit...")
+        subprocess.check_call(["pip", "install", "pre-commit"])
+        subprocess.check_call(["pre-commit", "install"])
+        logger.info("pre-commit installed and hooks set up.")
+
+
+# Function to handle cleanup operations
+def exit_handler(signal_received, frame):
+    logger.info("Exiting script, cleaning up...")
+    # Unstage any remaining staged files
+    subprocess.run(["git", "reset"])
+    # Finalize logging
+    logging.shutdown()
+    sys.exit(0)
+
+
+# Function to commit deleted files
+def commit_deleted_files(repo):
+    deleted_files = repo.index.diff(None)
+    if deleted_files:
+        for deleted_file in deleted_files:
+            repo.index.remove([deleted_file.a_path], working_tree=True)
+            repo.index.commit(f"Deleted file: {deleted_file.a_path}")
+            logger.info(f"Committed deleted file: {deleted_file.a_path}")
+
+
+# Function to unstage files
+def unstage_files(repo):
+    repo.index.reset()
+
+
+# Function to discover repository state
+def discover_repo_state(repo):
+    try:
+        deleted = [item.a_path for item in repo.index.diff(None) if item.deleted_file]
+        untracked = [
+            item for item in repo.untracked_files if isinstance(item, str)
+        ]  # Handle unexpected types
+        modified = [
+            item.a_path for item in repo.index.diff("HEAD") if not item.deleted_file
+        ]
+        staged = [
+            item.a_path for item in repo.index.diff("HEAD") if item.a_path in modified
+        ]
+        committed_not_pushed = []  # Placeholder for future implementation
+        return deleted, untracked, modified, staged, committed_not_pushed
+    except Exception as e:
+        logger.error(f"Error discovering repository state: {e}")
+        return [], [], [], [], []  # Return empty lists if there's an error
+
+
+# Function to process files
+def process_files(repo, files, debug=False, oneshot=False):
+    for file_path in files:
+        try:
+            # Stage the file
+            repo.index.add([file_path])
+
+            # Get diff and generate commit message (placeholder for OpenAI API usage)
+            diff = subprocess.check_output(["git", "diff", "--", file_path]).decode(
+                "utf-8"
+            )
+            commit_message = f"Auto commit: {file_path}\n\n{diff}"
+
+            # Run pre-commit hooks
+            attempts = 0
+            while attempts < LOOP_MAX_PRE_COMMIT:
+                attempts += 1
+                try:
+                    subprocess.check_call(
+                        ["pre-commit", "run", "--all-files", "--hook-stage=commit-msg"]
+                    )
+                    break  # Exit loop if pre-commit succeeds
+                except subprocess.CalledProcessError:
+                    logger.warning(
+                        f"Pre-commit failed on attempt {attempts} for file: {file_path}"
+                    )
+                    if attempts == LOOP_MAX_PRE_COMMIT:
+                        raise Exception(
+                            f"Max attempts reached for pre-commit on file: {file_path}"
+                        )
+
+            # Commit and push changes
+            repo.index.commit(commit_message)
+            origin = repo.remote(name="origin")
+            origin.push()
+
+            logger.info(f"Committed and pushed changes for file: {file_path}")
+
+            if oneshot:
+                break  # Exit loop if oneshot mode is enabled
+
+        except Exception as e:
+            logger.error(f"Error processing file {file_path}: {e}")
+
+
+# Main function
+def main():
+    # Argument parsing
+    parser = argparse.ArgumentParser(
+        description="Automate Git file handling and commit process."
+    )
+    parser.add_argument("--debug", action="store_true", help="Enable debug mode")
+    parser.add_argument("--file-name", type=str, help="Process only the specified file")
+    parser.add_argument(
+        "--oneshot", action="store_true", help="Exit after processing one file"
+    )
+    args = parser.parse_args()
+
+    # Initialize Git repository
+    repo = initialize_git_repo()
+
+    # Check and install pre-commit
+    check_install_pre_commit()
+
+    # Cleanup handler for SIGINT
+    signal(SIGINT, exit_handler)
+
+    # Discover repository state
+    deleted, untracked, modified, staged, committed_not_pushed = discover_repo_state(
+        repo
+    )
+    logger.info(
+        f"Repository state: Deleted={deleted}, Untracked={untracked}, Modified={modified}, Staged={staged}"
+    )
+
+    # Commit any deleted files
+    commit_deleted_files(repo)
+
+    # Unstage files
+    unstage_files(repo)
+
+    # Discover repository state again after unstage
+    deleted, untracked, modified, staged, committed_not_pushed = discover_repo_state(
+        repo
+    )
+
+    # Error handling for remaining files
+    if deleted or staged:
+        logger.error(
+            f"Remaining deleted or staged files after cleanup: Deleted={deleted}, Staged={staged}"
+        )
+        sys.exit(1)
+
+    # Log untracked and modified files
+    logger.info(f"Untracked files: {untracked}")
+    logger.info(f"Modified files: {modified}")
+
+    # Process files based on arguments
+    if args.file_name:
+        process_files(repo, [args.file_name], debug=args.debug, oneshot=args.oneshot)
+    else:
+        files_to_process = untracked + modified
+        process_files(repo, files_to_process, debug=args.debug, oneshot=args.oneshot)
+
+    # Completion message
+    logger.info("All files processed successfully.")
+
+
+if __name__ == "__main__":
+    main()
