@@ -334,6 +334,7 @@ def workflow_process_file(file_name, repo):
         sys.exit(1)
 
     if args.debug:
+        print(message=f"Debug mode enabled:", status=f"{args.debug}")
         # Get git status
         git_get_status(repo)
 
