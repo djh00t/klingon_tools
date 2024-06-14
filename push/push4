@@ -51,7 +51,9 @@ def git_get_toplevel():
         return repo  # Return the git.Repo object
     except (InvalidGitRepositoryError, NoSuchPathError) as e:
         # Handle cases where the directory is not a Git repository or the path is invalid
-        logger.error(f"Error: {e}")
+        logger.error(message="Error initializing git repository", status="❌")
+        # Log exception
+        logger.exception(message=f"{e}")
         return None  # Return None or handle error accordingly
 
 
@@ -59,25 +61,45 @@ def git_get_toplevel():
 def git_get_status(repo):
     global deleted_files, untracked_files, modified_files, staged_files, committed_not_pushed
 
+    # Get current git branch
     current_branch = repo.active_branch
+
+    # Get deleted_files
     deleted_files = [
         item.a_path for item in repo.index.diff(None) if item.change_type == "D"
     ]
+
+    # Get untracked_files
     untracked_files = repo.untracked_files
+
+    # Get modified_files
     modified_files = [
         item.a_path for item in repo.index.diff(None) if item.change_type == "M"
     ]
-    staged_files = [item.a_path for item in repo.index.diff("HEAD")]
-    committed_not_pushed = []
 
+    # Get staged_files
+    staged_files = [item.a_path for item in repo.index.diff("HEAD")]
+
+    # Create committed_not_pushed list
+    committed_not_pushed = []
     try:
+        # Get committed not pushed files from diff-tree
         for item in repo.head.commit.diff(f"origin/{current_branch}"):
+
+            # Check if item has a_blob and b_blob attributes
             if hasattr(item, "a_blob") and hasattr(item, "b_blob"):
+
+                # Check if item is a file
                 committed_not_pushed.append(item.a_path)
+    # Handle value errors and exceptions
     except ValueError as e:
-        logger.error(f"Error processing diff-tree output: {e}")
+        logger.error(message="Error processing diff-tree output:", status="❌")
+        # Log exception
+        logger.exception(message=f"{e}")
     except Exception as e:
-        logger.error(f"Unexpected error: {e}")
+        logger.error(message=f"Unexpected error:", status="❌")
+        # Log exception
+        logger.exception(message=f"{e}")
 
 
 # Function to commit deleted files
@@ -93,8 +115,8 @@ def git_commit_deletes(repo):
                 ]
             )
         )
-        logger.info(f"There are {len(all_deleted_files)} deleted files.")
-        logger.debug(f"Deleted files: {all_deleted_files}")
+        logger.info(message=f"Deleted files", status=f"{len(all_deleted_files)}")
+        logger.debug(message=f"Deleted files: {all_deleted_files}", status="🐞")
 
         for file in all_deleted_files:
             repo.index.remove([file], working_tree=True)
@@ -103,18 +125,26 @@ def git_commit_deletes(repo):
         repo.index.commit(commit_message)
 
         logger.info(
-            f"Committed {len(all_deleted_files)} deleted files with message: '{commit_message}'."
+            message=f"Committed {len(all_deleted_files)} deleted files",
+            status="✅",
         )
 
 
-# Function to unstage files
+# Function to unstage all staged files
 def git_unstage_files(repo):
+
+    # Get staged files
     for file in staged_files:
         try:
+            # Reset file
             repo.git.reset(file)
+            # Log success
             logger.info(message="Un-staging file", status=f"{file}")
+        # Handle exceptions
         except git_exc.GitCommandError as e:
+            # Log error
             logger.error(message="Error un-staging file", status=f"{file}")
+            # Log exception
             logger.exception(message=f"{e}")
 
 
@@ -227,7 +257,9 @@ def git_commit_file(file_name, commit_message, repo):
         repo.index.commit(commit_message)
         logger.info(message="File committed", status="✅")
     except Exception as e:
-        logger.error(message="Failed to commit file", status="❌", reason=str(e))
+        logger.error(message="Failed to commit file", status="❌")
+        # Log exception
+        logger.exception(message=f"{e}")
 
 
 # Function to log git statistics
@@ -334,7 +366,7 @@ def workflow_process_file(file_name, repo):
         sys.exit(1)
 
     if args.debug:
-        logger.debug(message=f"Debug mode enabled:", status=f"{args.debug}")
+        logger.debug(message=f"Debug mode enabled:", status="🐞")
         # Get git status
         git_get_status(repo)
 
