@@ -119,12 +119,14 @@ def git_get_status(repo: Repo) -> None:
 
 
 # Function to commit deleted files
-def git_commit_deletes(repo):
-    """
-    Commits deleted files in the given repository.
+def git_commit_deletes(repo: Repo) -> None:
+    """Commits deleted files in the given repository.
+
+    This function merges deleted files with those in the working tree, removes them
+    from the index, commits the deleted files, and pushes the changes to the remote repository.
 
     Args:
-        repo: The repository object.
+        repo (Repo): The git.Repo object representing the repository.
 
     Returns:
         None
@@ -165,25 +167,41 @@ def git_commit_deletes(repo):
 
 
 # Function to unstage all staged files
-def git_unstage_files(repo):
+def git_unstage_files(repo: Repo) -> None:
+    """Unstages all staged files in the given repository.
 
-    # Get staged files
+    This function resets each staged file in the repository, effectively unstaging them.
+    It handles exceptions for git command errors and logs the results.
+
+    Args:
+        repo (Repo): The git.Repo object representing the repository.
+
+    Returns:
+        None
+    """
     for file in staged_files:
         try:
-            # Reset file
             repo.git.reset(file)
-            # Log success
             logger.info(message="Un-staging file", status=f"{file}")
-        # Handle exceptions
         except git_exc.GitCommandError as e:
-            # Log error
             logger.error(message="Error un-staging file", status=f"{file}")
-            # Log exception
             logger.exception(message=f"{e}")
 
 
 # Function to stage a file, get diff, and return commit message
-def git_stage_diff(file_name, repo):
+def git_stage_diff(file_name: str, repo: Repo) -> str:
+    """Stages a file, generates a diff, and returns a commit message.
+
+    This function stages the specified file in the repository, generates a diff for the staged changes,
+    and uses the OpenAI API to generate a commit message based on the diff.
+
+    Args:
+        file_name (str): The name of the file to be staged and diffed.
+        repo (Repo): The git.Repo object representing the repository.
+
+    Returns:
+        str: The generated commit message.
+    """
     repo.index.add([file_name])
     staged_files = repo.git.diff("--cached", "--name-only").splitlines()
     logger.debug(message="Staged files", status=f"{staged_files}")
@@ -233,7 +251,19 @@ def git_stage_diff(file_name, repo):
 
 
 # Function to handle pre-commit hooks
-def git_pre_commit(file_name, repo):
+def git_pre_commit(file_name: str, repo: Repo) -> bool:
+    """Runs pre-commit hooks on a file.
+
+    This function runs pre-commit hooks in a loop, handling file modifications by pre-commit hooks.
+    It returns success or failure based on the pre-commit hook results.
+
+    Args:
+        file_name (str): The name of the file to run pre-commit hooks on.
+        repo (Repo): The git.Repo object representing the repository.
+
+    Returns:
+        bool: True if pre-commit hooks pass, False otherwise.
+    """
     attempt = 0
 
     while attempt < LOOP_MAX_PRE_COMMIT:
