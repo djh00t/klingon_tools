@@ -88,6 +88,8 @@ def git_get_status(repo):
                 committed_not_pushed.append(item.a_path)
     except ValueError as e:
         logger.error(f"Error processing diff-tree output: {e}")
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
     deleted_files = [
         item.a_path for item in repo.index.diff(None) if item.change_type == "D"
     ]
@@ -429,7 +431,7 @@ DEBUG = args.debug
 # Enable debug mode if required
 if DEBUG:
     logger.info(message="Debug mode is enabled.", status="🐛")
-    logger.basicConfig(level=logging.DEBUG)
+    log_tools.configure_logging()
 
 # Discover the current git repository path. If no git repository is found
 # exit the script with an error message and instructions on how to:
