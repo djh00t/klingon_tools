@@ -6,6 +6,7 @@ import subprocess
 from git import Repo
 from git_utils import (
     git_get_toplevel,
+    get_git_user_info,
     git_get_status,
     git_commit_deletes,
     git_unstage_files,
@@ -110,6 +111,9 @@ def startup_tasks() -> None:
         logger.setLevel(logging.DEBUG)
 
     check_software_requirements()
+
+    user_name, user_email = get_git_user_info()
+    logger.info(f"Using git user name: {user_name} and email: {user_email}")
 
     global repo_path
     repo_path = args.repo_path
