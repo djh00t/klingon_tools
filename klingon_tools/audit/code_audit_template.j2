@@ -1,0 +1,80 @@
+# Code Audit Report
+
+## `{{ className }}` {{ nameType }} - `{{ fileName }}`
+{#
+Title Explanation:
+
+`{{ className }}` means the most specific of either the
+className, functionName or methodName that covers all of the code that must be
+audited to complete the assignment.
+
+For instance if I asked for an audit of a specific function from a specific
+file, the `{{ className }}` field would be the
+functionName. If the request covers two files, then the title would contain the
+most specific of either the className, functionName or methodName on a per file
+basis and the title would be repeated for each file with a comma separating the fields.
+
+`{{ nameType }}` is the type of the name used in the `{{ className }}` field.
+This could be `class`, `function`, or `method`.
+
+`{{ fileName }}` is the name of the file being audited.
+#}
+
+| Date       | Time     | Author  | Result |
+|------------|----------|---------|--------|
+| {{ date }} | {{ time }} | {{ author }} | {{ result }} |
+{#
+
+This table provides details on when and who performed the code audit and the final result of the audit.
+
+- **Date:** The date when the code audit was performed, MUST match the date that the audit completed.
+- **Time:** The time when the code audit was performed, MUST match the time that the audit completed.
+- **Author:** The name of the author who performed the code audit. If the audit was completed by AI, the name of the AI model must be used.
+- **Result:** The result of the code audit, either `Pass`, `Fail`. If the result is `Fail`, the audit must include a detailed explanation of the failure in the conclusion section of the report and contain enough detail that the developer can understand the issue and correct it without needing to refer back to the original code.
+
+#}
+
+### Overview
+{{ assignmentSummary }}
+
+### Assignment
+{{ assignmentDescription }}
+
+{% for item in classFunctionMethod %}
+### `{{ item.name }}` {{ item.type }}
+
+**Documentation in README.md:**
+- `{{ item.name }}` is a {{ item.readmeSummary }}
+- Args:
+  - `{{ item.arg }}` ({{ item.argType }}): {{ item.argDescription }}
+  {% if item.return %}
+- Returns:
+  - `{{ item.return }}` ({{ item.returnType }}): {{ item.returnDescription }}
+  {% endif %}
+
+**Code in {{ fileName }}:**
+- {{ item.codeFeature }}
+
+**Compliance with Google Style Guide**
+- {{ item.styleGuide }}
+
+**Gap Analysis:**
+- {{ item.gapAnalysis }}
+
+{% endfor %}
+
+### Conclusion
+{#
+
+Write up describing the result of the audit including, but not limited to:
+- If the code matches the documentation.
+  - README.md in same directory as the code.
+  - Docstrings in the code.
+- If the code matches the relevant Google Style Guide.
+- If the code lints without errors.
+- If the code has appropriate test coverage of all features especially external API's and methods of using the code to prevent regression problems.
+- If the code passes all tests.
+- If the code has any security vulnerabilities.
+
+#}
+{{ assignmentConclusion }}

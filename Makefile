@@ -85,7 +85,7 @@ update-version:
 	sed -i "s/version=\"[0-9]*\.[0-9]*\.[0-9]*\"/version=\"$$NEW_VERSION\"/" setup.py; \
 	git add VERSION setup.py; \
 	git commit -m "Bump version to $$NEW_VERSION"; \
-	git push origin main; \
+	git push origin version-bump; \
 	echo $$NEW_VERSION > VERSION; \
 	echo "New version is:			$$NEW_VERSION"; \
 	sed -i "s/version=\"[0-9]*\.[0-9]*\.[0-9]*\"/version=\"$$NEW_VERSION\"/" setup.py; \
@@ -96,7 +96,7 @@ update-version:
 	fi; \
 	git add VERSION setup.py; \
 	git commit -m "Bump version to $$NEW_VERSION"; \
-	git push origin main
+	git push origin version-bump
 
 ## generate-pyproject: Generate a pyproject.toml file
 generate-pyproject:

@@ -1,16 +1,8 @@
 fail_fast: false
-# exclude: |
-#    '.*.terraform/'
+
 repos:
-    #     - repo: https://github.com/adrienverge/yamllint
-    #       rev: v1.30.0
-    #       hooks:
-    #         - args:
-    #             - --config-file
-    #             - .github/linters/.yamllint.yaml
-    #           id: yamllint
     - repo: https://github.com/pre-commit/pre-commit-hooks
-      rev: v4.5.0
+      rev: v4.6.0
       hooks:
         - id: check-merge-conflict
         - id: end-of-file-fixer
@@ -23,35 +15,48 @@ repos:
         - id: trailing-whitespace
           args:
             - --markdown-linebreak-ext=md
-    - repo: https://github.com/Lucas-C/pre-commit-hooks
-      rev: v1.5.5
+        - id: end-of-file-fixer
+        - id: check-yaml
+###$     - repo: https://github.com/pycqa/flake8
+###$       rev: 7.0.0
+###$       hooks:
+###$         - id: flake8
+###$           additional_dependencies: [flake8-docstrings]
+    - repo: https://github.com/psf/black
+      rev: 24.4.2
       hooks:
-        - id: remove-crlf
-        - id: remove-tabs
-    - repo: https://github.com/sirosen/texthooks
-      rev: 0.6.6
-      hooks:
-        - id: fix-smartquotes
-    - repo: https://github.com/djh00t/sops-pre-commit
-      rev: v0.0.2g
-      hooks:
-        - id: kubernetes-secret
-          exclude: (k8s\/apps\/group-00\/kube-vip\/rbac.yaml|tmpl\/.*.sops\.ya?ml|knative\-operator\.ya?ml|tekton\-pipelines\.ya?ml)
-        - id: aws-access-key-id
-        - id: aws-secret-access-key
-        - id: rsa-private-key
-        - id: ssh-private-key
-        - id: github-access-token
-        - id: generic-api-key
-        - id: gcp-api-key
-        - id: jwt
-        - id: slack-webhook-url
-        - id: google-oauth-client-secret
-    - repo: https://github.com/gruntwork-io/pre-commit
-      rev: v0.1.23
-      hooks:
-        - id: terraform-fmt
-        - id: terraform-validate
-        - id: tflint
-#        - id: shellcheck
-#          args: ["-x -e SC1091"]
+        - id: black
+          language_version: python3.12
+    ###%- repo: https://github.com/Lucas-C/pre-commit-hooks
+###%      rev: v1.5.5
+###%      hooks:
+###%        - id: remove-crlf
+###%        - id: remove-tabs
+###%    - repo: https://github.com/sirosen/texthooks
+###%      rev: 0.6.6
+###%      hooks:
+###%        - id: fix-smartquotes
+###%    - repo: https://github.com/djh00t/sops-pre-commit
+###%      rev: v0.0.2f
+###%      hooks:
+###%        - id: kubernetes-secret
+###%          exclude: (k8s\/apps\/group-00\/kube-vip\/rbac.yaml|tmpl\/.*.sops\.ya?ml|knative\-operator\.ya?ml|tekton\-pipelines\.ya?ml)
+###%        - id: aws-access-key-id
+###%        - id: aws-secret-access-key
+###%        - id: rsa-private-key
+###%        - id: ssh-private-key
+###%        - id: github-access-token
+###%        - id: generic-api-key
+###%        - id: gcp-api-key
+###%        - id: jwt
+###%        - id: slack-webhook-url
+###%        - id: google-oauth-client-secret
+###%    - repo: https://github.com/gruntwork-io/pre-commit
+###%      rev: v0.1.23
+###%      hooks:
+###%        - id: terraform-fmt
+###%        - id: terraform-validate
+###%        - id: tflint
+###%#        - id: shellcheck
+###%#          args: ["-x -e SC1091"]
+###%
