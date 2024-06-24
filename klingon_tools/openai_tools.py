@@ -35,6 +35,35 @@ def generate_commit_message(diff: str) -> str:
 
     commit_message = response.choices[0].message.content.strip()
     user_name, user_email = get_git_user_info()
+    commit_message = "\n".join(
+        [
+            (
+                line
+                if len(line) <= 78
+                else "\n".join(wrapped_line for wrapped_line in textwrap.wrap(line, 78))
+            )
+            for line in commit_message.split("\n")
+        ]
+    )
+
+    # Prefix commit message with appropriate emoticon
+    commit_type = commit_message.split(":")[0]
+    emoticon_prefix = {
+        "feat": "✨",
+        "fix": "🐛",
+        "docs": "📚",
+        "style": "💄",
+        "refactor": "♻️",
+        "perf": "🚀",
+        "test": "🚨",
+        "build": "🛠️",
+        "ci": "⚙️",
+        "chore": "🔧",
+        "revert": "⏪",
+    }.get(commit_type, "")
+
+    commit_message = f"{emoticon_prefix} {commit_message}"
+
     signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
 
     commit_message = "\n".join(
