@@ -1,4 +1,4 @@
-name: Auto PR for New Branches
+name: Auto PR
 
 on:
   # Push to all but main and master
@@ -32,7 +32,7 @@ jobs:
         id: commit_messages
         run: |
           git fetch origin main
-          COMMITS=$(git log origin/main..HEAD --pretty=format:"%s" || echo "No conventional commits found.")
+          COMMITS=$(git log origin/main..HEAD --pretty=format:"- %s" || echo "No conventional commits found.")
           echo "::set-output name=commits::$COMMITS"
 
       - name: Create Pull Request
@@ -64,7 +64,6 @@ jobs:
             else
               UPDATED_BODY="$EXISTING_BODY
 
-              New Commits:
               ${{ steps.commit_messages.outputs.commits }}"
 
               gh pr edit $PR_URL --body "$UPDATED_BODY"
