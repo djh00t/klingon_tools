@@ -22,7 +22,7 @@ jobs:
         id: commit_messages
         run: |
           git fetch origin main
-          COMMITS=$(git log origin/main..HEAD --pretty=format:"%s" | grep -E "^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert|merge):")
+          COMMITS=$(git log origin/main..HEAD --pretty=format:"%s" | grep -E "^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert|merge):" || echo "No conventional commits found.")
           echo "::set-output name=commits::$COMMITS"
 
       - name: Create Pull Request
