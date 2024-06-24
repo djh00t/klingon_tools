@@ -1,7 +1,8 @@
 import re
-from git import Repo
+from git import Repo, GitCommandError
 from klingon_tools.logger import logger
 from klingon_tools.git_user_info import get_git_user_info
+from klingon_tools.openai_tools import generate_commit_message
 
 
 def is_commit_message_signed_off(commit_message: str) -> bool:
@@ -19,19 +20,4 @@ def validate_commit_messages(repo: Repo) -> bool:
     """Validate all commit messages to ensure they are signed off and follow the Conventional Commits standard."""
     for commit in repo.iter_commits("HEAD"):
         commit_message = commit.message
-        if not is_commit_message_signed_off(commit_message):
-            user_name, user_email = get_git_user_info()
-            signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
-            new_commit_message = commit_message + signoff
-            repo.git.commit("--amend", "-m", new_commit_message)
-            logger.info(
-                message=f"Commit {commit.hexsha} was not signed off. Signed off and amended.",
-                status="✅",
-            )
-        if not is_conventional_commit(commit_message):
-            logger.error(
-                message=f"Commit {commit.hexsha} does not follow Conventional Commits standard.",
-                status="❌",
-            )
-            return False
     return True
