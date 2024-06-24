@@ -17,9 +17,9 @@ from klingon_tools.git_tools import (
     git_pre_commit,
     git_commit_file,
     log_git_stats,
-    git_push,
     cleanup_lock_file,
 )
+from klingon_tools.git_push import git_push
 from klingon_tools.openai_tools import generate_commit_message
 from klingon_tools.logger import logger
 
