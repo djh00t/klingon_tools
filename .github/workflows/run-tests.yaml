@@ -1,11 +1,8 @@
 name: "🚨 Run Tests"
 
 on:
-  #pull_request:
-  #  branches:
-  #    - '**'
   workflow_run:
-    workflows: ["Auto PR"]
+    workflows: ["🔄 Auto PR"]
     types:
       - completed
 
