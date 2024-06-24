@@ -2,9 +2,10 @@ name: '🚨 Run Tests'
 
 on:
   pull_request:
-    types: [opened, edited, synchronize, reopened, ready_for_review]
     # What options are available for pull_request types?
     # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#pull_request
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
 
 jobs:
   test:
