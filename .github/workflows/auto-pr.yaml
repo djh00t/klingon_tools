@@ -48,29 +48,29 @@ jobs:
           PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
 
           if [ -z "$PR_URL" ]; then
-            # No PR exists, create one
-            gh pr create --base main --head ${{ github.ref }} --title "Pull Request for new branch ${{ github.branch }} created by @${{ github.actor }}" --body "This PR is automatically created for the new branch ${{ github.ref }} created by @${{ github.actor }}.
+          # No PR exists, create one
+          gh pr create --base main --head ${{ github.ref }} --title "Pull Request for new branch ${{ github.branch }} created by @${{ github.actor }}" --body "This PR is automatically created for the new branch ${{ github.ref }} created by @${{ github.actor }}.
 
-            **Changes:**
-            ${{ steps.commit_messages.outputs.commits }}"
+          **Changes:**
+          ${{ steps.commit_messages.outputs.commits }}"
           else
-            # PR exists, update it
-            # Get the existing PR body
-            EXISTING_BODY=$(gh pr view $PR_URL --json body --jq '.body')
+          # PR exists, update it
+          # Get the existing PR body
+          EXISTING_BODY=$(gh pr view $PR_URL --json body --jq '.body')
 
-            # Check if the PR body is broken
-            if [[ "$EXISTING_BODY" == *"No conventional commits found."* ]];
-            then
-            echo "Regenerating PR body as it has a broken body."
-            NEW_BODY="REGENERATED: This PR is automatically created for the new branch ${{ github.ref }}.
+          # Check if the PR body is broken
+          if [[ "$EXISTING_BODY" == *"No conventional commits found."* ]];
+          then
+          echo "Regenerating PR body as it has a broken body."
+          NEW_BODY="REGENERATED: This PR is automatically created for the new branch ${{ github.ref }}.
 
-            **Changes:**
-            ${{ steps.commit_messages.outputs.commits }}"
-            gh pr edit $PR_URL --body "$NEW_BODY"
-            else
-            UPDATED_BODY="$EXISTING_BODY
-            ${{ steps.commit_messages.outputs.commits }}"
+          **Changes:**
+          ${{ steps.commit_messages.outputs.commits }}"
+          gh pr edit $PR_URL --body "$NEW_BODY"
+          else
+          UPDATED_BODY="$EXISTING_BODY
+          ${{ steps.commit_messages.outputs.commits }}"
 
-            gh pr edit $PR_URL --body "$UPDATED_BODY"
-            fi
+          gh pr edit $PR_URL --body "$UPDATED_BODY"
+          fi
           fi
