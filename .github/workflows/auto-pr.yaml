@@ -36,7 +36,27 @@ jobs:
           COMMITS=$(echo "$COMMITS" | sed -E 's/^-\s([a-z]+)(\([^\)]*\))?:\s/- **\1**\2: /')
           echo "::set-output name=commits::$COMMITS"
 
-      - name: Create Pull Request
+      - name: Wait for tests to pass
+        uses: actions/github-script@v3
+        with:
+          script: |
+            const { context, github } = require('@actions/github');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const ref = context.ref;
+
+            const checkRuns = await github.checks.listForRef({
+              owner,
+              repo,
+              ref,
+              status: 'completed'
+            });
+
+            const testsCheck = checkRuns.data.check_runs.find(check => check.name === '🚨 Run Tests');
+
+            if (!testsCheck || testsCheck.conclusion !== 'success') {
+              throw new Error('Tests have not passed yet.');
+            }
         env:
           GH_TOKEN: ""
           OWNER: ${{ github.repository_owner }}
