@@ -4,6 +4,10 @@ on:
   pull_request:
     branches:
       - '**'
+  workflow_run:
+    workflows: ["Auto PR"]
+    types:
+      - completed
 
 jobs:
   test:
@@ -16,6 +20,14 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.x'
+
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
