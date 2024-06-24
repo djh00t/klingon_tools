@@ -57,14 +57,16 @@ jobs:
             if (!testsCheck || testsCheck.conclusion !== 'success') {
               throw new Error('Tests have not passed yet.');
             }
+
+      - name: Authenticate with GitHub CLI
         env:
-          GH_TOKEN: ""
-          OWNER: ${{ github.repository_owner }}
-          REPO: ${{ github.event.repository.name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          unset GH_TOKEN
           echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
           gh auth status
+
+      - name: Create or Update Pull Request
+        run: |
           PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
 
           if [ -z "$PR_URL" ]; then
