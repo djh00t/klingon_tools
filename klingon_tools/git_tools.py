@@ -35,6 +35,17 @@ def git_get_toplevel() -> Optional[Repo]:
     try:
         repo = Repo(".", search_parent_directories=True)
         toplevel_dir = repo.git.rev_parse("--show-toplevel")
+        # Check if the current branch is a new branch and push it upstream if necessary
+        current_branch = repo.active_branch
+        tracking_branch = current_branch.tracking_branch()
+        if tracking_branch is None:
+            logger.info(
+                message=f"New branch detected: {current_branch.name}", status="🌱"
+            )
+            repo.git.push("--set-upstream", "origin", current_branch.name)
+            logger.info(
+                message=f"Branch {current_branch.name} pushed upstream", status="✅"
+            )
         return repo
     except (InvalidGitRepositoryError, NoSuchPathError) as e:
         logger.error(message="Error initializing git repository", status="❌")
