@@ -1,7 +1,8 @@
 name: Auto PR for New Branches
 
 on:
-  create:
+  # Push to all but main and master
+  push:
     branches-ignore:
       - main
       - master
@@ -15,7 +16,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: 'Create PR for new branch ${{ github.ref }} created by @${{ github.actor }}'
