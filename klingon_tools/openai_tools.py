@@ -1,7 +1,7 @@
 import os
 import textwrap
 from openai import OpenAI
-from klingon_tools.git_tools import get_git_user_info
+from klingon_tools.git_user_info import get_git_user_info
 from klingon_tools.logger import logger
 from klingon_tools.git_tools import get_git_user_info
 
