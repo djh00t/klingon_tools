@@ -5,4 +5,3 @@ wheel
 pytest
 pytest-mock
 iniconfig
-lib2to3
