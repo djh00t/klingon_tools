@@ -1,0 +1,72 @@
+name: Auto PR for New Branches
+
+on:
+  # Push to all but main and master
+  push:
+    branches-ignore:
+      - main
+      - master
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Cache APT packages
+        uses: actions/cache@v2
+        with:
+          path: /var/cache/apt
+          key: ${{ runner.os }}-apt-${{ hashFiles('**/apt.txt') }}-${{ github.run_id }}-${{ github.event.repository.name }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+
+      - name: Fetch commit messages
+        id: commit_messages
+        run: |
+          git fetch origin main
+          COMMITS=$(git log origin/main..HEAD --pretty=format:"%s" || echo "No conventional commits found.")
+          echo "::set-output name=commits::$COMMITS"
+
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ""
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+        run: |
+          unset GH_TOKEN
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+          gh auth status
+          PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
+
+          if [ -z "$PR_URL" ]; then
+            gh pr create --base main --head ${{ github.ref }} --title "Pull Request for new branch ${{ github.ref }} created by ${{ github.actor }}" --body "This PR is automatically created for the new branch ${{ github.ref }}.
+
+            Changes:
+            ${{ steps.commit_messages.outputs.commits }}"
+          else
+            EXISTING_BODY=$(gh pr view $PR_URL --json body --jq '.body')
+            if [[ "$EXISTING_BODY" == *"No conventional commits found."* ]];
+            then
+              echo "Regenerating PR body as it has a broken body."
+              NEW_BODY="REGENERATED: This PR is automatically created for the new branch ${{ github.ref }}.
+
+              Changes:
+              ${{ steps.commit_messages.outputs.commits }}"
+              gh pr edit $PR_URL --body "$NEW_BODY"
+            else
+              UPDATED_BODY="$EXISTING_BODY
+
+              New Commits:
+              ${{ steps.commit_messages.outputs.commits }}"
+
+              gh pr edit $PR_URL --body "$UPDATED_BODY"
+            fi
+          fi
