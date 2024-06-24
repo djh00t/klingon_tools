@@ -30,8 +30,10 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Run make check-packages
-        run: |
-          make check-packages
+        run: make check-packages
+
+      - name: Install klingon_tools
+        run: make install
 
       - name: Run tests
         run: make test
