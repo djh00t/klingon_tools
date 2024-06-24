@@ -16,7 +16,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install GitHub CLI
-        run: sudo apt-get install -y gh
+        run: |
+          sudo apt update
+          sudo apt install -y gh
 
       - name: Fetch commit messages
         id: commit_messages
@@ -34,7 +36,7 @@ jobs:
           unset GH_TOKEN
           echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
           gh auth status
-          PR_URL=$(gh pr list --head ${{ github.ref }} --json url --jq '.[0].url' || echo "")
+          PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
 
           if [ -z "$PR_URL" ]; then
             gh pr create --base main --head ${{ github.ref }} --title "Pull Request for new branch ${{ github.ref }} created by ${{ github.actor }}" --body "This PR is automatically created for the new branch ${{ github.ref }}.
