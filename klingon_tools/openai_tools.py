@@ -1,6 +1,7 @@
 import os
 import textwrap
 from openai import OpenAI
+from klingon_tools.git_tools import get_git_user_info
 from klingon_tools.logger import logger
 from klingon_tools.git_tools import get_git_user_info
 
@@ -34,6 +35,9 @@ def generate_commit_message(diff: str) -> str:
     )
 
     commit_message = response.choices[0].message.content.strip()
+    user_name, user_email = get_git_user_info()
+    signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
+
     commit_message = "\n".join(
         [
             (
