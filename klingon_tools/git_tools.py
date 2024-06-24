@@ -12,9 +12,9 @@ from git import (
     exc as git_exc,
 )
 from klingon_tools.logger import logger
+from klingon_tools.git_user_info import get_git_user_info
 from klingon_tools.git_push import git_push
 from klingon_tools.git_validate_commit import validate_commit_messages
-from klingon_tools.git_user_info import get_git_user_info
 
 LOOP_MAX_PRE_COMMIT = 5
 
@@ -55,41 +55,6 @@ def git_get_toplevel() -> Optional[Repo]:
         logger.error(message="Error initializing git repository", status="❌")
         logger.exception(message=f"{e}")
         return None
-
-
-def get_git_user_info() -> Tuple[str, str]:
-    """Retrieves the user's name and email from git configuration."""
-
-    def get_config_value(command: str) -> str:
-        try:
-            return subprocess.check_output(command.split()).decode().strip()
-        except subprocess.CalledProcessError:
-            return ""
-
-    user_name = get_config_value("git config --get user.name") or get_config_value(
-        "git config --global --get user.name"
-    )
-    user_email = get_config_value("git config --get user.email") or get_config_value(
-        "git config --global --get user.email"
-    )
-
-    if (
-        not user_name
-        or user_name == "Your Name"
-        or not user_email
-        or user_email == "your.email@example.com"
-    ):
-        logger.error(
-            "Git user name and email are not set or are set to default values."
-        )
-        logger.info(
-            "Please set your git user name and email using the following commands:"
-        )
-        logger.info("  git config --global user.name 'Your Name'")
-        logger.info("  git config --global user.email 'your.email@example.com'")
-        sys.exit(1)
-
-    return user_name, user_email
 
 
 def git_get_status(repo: Repo) -> None:
