@@ -15,10 +15,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install GitHub CLI
+      - name: Cache APT packages
+        uses: actions/cache@v2
+        with:
+          path: /var/cache/apt
+          key: ${{ runner.os }}-apt-${{ hashFiles('**/apt.txt') }}-${{ github.run_id }}-${{ github.event.repository.name }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
+
+      - name: Install dependencies
         run: |
-          sudo apt update
-          sudo apt install -y gh
+          sudo apt-get update
+          sudo apt-get install -y gh
 
       - name: Fetch commit messages
         id: commit_messages
