@@ -142,7 +142,7 @@ def git_commit_deletes(repo: Repo) -> None:
         for file in all_deleted_files:
             repo.index.remove([file], working_tree=True)
 
-        commit_message = "Committing deleted files"
+        commit_message = "chore: Committing deleted files"
         repo.index.commit(commit_message)
         logger.info(
             message=f"Committed {len(all_deleted_files)} deleted files", status="✅"
