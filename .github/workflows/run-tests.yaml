@@ -2,9 +2,6 @@ name: '🚨 Run Tests'
 
 on:
   pull_request:
-    branches-ignore:
-      - main
-      - master
     types: [opened, edited, synchronize, reopened, ready_for_review]
     # What options are available for pull_request types?
     # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#pull_request
