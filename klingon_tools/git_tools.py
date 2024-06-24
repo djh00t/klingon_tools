@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import re
 from typing import Optional, Tuple
 import git
 from git import (
@@ -11,6 +12,14 @@ from git import (
     exc as git_exc,
 )
 from klingon_tools.logger import logger
+from klingon_tools.git_user_info import get_git_user_info
+from klingon_tools.git_validate_commit import (
+    is_commit_message_signed_off,
+    is_conventional_commit,
+)
+from klingon_tools.openai_tools import generate_commit_message
+from klingon_tools.git_push import git_push
+from klingon_tools.git_validate_commit import validate_commit_messages
 
 LOOP_MAX_PRE_COMMIT = 5
 
@@ -51,41 +60,6 @@ def git_get_toplevel() -> Optional[Repo]:
         logger.error(message="Error initializing git repository", status="❌")
         logger.exception(message=f"{e}")
         return None
-
-
-def get_git_user_info() -> Tuple[str, str]:
-    """Retrieves the user's name and email from git configuration."""
-
-    def get_config_value(command: str) -> str:
-        try:
-            return subprocess.check_output(command.split()).decode().strip()
-        except subprocess.CalledProcessError:
-            return ""
-
-    user_name = get_config_value("git config --get user.name") or get_config_value(
-        "git config --global --get user.name"
-    )
-    user_email = get_config_value("git config --get user.email") or get_config_value(
-        "git config --global --get user.email"
-    )
-
-    if (
-        not user_name
-        or user_name == "Your Name"
-        or not user_email
-        or user_email == "your.email@example.com"
-    ):
-        logger.error(
-            "Git user name and email are not set or are set to default values."
-        )
-        logger.info(
-            "Please set your git user name and email using the following commands:"
-        )
-        logger.info("  git config --global user.name 'Your Name'")
-        logger.info("  git config --global user.email 'your.email@example.com'")
-        sys.exit(1)
-
-    return user_name, user_email
 
 
 def git_get_status(repo: Repo) -> None:
@@ -142,7 +116,48 @@ def git_commit_deletes(repo: Repo) -> None:
         for file in all_deleted_files:
             repo.index.remove([file], working_tree=True)
 
-        commit_message = "chore: Committing deleted files"
+        user_name, user_email = get_git_user_info()
+        signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
+        commit_message = "chore: Committing deleted files" + signoff
+        if not is_commit_message_signed_off(commit_message):
+            user_name, user_email = get_git_user_info()
+            signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
+            commit_message += signoff
+
+        if not is_conventional_commit(commit_message):
+            logger.warning(
+                message="Commit message does not follow Conventional Commits standard. Regenerating commit message.",
+                status="⚠️",
+            )
+            diff = repo.git.diff("HEAD")
+            commit_message = generate_commit_message(diff)
+
+        if not is_commit_message_signed_off(commit_message):
+            user_name, user_email = get_git_user_info()
+            signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
+            commit_message += signoff
+
+        if not is_conventional_commit(commit_message):
+            logger.warning(
+                message="Commit message does not follow Conventional Commits standard. Regenerating commit message.",
+                status="⚠️",
+            )
+            diff = repo.git.diff("HEAD")
+            commit_message = generate_commit_message(diff)
+
+        if not is_commit_message_signed_off(commit_message):
+            user_name, user_email = get_git_user_info()
+            signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
+            commit_message += signoff
+
+        if not is_conventional_commit(commit_message):
+            logger.warning(
+                message="Commit message does not follow Conventional Commits standard. Regenerating commit message.",
+                status="⚠️",
+            )
+            diff = repo.git.diff("HEAD")
+            commit_message = generate_commit_message(diff)
+
         repo.index.commit(commit_message)
         logger.info(
             message=f"Committed {len(all_deleted_files)} deleted files", status="✅"
@@ -257,50 +272,3 @@ def log_git_stats() -> None:
         message="Committed not pushed files", status=f"{len(committed_not_pushed)}"
     )
     logger.info(message=80 * "-", status="")
-
-
-def git_push(repo: Repo) -> None:
-    """Pushes changes to the remote repository."""
-    try:
-        # Fetch the latest changes from the remote repository
-        repo.remotes.origin.fetch()
-
-        # Get the current branch name
-        current_branch = repo.active_branch.name
-
-        # Check for unstaged changes and stash them if any
-        stash_needed = repo.is_dirty(untracked_files=True)
-        if stash_needed:
-            repo.git.stash("save", "--include-untracked", "Auto stash before rebase")
-
-        # Rebase the current branch on top of the remote branch
-        repo.git.rebase(f"origin/{current_branch}")
-
-        # Push the changes to the remote repository
-        repo.remotes.origin.push()
-
-        # Apply the stashed changes back if they were stashed
-        if stash_needed:
-            try:
-                repo.git.stash("pop")
-            except GitCommandError as e:
-                logger.error(
-                    message="Failed to apply stashed changes",
-                    status="❌",
-                    reason=str(e),
-                )
-                # If there are conflicts, you can handle them here or manually resolve them
-
-        logger.info(message="Pushed changes to remote repository", status="✅")
-    except GitCommandError as e:
-        logger.error(
-            message="Failed to push changes to remote repository",
-            status="❌",
-            reason=str(e),
-        )
-    except Exception as e:
-        logger.error(
-            message="An unexpected error occurred",
-            status="❌",
-            reason=str(e),
-        )

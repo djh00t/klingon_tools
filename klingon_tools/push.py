@@ -17,9 +17,9 @@ from klingon_tools.git_tools import (
     git_pre_commit,
     git_commit_file,
     log_git_stats,
-    git_push,
     cleanup_lock_file,
 )
+from klingon_tools.git_push import git_push
 from klingon_tools.openai_tools import generate_commit_message
 from klingon_tools.logger import logger
 
@@ -150,7 +150,8 @@ def main():
     # Run startup tasks
     startup_tasks()
 
-    # If --file-name is provided
+    global repo
+
     if args.file_name:
         # Log processing mode
         logger.info("File name mode enabled", status=args.file_name)
