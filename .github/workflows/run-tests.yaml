@@ -1,13 +1,10 @@
-name: "🚨 Run Tests"
+name: '🚨 Run Tests'
 
 on:
-  #pull_request:
-  #  branches:
-  #    - '**'
-  workflow_run:
-    workflows: ["Auto PR"]
-    types:
-      - completed
+  pull_request:
+    # What options are available for pull_request types?
+    # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#pull_request
+    types: [opened, edited, synchronize, reopened, ready_for_review]
 
 jobs:
   test:
