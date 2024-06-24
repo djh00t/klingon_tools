@@ -150,7 +150,7 @@ def main():
     # Run startup tasks
     startup_tasks()
 
-    # If --file-name is provided
+    global repo
     if args.file_name:
         # Log processing mode
         logger.info("File name mode enabled", status=args.file_name)
