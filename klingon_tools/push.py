@@ -211,6 +211,16 @@ def main():
             # Process file
             workflow_process_file(file, repo)
 
+    # If there are committed not pushed files and no other classes of files
+    if committed_not_pushed and not (
+        deleted_files or untracked_files or modified_files or staged_files
+    ):
+        logger.info(
+            message="Only committed not pushed files found. Running git push.",
+            status="🚀",
+        )
+        git_push(repo)
+
     # Log script completion
     logger.info(
         message="All files processed. Script completed successfully.",
