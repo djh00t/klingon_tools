@@ -65,6 +65,24 @@ Expected output:
 Running Install numpy...                                               OK
 ```
 
+## Conventional Commits
+
+We require all commit messages to follow the Conventional Commits standard. Below are the types we use and their explanations:
+
+| Type      | Emoticon | Description                                      |
+|-----------|----------|--------------------------------------------------|
+| feat      | ✨        | add new user authentication feature              |
+| fix       | 🐛        | resolve issue with user login                    |
+| docs      | 📚        | update README with new setup instructions        |
+| style     | 💄        | improve button styling                           |
+| refactor  | ♻️        | reorganize project structure                     |
+| perf      | 🚀        | optimize database queries for faster response    |
+| test      | 🚨        | add unit tests for login component               |
+| build     | 🛠️        | update dependencies                              |
+| ci        | ⚙️        | add GitHub Actions workflow                      |
+| chore     | 🔧        | clean up old files                               |
+| revert    | ⏪        | undo previous commit that caused issues          |
+
 ## Contributing
 
 Contributions are welcome. Please open an issue to discuss your idea before making a change.
