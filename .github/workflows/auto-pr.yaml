@@ -47,7 +47,7 @@ jobs:
           PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
 
           if [ -z "$PR_URL" ]; then
-            gh pr create --base main --head ${{ github.ref }} --title "Pull Request for new branch ${{ github.ref }} created by ${{ github.actor }}" --body "This PR is automatically created for the new branch ${{ github.ref }}.
+            gh pr create --base main --head ${{ github.ref }} --title "Pull Request for new branch ${{ github.ref }} created by @${{ github.actor }}" --body "This PR is automatically created for the new branch ${{ github.ref }}.
 
             Changes:
             ${{ steps.commit_messages.outputs.commits }}"
