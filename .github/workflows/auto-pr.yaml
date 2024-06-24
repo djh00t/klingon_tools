@@ -32,7 +32,7 @@ jobs:
         id: commit_messages
         run: |
           git fetch origin main
-          COMMITS=$(git log origin/main..HEAD --pretty=format:"- %s" || echo "No conventional commits found.")
+          COMMITS=$(git log origin/main..HEAD --pretty=format:"- **%s**" || echo "No conventional commits found.")
           echo "::set-output name=commits::$COMMITS"
 
       - name: Create Pull Request
@@ -50,7 +50,7 @@ jobs:
             # No PR exists, create one
             gh pr create --base main --head ${{ github.ref }} --title "Pull Request for new branch ${{ github.ref }} created by @${{ github.actor }}" --body "This PR is automatically created for the new branch ${{ github.ref }} created by @${{ github.actor }}.
 
-            Changes:
+            **Changes:**
             ${{ steps.commit_messages.outputs.commits }}"
           else
             # PR exists, update it
@@ -63,7 +63,7 @@ jobs:
             echo "Regenerating PR body as it has a broken body."
             NEW_BODY="REGENERATED: This PR is automatically created for the new branch ${{ github.ref }}.
 
-            Changes:
+            **Changes:**
             ${{ steps.commit_messages.outputs.commits }}"
             gh pr edit $PR_URL --body "$NEW_BODY"
             else
