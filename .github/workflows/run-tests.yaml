@@ -1,6 +1,10 @@
 name: "🚨 Run Tests"
 
 on:
+  pull_request:
+    branches-ignore:
+      - main
+      - master
   workflow_run:
     workflows: ["🔄 Auto PR"]
     types:
