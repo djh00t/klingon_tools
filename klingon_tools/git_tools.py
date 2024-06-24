@@ -158,7 +158,13 @@ def git_commit_deletes(repo: Repo) -> None:
             diff = repo.git.diff("HEAD")
             commit_message = generate_commit_message(diff)
 
-        repo.index.commit(commit_message)
+        user_name, user_email = get_git_user_info()
+        signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
+        commit_message += signoff
+        user_name, user_email = get_git_user_info()
+        signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
+        commit_message += signoff
+        repo.git.commit("-S", "-m", commit_message)
         logger.info(
             message=f"Committed {len(all_deleted_files)} deleted files", status="✅"
         )
