@@ -49,7 +49,7 @@ jobs:
 
           if [ -z "$PR_URL" ]; then
             # No PR exists, create one
-            gh pr create --base main --head ${{ github.ref }} --title "Pull Request for new branch ${{ github.ref }} created by @${{ github.actor }}" --body "This PR is automatically created for the new branch ${{ github.ref }} created by @${{ github.actor }}.
+            gh pr create --base main --head ${{ github.ref }} --title "Pull Request for new branch ${{ github.branch }} created by @${{ github.actor }}" --body "This PR is automatically created for the new branch ${{ github.ref }} created by @${{ github.actor }}.
 
             **Changes:**
             ${{ steps.commit_messages.outputs.commits }}"
