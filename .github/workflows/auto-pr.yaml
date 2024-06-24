@@ -22,7 +22,7 @@ jobs:
         id: commit_messages
         run: |
           git fetch origin main
-          COMMITS=$(git log origin/main..HEAD --pretty=format:"%s" | grep -E "^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert|merge):" || echo "No conventional commits found.")
+          COMMITS=$(git log origin/main..HEAD --pretty=format:"%s" || echo "No conventional commits found.")
           echo "::set-output name=commits::$COMMITS"
 
       - name: Create Pull Request
@@ -34,7 +34,7 @@ jobs:
           unset GH_TOKEN
           echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
           gh auth status
-          gh pr create --base main --head ${{ github.ref }} --title "Pull Request for new branch ${{ github.ref }}" --body "This PR is automatically created for the new branch `${{ github.ref }}`.
+          gh pr create --base main --head ${{ github.ref }} --title "Pull Request for new branch ${{ github.ref }} created by ${{ github.actor }}" --body "This PR is automatically created for the new branch ${{ github.ref }}.
 
           Changes:
           ${{ steps.commit_messages.outputs.commits }}"
