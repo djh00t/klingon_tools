@@ -36,30 +36,6 @@ jobs:
           COMMITS=$(echo "$COMMITS" | sed -E 's/^-\s([a-z]+)(\([^\)]*\))?:\s/- **\1**\2: /')
           echo "::set-output name=commits::$COMMITS"
 
-      - name: Wait for tests to pass
-        uses: actions/github-script@v3
-        with:
-          script: |
-            const { getOctokit } = require('@actions/github');
-            const context = require('@actions/github').context;
-            const octokit = getOctokit(process.env.GITHUB_TOKEN);
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const ref = context.ref;
-
-            const checkRuns = await octokit.checks.listForRef({
-              owner,
-              repo,
-              ref,
-              status: 'completed'
-            });
-
-            const testsCheck = checkRuns.data.check_runs.find(check => check.name === '🚨 Run Tests');
-
-            if (!testsCheck || testsCheck.conclusion !== 'success') {
-              throw new Error('Tests have not passed yet.');
-            }
-
       - name: Authenticate with GitHub CLI
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
