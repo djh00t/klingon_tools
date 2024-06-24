@@ -5,10 +5,9 @@ on:
     branches-ignore:
       - main
       - master
-  workflow_run:
-    workflows: ["🔄 Auto PR"]
-    types:
-      - completed
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+    # What options are available for pull_request types?
+    # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#pull_request
 
 jobs:
   test:
