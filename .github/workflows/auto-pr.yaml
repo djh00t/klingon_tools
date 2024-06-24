@@ -34,7 +34,19 @@ jobs:
           unset GH_TOKEN
           echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
           gh auth status
-          gh pr create --base main --head ${{ github.ref }} --title "Pull Request for new branch ${{ github.ref }} created by ${{ github.actor }}" --body "This PR is automatically created for the new branch ${{ github.ref }}.
+          PR_URL=$(gh pr list --head ${{ github.ref }} --json url --jq '.[0].url' || echo "")
 
-          Changes:
-          ${{ steps.commit_messages.outputs.commits }}"
+          if [ -z "$PR_URL" ]; then
+            gh pr create --base main --head ${{ github.ref }} --title "Pull Request for new branch ${{ github.ref }} created by ${{ github.actor }}" --body "This PR is automatically created for the new branch ${{ github.ref }}.
+
+            Changes:
+            ${{ steps.commit_messages.outputs.commits }}"
+          else
+            EXISTING_BODY=$(gh pr view $PR_URL --json body --jq '.body')
+            UPDATED_BODY="$EXISTING_BODY
+
+            New Commits:
+            ${{ steps.commit_messages.outputs.commits }}"
+
+            gh pr edit $PR_URL --body "$UPDATED_BODY"
+          fi
