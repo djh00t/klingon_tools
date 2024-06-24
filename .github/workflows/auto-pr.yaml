@@ -40,7 +40,8 @@ jobs:
         uses: actions/github-script@v3
         with:
           script: |
-            const { context, github } = require('@actions/github');
+            const github = require('@actions/github');
+            const context = github.context;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const ref = context.ref;
