@@ -35,8 +35,7 @@ def generate_commit_message(diff: str) -> str:
 
     commit_message = response.choices[0].message.content.strip()
     user_name, user_email = get_git_user_info()
-    co_authored_by = f"\n\nCo-authored-by: {user_name} <{user_email}>"
-    signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>" + co_authored_by
+    signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
 
     commit_message = "\n".join(
         [
