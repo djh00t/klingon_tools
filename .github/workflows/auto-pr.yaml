@@ -45,10 +45,18 @@ jobs:
             ${{ steps.commit_messages.outputs.commits }}"
           else
             EXISTING_BODY=$(gh pr view $PR_URL --json body --jq '.body')
-            UPDATED_BODY="$EXISTING_BODY
+            if [[ "$EXISTING_BODY" == *"Changes:\nNo conventional commits found.\n"* ]]; then
+              NEW_BODY="This PR is automatically created for the new branch ${{ github.ref }}.
 
-            New Commits:
-            ${{ steps.commit_messages.outputs.commits }}"
+              Changes:
+              ${{ steps.commit_messages.outputs.commits }}"
+              gh pr edit $PR_URL --body "$NEW_BODY"
+            else
+              UPDATED_BODY="$EXISTING_BODY
 
-            gh pr edit $PR_URL --body "$UPDATED_BODY"
+              New Commits:
+              ${{ steps.commit_messages.outputs.commits }}"
+
+              gh pr edit $PR_URL --body "$UPDATED_BODY"
+            fi
           fi
