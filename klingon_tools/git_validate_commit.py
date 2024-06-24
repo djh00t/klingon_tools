@@ -1,6 +1,7 @@
 import re
 from git import Repo
 from klingon_tools.logger import logger
+from klingon_tools.git_user_info import get_git_user_info
 
 
 def is_commit_message_signed_off(commit_message: str) -> bool:
@@ -19,10 +20,14 @@ def validate_commit_messages(repo: Repo) -> bool:
     for commit in repo.iter_commits("HEAD"):
         commit_message = commit.message
         if not is_commit_message_signed_off(commit_message):
-            logger.error(
-                message=f"Commit {commit.hexsha} is not signed off.", status="❌"
+            user_name, user_email = get_git_user_info()
+            signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
+            new_commit_message = commit_message + signoff
+            commit.amend(message=new_commit_message)
+            logger.info(
+                message=f"Commit {commit.hexsha} was not signed off. Signed off and amended.",
+                status="✅",
             )
-            return False
         if not is_conventional_commit(commit_message):
             logger.error(
                 message=f"Commit {commit.hexsha} does not follow Conventional Commits standard.",
