@@ -63,7 +63,6 @@ jobs:
               gh pr edit $PR_URL --body "$NEW_BODY"
             else
               UPDATED_BODY="$EXISTING_BODY
-
               ${{ steps.commit_messages.outputs.commits }}"
 
               gh pr edit $PR_URL --body "$UPDATED_BODY"

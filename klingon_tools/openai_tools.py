@@ -3,6 +3,7 @@ import textwrap
 from openai import OpenAI
 from klingon_tools.git_tools import get_git_user_info
 from klingon_tools.logger import logger
+from klingon_tools.git_tools import get_git_user_info
 
 # Initialize OpenAI API client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -20,7 +21,9 @@ Generate a git commit message based on these diffs:
 
 
 def generate_commit_message(diff: str) -> str:
-    """Generates a commit message using OpenAI API based on the provided diff."""
+    """Generates a commit message using OpenAI API based on the provided diff and appends a sign-off."""
+    user_name, user_email = get_git_user_info()
+
     role_user_content = push_role_user_content_template.format(diff=diff)
 
     response = client.chat.completions.create(
@@ -48,6 +51,7 @@ def generate_commit_message(diff: str) -> str:
         ]
     )
 
+    signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
     commit_message += signoff
 
     logger.info(message=80 * "-", status="")
