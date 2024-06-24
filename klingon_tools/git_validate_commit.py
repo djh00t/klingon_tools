@@ -23,7 +23,7 @@ def validate_commit_messages(repo: Repo) -> bool:
             user_name, user_email = get_git_user_info()
             signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
             new_commit_message = commit_message + signoff
-            commit.amend(message=new_commit_message)
+            repo.git.commit("--amend", "-m", new_commit_message)
             logger.info(
                 message=f"Commit {commit.hexsha} was not signed off. Signed off and amended.",
                 status="✅",
