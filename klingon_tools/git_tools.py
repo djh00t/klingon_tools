@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import re
 from typing import Optional, Tuple
 import git
 from git import (
@@ -11,6 +12,8 @@ from git import (
     exc as git_exc,
 )
 from klingon_tools.logger import logger
+from klingon_tools.git_push import git_push
+from klingon_tools.git_validate_commit import validate_commit_messages
 
 LOOP_MAX_PRE_COMMIT = 5
 
@@ -258,10 +261,15 @@ def log_git_stats() -> None:
     )
     logger.info(message=80 * "-", status="")
 
-
-def git_push(repo: Repo) -> None:
     """Pushes changes to the remote repository."""
     try:
+        # Validate commit messages
+        if not validate_commit_messages(repo):
+            logger.error(
+                message="Commit message validation failed. Aborting push.", status="❌"
+            )
+            return
+
         # Fetch the latest changes from the remote repository
         repo.remotes.origin.fetch()
 
