@@ -1,0 +1,25 @@
+name: Auto PR for New Branches
+
+on:
+  create:
+    branches-ignore:
+      - main
+      - master
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'Create PR for new branch ${{ github.ref }} created by @${{ github.actor }}'
+          branch: ${{ github.ref }}
+          title: 'Pull Request for new branch ${{ github.ref }}'
+          body: |
+            This PR is automatically created for the new branch `${{ github.ref }}`.
