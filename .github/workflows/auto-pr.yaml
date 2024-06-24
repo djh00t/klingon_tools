@@ -56,8 +56,7 @@ jobs:
             if [[ "$EXISTING_BODY" == *"No conventional commits found."* ]];
             then
               echo "Regenerating PR body as it has a broken body."
-
-              NEW_BODY="This PR is automatically created for the new branch ${{ github.ref }}.
+              NEW_BODY="REGENERATED: This PR is automatically created for the new branch ${{ github.ref }}.
 
               Changes:
               ${{ steps.commit_messages.outputs.commits }}"
