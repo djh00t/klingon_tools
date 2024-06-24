@@ -11,6 +11,7 @@ from git import (
     exc as git_exc,
 )
 from push.logger import logger
+from klingon_tools.git_validate_commit import validate_commit_messages
 
 LOOP_MAX_PRE_COMMIT = 5
 
