@@ -41,11 +41,9 @@ def generate_commit_message(diff: str) -> str:
     commit_message = "\n".join(
         [
             (
-                " " + line
+                line
                 if len(line) <= 78
-                else "\n".join(
-                    " " + wrapped_line for wrapped_line in textwrap.wrap(line, 78)
-                )
+                else "\n".join(wrapped_line for wrapped_line in textwrap.wrap(line, 78))
             )
             for line in commit_message.split("\n")
         ]
