@@ -14,6 +14,7 @@ from git import (
 from klingon_tools.logger import logger
 from klingon_tools.git_push import git_push
 from klingon_tools.git_validate_commit import validate_commit_messages
+from klingon_tools.git_user_info import get_git_user_info
 
 LOOP_MAX_PRE_COMMIT = 5
 
@@ -145,7 +146,9 @@ def git_commit_deletes(repo: Repo) -> None:
         for file in all_deleted_files:
             repo.index.remove([file], working_tree=True)
 
-        commit_message = "chore: Committing deleted files"
+        user_name, user_email = get_git_user_info()
+        signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
+        commit_message = "chore: Committing deleted files" + signoff
         repo.index.commit(commit_message)
         logger.info(
             message=f"Committed {len(all_deleted_files)} deleted files", status="✅"
