@@ -15,13 +15,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Cache APT packages
-        uses: actions/cache@v2
-        with:
-          path: /var/cache/apt
-          key: ${{ runner.os }}-apt-${{ hashFiles('**/apt.txt') }}-${{ github.run_id }}-${{ github.event.repository.name }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-apt-
 
       - name: Install dependencies
         run: |
