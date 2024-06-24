@@ -151,6 +151,7 @@ def main():
     startup_tasks()
 
     global repo
+
     if args.file_name:
         # Log processing mode
         logger.info("File name mode enabled", status=args.file_name)
