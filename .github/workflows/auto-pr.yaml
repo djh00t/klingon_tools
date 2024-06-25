@@ -1,4 +1,4 @@
-name: "\U0001F504 Auto PR"
+name: "🔄 Auto PR"
 true:
   push:
     branches-ignore:
