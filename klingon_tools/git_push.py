@@ -5,7 +5,21 @@ from klingon_tools.git_validate_commit import validate_commit_messages
 
 
 def git_push(repo: git.Repo) -> None:
-    """Pushes changes to the remote repository."""
+    """Pushes changes to the remote repository.
+
+    This function performs several steps to ensure that the local repository
+    is in sync with the remote repository before pushing changes. It validates
+    commit messages, stashes any unstaged changes, rebases the current branch
+    on top of the remote branch, and then pushes the changes. If there were
+    any stashed changes, it attempts to apply them back.
+
+    Args:
+        repo (git.Repo): The Git repository object.
+
+    Raises:
+        GitCommandError: If any git command fails.
+        Exception: For any unexpected errors.
+    """
     try:
         # Validate commit messages
         if not validate_commit_messages(repo):
