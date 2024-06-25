@@ -35,9 +35,6 @@ templates = {
     ```
     <type>(scope): <description>
 
-    [body]
-
-    [optional footer(s)]
     ```
     Ensure the following:
 
