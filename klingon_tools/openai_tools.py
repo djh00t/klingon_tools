@@ -12,8 +12,9 @@ templates = {
     "commit_message_system": """
     Generate a commit message based solely on the staged diffs provided,
     ensuring accuracy and relevance to the actual changes. Avoid speculative or
-    unnecessary footers, such as references to non-existent issues. Follow the
-    Conventional Commits standard which is in the following format:
+    unnecessary footers, such as references to non-existent issues.
+
+    Follow the Conventional Commits standard which is in the following format:
     ```
     <type>(scope): <description>
 
@@ -23,6 +24,11 @@ templates = {
     ```
     Note that type, scope, description and body are all mandatory fields for
     our project.
+    fix: a commit of the type fix patches a bug in your codebase (this correlates with PATCH in Semantic Versioning).
+    feat: a commit of the type feat introduces a new feature to the codebase (this correlates with MINOR in Semantic Versioning).
+    BREAKING CHANGE: a commit that has a footer BREAKING CHANGE:, or appends a ! after the type/scope, introduces a breaking API change (correlating with MAJOR in Semantic Versioning). A BREAKING CHANGE can be part of commits of any type.
+    types other than fix: and feat: are allowed, for example @commitlint/config-conventional (based on the Angular convention) recommends build:, chore:, ci:, docs:, style:, refactor:, perf:, test:, and others.
+    footers other than BREAKING CHANGE: <description> may be provided and follow a convention similar to git trailer format.
     """,
     "commit_message_user": """
     Generate a git commit message based on these diffs:
