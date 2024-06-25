@@ -194,6 +194,7 @@ def git_commit_deletes(repo: Repo) -> None:
                 status="⚠️",
             )
             diff = repo.git.diff("HEAD")
+            # Generate the commit message using the diff
             commit_message = generate_commit_message(diff)
 
         # Re-check and sign off the commit message if necessary
@@ -261,6 +262,7 @@ def git_stage_diff(file_name: str, repo: Repo) -> str:
     Returns:
         A string containing the diff of the staged file.
     """
+    # Stage the specified file
     # Stage the specified file
     repo.index.add([file_name])
     staged_files = repo.git.diff("--cached", "--name-only").splitlines()
@@ -351,33 +353,64 @@ def git_pre_commit(file_name: str, repo: Repo) -> bool:
 
 
 def git_commit_file(file_name: str, repo: Repo) -> None:
-    """Commits a file with a generated commit message."""
+    """Commits a file with a generated commit message.
+
+    This function stages the specified file, generates a commit message using
+    the diff of the file, and commits the file to the repository. It logs the
+    status of each step and handles exceptions that may occur during the process.
+
+    Args:
+        file_name: The name of the file to be committed.
+        repo: An instance of the git.Repo object representing the repository.
+
+    Returns:
+        None
+    """
     repo.index.add([file_name])
 
     try:
+        # Generate the diff for the staged file
         diff = repo.git.diff("HEAD", file_name)
         try:
             commit_message = generate_commit_message(diff)
+            # Commit the file with the generated commit message
             repo.index.commit(commit_message.strip())
+            # Log the successful commit
             logger.info(message="File committed", status="✅")
         except ValueError as ve:
+            # Log an error message if the commit message format is invalid
             logger.error(message="Commit message format error", status="❌")
             logger.exception(message=f"{ve}")
         except Exception as e:
+            # Log an error message if the commit fails
             logger.error(message="Failed to commit file", status="❌")
             logger.exception(message=f"{e}")
     except Exception as e:
+        # Log an error message if adding the file to the index fails
         logger.error(message="Failed to add file to index", status="❌")
         logger.exception(message=f"{e}")
 
 
 def log_git_stats() -> None:
-    """Logs git statistics."""
+    """Logs git statistics.
+
+    This function logs the number of deleted files, untracked files, modified files,
+    staged files, and committed but not pushed files in the repository.
+
+    Returns:
+        None
+    """
+    # Log a separator line
     logger.info(message=80 * "-", status="")
+    # Log the number of deleted files
     logger.info(message="Deleted files", status=f"{len(deleted_files)}")
+    # Log the number of untracked files
     logger.info(message="Untracked files", status=f"{len(untracked_files)}")
+    # Log the number of modified files
     logger.info(message="Modified files", status=f"{len(modified_files)}")
+    # Log the number of staged files
     logger.info(message="Staged files", status=f"{len(staged_files)}")
+    # Log the number of committed but not pushed files
     logger.info(
         message="Committed not pushed files", status=f"{len(committed_not_pushed)}"
     )
