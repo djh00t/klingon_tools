@@ -1,4 +1,4 @@
-name: "\U0001F680 Deploy to TestPyPI and PyPI"
+name: "🚀 Deploy to TestPyPI and PyPI"
 true:
   push:
     branches:
