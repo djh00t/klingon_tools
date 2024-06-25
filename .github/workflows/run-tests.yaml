@@ -1,4 +1,4 @@
-name: "\U0001F6A8 Run Tests"
+name: "🚨 Run Tests"
 true:
   pull_request:
     types:
