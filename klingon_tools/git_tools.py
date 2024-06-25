@@ -24,70 +24,117 @@ from klingon_tools.git_validate_commit import validate_commit_messages
 LOOP_MAX_PRE_COMMIT = 5
 
 
-# Function to cleanup .lock file
 def cleanup_lock_file(repo_path: str) -> None:
     """Cleans up the .lock file in the git repository.
 
     This function removes the .lock file if it exists in the git repository.
 
+    Args:
+        repo_path: The path to the git repository.
+
     Returns:
         None
     """
+    # Construct the path to the .lock file
     lock_file_path = os.path.join(repo_path, ".git", "index.lock")
+
+    # Check if the .lock file exists and remove it
     if os.path.exists(lock_file_path):
         os.remove(lock_file_path)
         logger.info("Cleaned up .lock file.")
 
 
 def git_get_toplevel() -> Optional[Repo]:
-    """Initializes a git repository object and returns the top-level directory."""
+    """Initializes a git repository object and returns the top-level directory.
+
+    This function attempts to initialize a git repository object and retrieve
+    the top-level directory of the repository. If the current branch is new,
+    it pushes the branch upstream.
+
+    Returns:
+        An instance of the git.Repo object if successful, otherwise None.
+    """
     try:
+        # Initialize the git repository object
         repo = Repo(".", search_parent_directories=True)
+        # Retrieve the top-level directory of the repository
         toplevel_dir = repo.git.rev_parse("--show-toplevel")
-        # Check if the current branch is a new branch and push it upstream if necessary
+        # Check if the current branch is a new branch
         current_branch = repo.active_branch
         tracking_branch = current_branch.tracking_branch()
         if tracking_branch is None:
             logger.info(
                 message=f"New branch detected: {current_branch.name}", status="🌱"
             )
+            # Push the new branch upstream
             repo.git.push("--set-upstream", "origin", current_branch.name)
             logger.info(
                 message=f"Branch {current_branch.name} pushed upstream", status="✅"
             )
+        # Return the initialized repository object
         return repo
     except (InvalidGitRepositoryError, NoSuchPathError) as e:
+        # Log an error message if the repository initialization fails
         logger.error(message="Error initializing git repository", status="❌")
         logger.exception(message=f"{e}")
+        # Return None if the repository initialization fails
         return None
 
 
-def git_get_status(repo: Repo) -> None:
-    """Retrieves the current status of the git repository."""
+def git_get_status(repo: Repo) -> Tuple[list, list, list, list, list]:
+    """Retrieves the current status of the git repository.
+
+    This function collects and returns the status of the git repository,
+    including deleted files, untracked files, modified files, staged files,
+    and committed but not pushed files.
+
+    Args:
+        repo: An instance of the git.Repo object representing the repository.
+
+    Returns:
+        A tuple containing lists of deleted files, untracked files, modified files,
+        staged files, and committed but not pushed files.
+    """
     global deleted_files, untracked_files, modified_files, staged_files, committed_not_pushed
 
+    # Get the current branch of the repository
     current_branch = repo.active_branch
+
+    # Initialize lists to store the status of files
     deleted_files = [
-        item.a_path for item in repo.index.diff(None) if item.change_type == "D"
+        # List of deleted files
+        item.a_path
+        for item in repo.index.diff(None)
+        if item.change_type == "D"
     ]
-    untracked_files = repo.untracked_files
+    untracked_files = repo.untracked_files  # List of untracked files
     modified_files = [
-        item.a_path for item in repo.index.diff(None) if item.change_type == "M"
+        # List of modified files
+        item.a_path
+        for item in repo.index.diff(None)
+        if item.change_type == "M"
     ]
-    staged_files = [item.a_path for item in repo.index.diff("HEAD")]
-    committed_not_pushed = []
+    staged_files = [
+        item.a_path for item in repo.index.diff("HEAD")
+    ]  # List of staged files
+    committed_not_pushed = []  # List of committed but not pushed files
 
     try:
+        # Check for committed but not pushed files
         for item in repo.head.commit.diff(f"origin/{current_branch}"):
             if hasattr(item, "a_blob") and hasattr(item, "b_blob"):
+                # Add the file to the committed but not pushed list
                 committed_not_pushed.append(item.a_path)
     except ValueError as e:
+        # Log an error message if there is an issue processing the diff-tree output
         logger.error(message="Error processing diff-tree output:", status="❌")
         logger.exception(message=f"{e}")
     except Exception as e:
+        # Log an error message for any unexpected errors
         logger.error(message=f"Unexpected error:", status="❌")
         logger.exception(message=f"{e}")
 
+    # Return the collected status information
     return (
         deleted_files,
         untracked_files,
@@ -98,8 +145,21 @@ def git_get_status(repo: Repo) -> None:
 
 
 def git_commit_deletes(repo: Repo) -> None:
-    """Commits deleted files in the given repository."""
+    """Commits deleted files in the given repository.
+
+    This function identifies deleted files in the repository, stages them for
+    commit, generates a commit message, and commits the changes. It ensures
+    that the commit message follows the Conventional Commits standard and is
+    signed off by the user.
+
+    Args:
+        repo: An instance of the git.Repo object representing the repository.
+
+    Returns:
+        None
+    """
     if deleted_files:
+        # Combine deleted files from the global list and the repository index
         all_deleted_files = list(
             set(
                 deleted_files
@@ -110,37 +170,24 @@ def git_commit_deletes(repo: Repo) -> None:
                 ]
             )
         )
-        logger.info(message=f"Deleted files", status=f"{len(all_deleted_files)}")
+        # Log the number of deleted files
+        logger.info(message="Deleted files", status=f"{len(all_deleted_files)}")
         logger.debug(message=f"Deleted files: {all_deleted_files}", status="🐞")
 
+        # Stage the deleted files for commit
         for file in all_deleted_files:
             repo.index.remove([file], working_tree=True)
 
-        user_name, user_email = get_git_user_info()
-        signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
-        commit_message = "chore: Committing deleted files" + signoff
+        # Generate the initial commit message
+        commit_message = "chore: Committing deleted files"
+
+        # Ensure the commit message is signed off
         if not is_commit_message_signed_off(commit_message):
             user_name, user_email = get_git_user_info()
             signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
             commit_message += signoff
 
-        if not is_conventional_commit(commit_message):
-            logger.warning(
-                message="Commit message does not follow Conventional Commits standard. Regenerating commit message.",
-                status="⚠️",
-            )
-            diff = repo.git.diff("HEAD")
-            diff = repo.git.diff("HEAD")
-            diff = repo.git.diff("HEAD")
-            diff = repo.git.diff("HEAD")
-            diff = repo.git.diff("HEAD")
-            commit_message = generate_commit_message(diff)
-
-        if not is_commit_message_signed_off(commit_message):
-            user_name, user_email = get_git_user_info()
-            signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
-            commit_message += signoff
-
+        # Ensure the commit message follows the Conventional Commits standard
         if not is_conventional_commit(commit_message):
             logger.warning(
                 message="Commit message does not follow Conventional Commits standard. Regenerating commit message.",
@@ -149,11 +196,13 @@ def git_commit_deletes(repo: Repo) -> None:
             diff = repo.git.diff("HEAD")
             commit_message = generate_commit_message(diff)
 
+        # Re-check and sign off the commit message if necessary
         if not is_commit_message_signed_off(commit_message):
             user_name, user_email = get_git_user_info()
             signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
             commit_message += signoff
 
+        # Re-check and regenerate the commit message if necessary
         if not is_conventional_commit(commit_message):
             logger.warning(
                 message="Commit message does not follow Conventional Commits standard. Regenerating commit message.",
@@ -161,17 +210,15 @@ def git_commit_deletes(repo: Repo) -> None:
             )
             diff = repo.git.diff("HEAD")
             commit_message = generate_commit_message(diff)
-
-        user_name, user_email = get_git_user_info()
-        signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
-        commit_message += signoff
-        user_name, user_email = get_git_user_info()
-        signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
-        commit_message += signoff
+        # Commit the deleted files with the generated commit message
         repo.git.commit("-S", "-m", commit_message)
+
+        # Log the successful commit
         logger.info(
             message=f"Committed {len(all_deleted_files)} deleted files", status="✅"
         )
+
+        # Push the commit to the remote repository
         git_push(repo)
 
 
