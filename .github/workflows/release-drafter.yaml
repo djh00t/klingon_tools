@@ -1,8 +1,10 @@
-name: "📦 Release Drafter"
-true:
+name: '📦 Release Drafter'
+
+on:
   push:
     branches:
-    - main
+      - main
+
 jobs:
   update-release-notes:
     runs-on: ubuntu-latest
