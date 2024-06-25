@@ -1,8 +1,10 @@
 name: "🚀 Deploy to TestPyPI and PyPI"
-true:
+
+on:
   push:
     branches:
-    - main
+      - main
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
