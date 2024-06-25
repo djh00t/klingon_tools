@@ -231,9 +231,21 @@ def git_commit_deletes(repo: Repo) -> None:
         try:
             repo.git.commit("-S", "-m", commit_message)
         except GitCommandError as e:
-            logger.error(message="Failed to commit deleted files", status="❌")
-            logger.exception(message=f"{e}")
-            raise
+            if "gpg failed to sign the data" in str(e):
+                logger.warning(
+                    message="GPG signing failed. Retrying commit without GPG signing.",
+                    status="⚠️",
+                )
+                try:
+                    repo.git.commit("-m", commit_message)
+                except GitCommandError as e:
+                    logger.error(message="Failed to commit deleted files", status="❌")
+                    logger.exception(message=f"{e}")
+                    raise
+            else:
+                logger.error(message="Failed to commit deleted files", status="❌")
+                logger.exception(message=f"{e}")
+                raise
 
         # Log the successful commit
         logger.info(
