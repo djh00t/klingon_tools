@@ -7,7 +7,7 @@ from klingon_tools.openai_tools import generate_commit_message
 
 def is_commit_message_signed_off(commit_message: str) -> bool:
     """Check if the commit message is signed off."""
-    return "Signed-off-by:" in commit_message
+    return "Signed-off-by:" in commit_message.strip()
 
 
 def is_conventional_commit(commit_message: str) -> bool:
