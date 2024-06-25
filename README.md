@@ -23,6 +23,56 @@ A Python library that contains the following utilities:
 
 Each utility has its own specific usage instructions, which can be found in the comments of the utility's script. In general, utilities can be run from the command line and accept various command-line arguments.
 
+### Example Usage of `gh-actions-update`
+
+The `gh-actions-update` entrypoint finds all GitHub Actions in the current repository, checks the version they are using, and retrieves the most recent version of each action. It returns a table containing "Action Name", "Current Version", and "Latest Version" columns.
+
+#### Usage
+
+To use the `gh-actions-update` entrypoint, run the following command:
+
+```sh
+python -m klingon_tools.gh_actions_update
+```
+
+To update all outdated actions to the latest version, use the `--update` flag:
+
+```sh
+python -m klingon_tools.gh_actions_update --update
+```
+
+To update actions in a specific file (bash wildcards accepted), use the `--file` flag:
+
+```sh
+python -m klingon_tools.gh_actions_update --update --file {filename}
+```
+
+To update all instances of a specific action, use the `--action` flag:
+
+```sh
+python -m klingon_tools.gh_actions_update --update --action {action name}
+```
+
+To update all instances of a specific action in a specific file, use both `--file` and `--action` flags:
+
+```sh
+python -m klingon_tools.gh_actions_update --update --file {filename} --action {action name}
+```
+
+#### Example Output
+
+```plaintext
+Action Name          Current Version    Latest Version
+-------------------  -----------------  ---------------
+actions/checkout     v2                 v3
+actions/setup-python v1                 v2
+
+Note: Use '--update' to update all outdated actions to the latest version.
+Use '--update --file {filename}' to update a specific file (bash wildcards accepted).
+Use '--action {action name}' to update all instances of a specific action.
+Use '--action' and '--file' together to update all instances of a specific action in a specific file.
+```
+
 ### Example Usage of `logtools`
 
 The `logtools` utility provides decorators for methods and CLI commands that log output in a clean and consistent manner with simple error handling.

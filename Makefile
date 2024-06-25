@@ -44,7 +44,10 @@ upload: test wheel
 
 ## install: Install the package locally
 install:
-	pip install -e .
+	@echo "Checking for requirements..."
+	@make check-packages
+	@echo "Installing $$APP_NAME..."
+	@pip install -e .
 
 ## install-pip: Install the package locally using pip
 install-pip:

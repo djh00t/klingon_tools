@@ -1,36 +1,36 @@
-name: '🚨 Run Tests'
+name: "🚨 Run Tests"
 
 on:
   pull_request:
-    # What options are available for pull_request types?
-    # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#pull_request
-    types: [opened, edited, synchronize, reopened, ready_for_review]
+    types:
+    - opened
+    - edited
+    - synchronize
+    - reopened
+    - ready_for_review
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v4.1.7
+    - name: Set up Python
+      uses: actions/setup-python@v5.1.0
+      with:
+        python-version: 3.x
+    - name: Cache pip
+      uses: actions/cache@v4.0.2
+      with:
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        path: ~/.cache/pip
+        restore-keys: '${{ runner.os }}-pip-
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-
-      - name: Cache pip
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Run make check-packages
-        run: make check-packages
-
-      - name: Install klingon_tools
-        run: make install
-
-      - name: Run tests
-        run: make test
+          '
+    - name: Run make check-packages
+      run: make check-packages
+    - name: Install klingon_tools
+      run: make install
+    - name: Run tests
+      run: make test
