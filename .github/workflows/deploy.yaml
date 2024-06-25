@@ -1,4 +1,4 @@
-name: Deploy to TestPyPI and PyPI
+name: 🚀 Deploy to TestPyPI and PyPI
 
 on:
   push:
