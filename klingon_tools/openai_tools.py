@@ -1,6 +1,7 @@
 import os
 import textwrap
 from openai import OpenAI
+import subprocess
 from klingon_tools.git_user_info import get_git_user_info
 from klingon_tools.logger import logger
 
@@ -10,11 +11,9 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # AI Templates
 templates = {
     "commit_message_system": """
-    Generate a commit message based solely on the staged diffs provided,
-    ensuring accuracy and relevance to the actual changes. Avoid speculative or
-    unnecessary footers, such as references to non-existent issues.
+    Generate a commit message based solely on the staged diffs provided, ensuring accuracy and relevance to the actual changes. Avoid speculative or unnecessary footers, such as references to non-existent issues.
 
-    Follow the Conventional Commits standard which is in the following format:
+    Follow the Conventional Commits standard using the following format:
     ```
     <type>(scope): <description>
 
@@ -22,13 +21,14 @@ templates = {
 
     [optional footer(s)]
     ```
-    Note that type, scope, description and body are all mandatory fields for
-    our project.
-    fix: a commit of the type fix patches a bug in your codebase (this correlates with PATCH in Semantic Versioning).
-    feat: a commit of the type feat introduces a new feature to the codebase (this correlates with MINOR in Semantic Versioning).
-    BREAKING CHANGE: a commit that has a footer BREAKING CHANGE:, or appends a ! after the type/scope, introduces a breaking API change (correlating with MAJOR in Semantic Versioning). A BREAKING CHANGE can be part of commits of any type.
-    types other than fix: and feat: are allowed, for example @commitlint/config-conventional (based on the Angular convention) recommends build:, chore:, ci:, docs:, style:, refactor:, perf:, test:, and others.
-    footers other than BREAKING CHANGE: <description> may be provided and follow a convention similar to git trailer format.
+    Ensure the following:
+
+    Type and Scope: Select the most specific of application name, file name, class name, method/function name, or feature name for the commit scope. If in doubt, use the name of the file being modified.
+    Types: Use fix: for patches that fix bugs, feat: for introducing new features, and other recognized types as per conventions (build:, chore:, ci:, docs:, style:, refactor:, perf:, test:, etc.).
+    Breaking Changes: Include a BREAKING CHANGE: footer or append ! after type/scope for commits that introduce breaking API changes.
+    Footers: Use a convention similar to git trailer format for additional footers.
+    Ensure the commit message generation handles diverse scenarios effectively and prompts for necessary inputs when ambiguities arise.
+
     """,
     "commit_message_user": """
     Generate a git commit message based on these diffs:
@@ -66,7 +66,7 @@ def generate_content(template_key: str, diff: str) -> str:
     return generated_content
 
 
-def format_message(message: str) -> str:
+def format_message(message: str, dryrun: bool = False) -> str:
     """Format message with line wrapping and sign-off."""
     user_name, user_email = get_git_user_info()
     commit_message = "\n".join(
@@ -124,14 +124,29 @@ def format_message(message: str) -> str:
     signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
     formatted_message = f"{emoticon_prefix} {commit_type}({commit_scope}): {commit_message.split(':', 1)[1].strip()}{signoff}"
 
+    if dryrun:
+        unstage_files()
+
+    if dryrun:
+        unstage_files()
     return formatted_message
 
 
-def generate_commit_message(diff: str) -> str:
+def unstage_files():
+    """Unstage all staged files."""
+    try:
+        subprocess.run(["git", "reset", "HEAD"], check=True)
+        logger.info("Unstaged all files.")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to unstage files: {e}")
+        raise
+
+
+def generate_commit_message(diff: str, dryrun: bool = False) -> str:
     """Generate a commit message."""
     generated_message = generate_content("commit_message_user", diff)
     try:
-        formatted_message = format_message(generated_message)
+        formatted_message = format_message(generated_message, dryrun)
     except ValueError as e:
         logger.error(f"Error formatting commit message: {e}")
         # Handle the case where the scope is missing by asking for a specific scope
@@ -143,7 +158,7 @@ def generate_commit_message(diff: str) -> str:
             generated_message = (
                 f"{commit_type}({commit_scope}): {commit_description.strip()}"
             )
-            formatted_message = format_message(generated_message)
+            formatted_message = format_message(generated_message, dryrun)
             logger.info(
                 message=f"Scope was missing. Please provide a more specific scope such as application name, file name, class name, method/function name, or feature name.",
                 status="",
@@ -158,10 +173,13 @@ def generate_commit_message(diff: str) -> str:
     return formatted_message
 
 
-def generate_pull_request_title(diff: str) -> str:
+def generate_pull_request_title(diff: str, dryrun: bool = False) -> str:
     """Generate a pull request title."""
     generated_title = generate_content("pull_request_title", diff)
-    formatted_title = format_message(generated_title)
+    formatted_title = format_message(generated_title, dryrun)
+
+    if dryrun:
+        unstage_files()
 
     logger.info(message=80 * "-", status="")
     logger.info(
@@ -172,10 +190,13 @@ def generate_pull_request_title(diff: str) -> str:
     return formatted_title
 
 
-def generate_release_body(diff: str) -> str:
+def generate_release_body(diff: str, dryrun: bool = False) -> str:
     """Generate a release body."""
     generated_body = generate_content("release_body", diff)
-    formatted_body = format_message(generated_body)
+    formatted_body = format_message(generated_body, dryrun)
+
+    if dryrun:
+        unstage_files()
 
     logger.info(message=80 * "-", status="")
     logger.info(message=f"Generated release body:\n\n{formatted_body}\n", status="")
