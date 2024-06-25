@@ -10,8 +10,19 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # AI Templates
 templates = {
     "commit_message_system": """
-    Generate a commit message based solely on the staged diffs provided, ensuring accuracy and relevance to the actual changes.
-    Avoid speculative or unnecessary footers, such as references to non-existent issues. Follow the Conventional Commits standard
+    Generate a commit message based solely on the staged diffs provided,
+    ensuring accuracy and relevance to the actual changes. Avoid speculative or
+    unnecessary footers, such as references to non-existent issues. Follow the
+    Conventional Commits standard which is in the following format:
+    ```
+    <type>(scope): <description>
+
+    [body]
+
+    [optional footer(s)]
+    ```
+    Note that type, scope, description and body are all mandatory fields for
+    our project.
     """,
     "commit_message_user": """
     Generate a git commit message based on these diffs:
@@ -117,14 +128,20 @@ def generate_commit_message(diff: str) -> str:
         formatted_message = format_message(generated_message)
     except ValueError as e:
         logger.error(f"Error formatting commit message: {e}")
-        # Handle the case where the scope is missing by adding a default scope
+        # Handle the case where the scope is missing by asking for a specific scope
         if "must include a scope" in str(e):
             commit_type, commit_description = generated_message.split(":", 1)
-            commit_scope = "default-scope"
+            # Here we would ideally use some logic to determine the most specific scope
+            # For now, we will use a placeholder
+            commit_scope = "specific-scope"
             generated_message = (
                 f"{commit_type}({commit_scope}): {commit_description.strip()}"
             )
             formatted_message = format_message(generated_message)
+            logger.info(
+                message=f"Scope was missing. Please provide a more specific scope such as application name, file name, class name, method/function name, or feature name.",
+                status="",
+            )
 
     logger.info(message=80 * "-", status="")
     logger.info(
