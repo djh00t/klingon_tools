@@ -346,9 +346,30 @@ In debug mode, additional information such as command output and error messages 
 
 ## Command - push
 
-The `push` command provides automated conventional commit message generation,
-pre-commit hooks and other tools that make rapid iterative development
-structured, consistent and easy to manage.
+The `push` command provides automated conventional commit message generation
+using the OpenAI API, pre-commit hooks and other tools that make rapid
+iterative development structured, consistent and easy to manage.
+
+Once klingon_tools is installed, the `push` command can be used to run
+pre-commit, commit and push changes to a remote repository in a single command.
+
+`push` iterates over every changed file, generating a dedicated commit message
+per file that has been changed.
+
+### Conventional Commits
+This code base follows the Conventional Commits specification to standardize
+commit messages. The Conventional Commits specification is a convention for
+writing commit messages that helps in understanding the history of changes,
+automating the release process, and generating changelogs.
+
+The `push` command uses the OpenAI API to generate conventional commit messages
+based on the changes that have been made to the code since the last commit. The
+`push` implementation of Conventional Commits specification is slightly
+different to the official spec in that the `push` command makes the scope
+and description mandatory for all commit messages.
+
+### Requires:
+- `OPENAI_API_KEY` environment variable containing the OpenAI API key.
 
 ### Args:
 - `-h`, `--help`: Show help message and exit.
@@ -371,44 +392,72 @@ push
 ### Expected Output
 
 
+```bash
+(klingon_tools) root@OREGON:~/klingon_tools# push
+Checking for software requirements...                                        ✅
+Using git user name:...                                            David Hooton
+Using git user email:...                                       david@hooton.org
+--------------------------------------------------------------------------------
+Deleted files...                                                              0
+Untracked files...                                                            0
+Modified files...                                                             1
+Staged files...                                                               0
+Committed not pushed files...                                                 0
+--------------------------------------------------------------------------------
+Batch mode enabled...                                                        📦
+Un-staging all staged files...                                               🔄
+Processing file...                                      klingon_tools/README.md
+Staging file...                                                              ✅
+Diff generated...                                                            ✅
+--------------------------------------------------------------------------------
+Generated commit message:
 
-### Usage
+✨ feat(klingon_tools): Update README.md with additional utilities and
+descriptions
 
-```sh
-python -m klingon_tools.push [OPTIONS]
+- Updated descriptions and formatting for LogTools features.
+- Added new utilities like push and gh-actions-update with descriptions.
+- Included installation instructions and class/method details for better
+understanding of LogTools.
+- Expanded on the usage examples of `log_message`, `method_state`, and
+`command_state`.
+- Documented the new `push` command with its arguments and example usage for a
+structured development process.
+- Provided information on contributing to the project and welcoming new ideas.
+
+Signed-off-by: David Hooton <david@hooton.org>
+
+--------------------------------------------------------------------------------
+check for merge conflicts................................................Passed
+fix end of files.........................................................Passed
+mixed line ending........................................................Passed
+trim trailing whitespace.................................................Passed
+fix end of files.........................................................Passed
+check yaml...........................................(no files to check)Skipped
+black................................................(no files to check)Skipped
+--------------------------------------------------------------------------------
+Pre-commit completed...                                                      ✅
+--------------------------------------------------------------------------------
+Generated commit message:
+
+✨ feat(klingon_tools/README.md): Add push command for automated conventional
+commit message generation, pre-commit hooks, and tools
+
+Added a new `push` command to provide automated conventional commit message
+generation, pre-commit hooks, and other tools for structured and consistent
+iterative development management.
+
+Signed-off-by: David Hooton <david@hooton.org>
+
+--------------------------------------------------------------------------------
+File committed...                                                            ✅
+Pushed changes to remote repository...                                       ✅
+All files processed. Script completed successfully....                       🚀
+================================================================================
+
 ```
 
-### Options
 
-- `--check-software-requirements`: Verifies that all necessary software requirements are installed.
-- `--workflow-process-file FILE_NAME`: Processes the specified workflow file.
-- `--startup-tasks`: Performs startup tasks required for the push operation.
-- `--main`: Executes the main push operation.
-
-### Example
-
-```sh
-python -m klingon_tools.push --check-software-requirements
-python -m klingon_tools.push --workflow-process-file my_workflow.yml
-python -m klingon_tools.push --startup-tasks
-python -m klingon_tools.push --main
-```
-
-### Expected Output
-
-```plaintext
-Checking software requirements...
-All required software is installed.
-
-Processing workflow file: my_workflow.yml
-Workflow file processed successfully.
-
-Performing startup tasks...
-Startup tasks completed successfully.
-
-Executing main push operation...
-Push operation completed successfully.
-```
 
 ## Contributing
 
