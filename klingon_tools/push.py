@@ -204,13 +204,13 @@ def main():
         # Merge untracked and modified files
         files_to_process = untracked_files + modified_files
 
-        # Get first file in files_to_process
-        file = files_to_process[0]
-
         # Make sure that there are files to process
         if not files_to_process:
             logger.info("No untracked or modified files to process.")
         else:
+            # Get first file in files_to_process
+            file = files_to_process[0]
+
             # Log processing mode
             logger.info(message="Processing first file", status=f"{file}")
 
