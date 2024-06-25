@@ -223,9 +223,21 @@ def git_commit_deletes(repo: Repo) -> None:
 
 
 def git_unstage_files(repo: Repo) -> None:
-    """Unstages all staged files in the given repository."""
+    """Unstages all staged files in the given repository.
+
+    This function iterates over all staged files in the repository and
+    un-stages them. It logs the status of each file as it is un-staged.
+
+    Args:
+        repo: An instance of the git.Repo object representing the repository.
+
+    Returns:
+        None
+    """
     logger.info(message="Un-staging all staged files", status="🔄")
     logger.debug(message="Staged files", status=f"{staged_files}")
+
+    # Iterate over each staged file and un-stage it
     for file in staged_files:
         try:
             repo.git.reset(file)
@@ -236,17 +248,32 @@ def git_unstage_files(repo: Repo) -> None:
 
 
 def git_stage_diff(file_name: str, repo: Repo) -> str:
-    """Stages a file, generates a diff, and returns the diff."""
+    """Stages a file, generates a diff, and returns the diff.
+
+    This function stages the specified file in the repository, generates a diff
+    for the staged file, and returns the diff as a string. It logs the status
+    of the staging and diff generation processes.
+
+    Args:
+        file_name: The name of the file to be staged and diffed.
+        repo: An instance of the git.Repo object representing the repository.
+
+    Returns:
+        A string containing the diff of the staged file.
+    """
+    # Stage the specified file
     repo.index.add([file_name])
     staged_files = repo.git.diff("--cached", "--name-only").splitlines()
     logger.debug(message="Staged files", status=f"{staged_files}")
 
+    # Check if the file was successfully staged
     if file_name in staged_files:
         logger.info(message="Staging file", status="✅")
     else:
         logger.error(message="Failed to stage file", status="❌")
         sys.exit(1)
 
+    # Generate the diff for the staged file
     diff = repo.git.diff("HEAD", file_name)
     if diff:
         logger.info(message="Diff generated", status="✅")
@@ -257,14 +284,29 @@ def git_stage_diff(file_name: str, repo: Repo) -> str:
 
 
 def git_pre_commit(file_name: str, repo: Repo) -> bool:
-    """Runs pre-commit hooks on a file."""
-    attempt = 0
+    """Runs pre-commit hooks on a file.
+
+    This function runs pre-commit hooks on the specified file. If the hooks
+    modify the file, it re-stages the file and re-runs the hooks up to a
+    maximum number of attempts. If the hooks pass without modifying the file,
+    it returns True. If the hooks fail after the maximum number of attempts,
+    it exits the script.
+
+    Args:
+        file_name: The name of the file to run pre-commit hooks on.
+        repo: An instance of the git.Repo object representing the repository.
+
+    Returns:
+        True if the pre-commit hooks pass without modifying the file, otherwise
+        exits the script after the maximum number of attempts.
+    """
+    attempt = 0  # Initialize the attempt counter
 
     while attempt < LOOP_MAX_PRE_COMMIT:
-        env = os.environ.copy()
-        env["PYTHONUNBUFFERED"] = "1"
+        env = os.environ.copy()  # Copy the current environment variables
+        env["PYTHONUNBUFFERED"] = "1"  # Set PYTHONUNBUFFERED to ensure real-time output
 
-        process = subprocess.Popen(
+        process = subprocess.Popen(  # Run the pre-commit hooks
             ["pre-commit", "run", "--files", file_name],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -272,49 +314,60 @@ def git_pre_commit(file_name: str, repo: Repo) -> bool:
             env=env,
         )
 
-        stdout, stderr = [], []
+        stdout, stderr = [], []  # Initialize lists to capture stdout and stderr
 
-        for line in process.stdout:
+        for line in process.stdout:  # Capture stdout line by line
             sys.stdout.write(line)
             stdout.append(line)
 
-        for line in process.stderr:
+        for line in process.stderr:  # Capture stderr line by line
             sys.stderr.write(line)
             stderr.append(line)
 
-        process.wait()
-        result = subprocess.CompletedProcess(
+        process.wait()  # Wait for the process to complete
+        result = subprocess.CompletedProcess(  # Create a CompletedProcess instance
             process.args, process.returncode, "".join(stdout), "".join(stderr)
         )
 
         if "files were modified by this hook" in result.stdout:
+            # Log that the file was modified by the pre-commit hook
             logger.info(message=80 * "-", status="")
-            logger.info(message="File modified by pre-commit, restaging", status=f"🔄")
+            logger.info(message="File modified by pre-commit, restaging", status="🔄")
             logger.info(message=80 * "-", status="")
-            repo.index.add([file_name])
-            attempt += 1
-            if attempt == LOOP_MAX_PRE_COMMIT:
+            repo.index.add([file_name])  # Re-stage the modified file
+            attempt += 1  # Increment the attempt counter
+            if attempt == LOOP_MAX_PRE_COMMIT:  # Check if maximum attempts reached
                 logger.error(
-                    f"Pre-commit hooks failed for {file_name} after {LOOP_MAX_PRE_COMMIT} attempts. Exiting script."
+                    message=f"Pre-commit hooks failed for {file_name} after {LOOP_MAX_PRE_COMMIT} attempts. Exiting script.",
+                    status="❌",
                 )
-                sys.exit(1)
-        elif result.returncode == 0:
+                sys.exit(1)  # Exit the script if maximum attempts reached
+        elif result.returncode == 0:  # Check if pre-commit hooks passed
             logger.info(message=80 * "-", status="")
             logger.info(message="Pre-commit completed", status="✅")
-            return True
+            return True  # Return True if hooks passed
 
-    return False
+    return False  # Return False if pre-commit hooks did not pass
 
 
-def git_commit_file(file_name: str, commit_message: str, repo: Repo) -> None:
-    """Commits a file with a given commit message."""
+def git_commit_file(file_name: str, repo: Repo) -> None:
+    """Commits a file with a generated commit message."""
     repo.index.add([file_name])
 
     try:
-        repo.index.commit(commit_message.strip())
-        logger.info(message="File committed", status="✅")
+        diff = repo.git.diff("HEAD", file_name)
+        try:
+            commit_message = generate_commit_message(diff)
+            repo.index.commit(commit_message.strip())
+            logger.info(message="File committed", status="✅")
+        except ValueError as ve:
+            logger.error(message="Commit message format error", status="❌")
+            logger.exception(message=f"{ve}")
+        except Exception as e:
+            logger.error(message="Failed to commit file", status="❌")
+            logger.exception(message=f"{e}")
     except Exception as e:
-        logger.error(message="Failed to commit file", status="❌")
+        logger.error(message="Failed to add file to index", status="❌")
         logger.exception(message=f"{e}")
 
 
