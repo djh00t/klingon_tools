@@ -63,7 +63,8 @@ def format_message(message: str) -> str:
         ]
     )
 
-    commit_type = commit_message.split(":")[0].split("(")[0]
+    commit_type, commit_scope = commit_message.split(":")[0].split("(")
+    commit_scope = commit_scope.rstrip(")")
     emoticon_prefix = {
         "feat": "✨",
         "fix": "🐛",
@@ -79,10 +80,7 @@ def format_message(message: str) -> str:
     }.get(commit_type, "")
 
     signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
-    if "(" not in commit_message.split(":")[0]:
-        commit_message = commit_message.replace(commit_type, f"{commit_type}(scope)")
-
-    formatted_message = f"{emoticon_prefix} {commit_message}{signoff}"
+    formatted_message = f"{emoticon_prefix} {commit_type}({commit_scope}): {commit_message.split(':', 1)[1].strip()}{signoff}"
 
     return formatted_message
 
