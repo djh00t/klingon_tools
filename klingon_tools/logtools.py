@@ -4,6 +4,15 @@ klingon_tools.logtools
 This module provides utilities for running and logging shell commands in a user-friendly manner.
 It includes the LogTools class, which offers decorators for methods and CLI commands to log output
 in a clean and consistent manner with simple error handling.
+
+Classes:
+    LogTools: A utility class for running and logging Python methods and shell commands.
+    LogTools.LogMessage: Handles logging messages with a given severity, style, status, and reason.
+
+Functions:
+    method_state: Decorator to log the state of a method with a given style, status, and reason.
+    command_state: Runs a list of shell commands and logs their output with a given style, status, and reason.
+    _format_pre_commit: Formats the message in pre-commit style.
 """
 
 import logging
