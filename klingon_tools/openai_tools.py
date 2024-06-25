@@ -80,8 +80,9 @@ def format_message(message: str) -> str:
             commit_type, commit_scope = commit_type_scope.split("(")
             commit_scope = commit_scope.rstrip(")")
         else:
-            commit_type = commit_type_scope
-            commit_scope = ""
+            raise ValueError(
+                "Commit message must include a scope in the format type(scope): description"
+            )
 
         emoticon_prefix = {
             "feat": "✨",
@@ -112,7 +113,18 @@ def format_message(message: str) -> str:
 def generate_commit_message(diff: str) -> str:
     """Generate a commit message."""
     generated_message = generate_content("commit_message_user", diff)
-    formatted_message = format_message(generated_message)
+    try:
+        formatted_message = format_message(generated_message)
+    except ValueError as e:
+        logger.error(f"Error formatting commit message: {e}")
+        # Handle the case where the scope is missing by adding a default scope
+        if "must include a scope" in str(e):
+            commit_type, commit_description = generated_message.split(":", 1)
+            commit_scope = "default-scope"
+            generated_message = (
+                f"{commit_type}({commit_scope}): {commit_description.strip()}"
+            )
+            formatted_message = format_message(generated_message)
 
     logger.info(message=80 * "-", status="")
     logger.info(
