@@ -1,5 +1,6 @@
 name: "🚨 Run Tests"
-true:
+
+on:
   pull_request:
     types:
     - opened
@@ -7,6 +8,7 @@ true:
     - synchronize
     - reopened
     - ready_for_review
+
 jobs:
   test:
     runs-on: ubuntu-latest
