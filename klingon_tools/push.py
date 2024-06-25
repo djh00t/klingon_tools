@@ -1,5 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+This module provides a script for automating git operations.
+
+The script performs various git operations such as staging, committing, and pushing
+files. It also integrates with pre-commit hooks and generates commit messages using
+OpenAI's API.
+
+Typical usage example:
+
+    $ python push.py --repo-path /path/to/repo --file-name example.txt
+
+Attributes:
+    deleted_files (list): List of deleted files.
+    untracked_files (list): List of untracked files.
+    modified_files (list): List of modified files.
+    staged_files (list): List of staged files.
+    committed_not_pushed (list): List of committed but not pushed files.
+"""
+
 import os
 import sys
 import argparse
@@ -35,8 +54,17 @@ committed_not_pushed = []
 
 
 def check_software_requirements() -> None:
-    """Checks and installs required software."""
+    """Checks and installs required software.
+
+    This function checks if the required software, specifically `pre-commit`,
+    is installed. If it is not installed, the function installs it using pip.
+
+    Raises:
+        subprocess.CalledProcessError: If the installation of `pre-commit` fails.
+    """
     try:
+        # Check if pre-commit is installed
+        # Install pre-commit using pip
         subprocess.run(
             ["pre-commit", "--version"],
             check=True,
@@ -45,6 +73,7 @@ def check_software_requirements() -> None:
         )
         logger.info(message="Checking for software requirements", status="✅")
     except subprocess.CalledProcessError:
+        # If pre-commit is not installed, log a warning and install it
         logger.warning(message="pre-commit is not installed.", status="Installing")
         subprocess.run(
             [sys.executable, "-m", "pip", "install", "pre-commit"],
@@ -52,14 +81,27 @@ def check_software_requirements() -> None:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
+        # Log the successful installation of pre-commit
         logger.info(message="Installed pre-commit", status="✅")
 
 
 def workflow_process_file(file_name: str, repo: Repo) -> None:
-    """Processes a single file through the workflow."""
+    """Processes a single file through the workflow.
+
+    This function stages the file, generates a commit message, runs pre-commit hooks,
+    commits the file, and pushes the commit if all checks pass.
+
+    Args:
+        file_name (str): The name of the file to process.
+        repo (Repo): The git repository object.
+
+    Raises:
+        SystemExit: If pre-commit hooks fail.
+    """
     # Generate a diff for the file
     diff = git_stage_diff(file_name, repo)
 
+    # Generate a commit message using the diff
     diff = repo.git.diff("HEAD")
     commit_message = generate_commit_message(diff)
 
@@ -68,25 +110,19 @@ def workflow_process_file(file_name: str, repo: Repo) -> None:
 
     if success:
         if args.dryrun:
+            # Log dry run mode and skip commit and push
             logger.info(
                 message="Dry run mode enabled. Skipping commit and push.", status="🚫"
             )
         else:
+            # Commit the file
+            git_commit_file(file_name, repo)
+            # Push the commit
             if args.dryrun:
-                logger.info(
-                    message="Dry run mode enabled. Skipping commit and push.",
-                    status="🚫",
-                )
+                # Log dry run mode and skip push
+                logger.info(message="Dry run mode enabled. Skipping push.", status="🚫")
             else:
-                # Commit the file
-                git_commit_file(file_name, repo)
-                # Push the commit
-                if args.dryrun:
-                    logger.info(
-                        message="Dry run mode enabled. Skipping push.", status="🚫"
-                    )
-                else:
-                    git_push(repo)
+                git_push(repo)
     else:
         # Log pre-commit hook failure
         logger.error(message="Pre-commit hooks failed. Exiting script.", status="❌")
@@ -104,6 +140,8 @@ def workflow_process_file(file_name: str, repo: Repo) -> None:
         sys.exit(1)
 
     if args.debug:
+        # Enable debug mode
+        # Log debug mode and git status
         logger.debug(message=f"Debug mode enabled", status="🐞 ")
         git_get_status(repo)
         log_git_stats()
@@ -114,7 +152,17 @@ log_tools = LogTools()
 
 
 def startup_tasks() -> None:
-    """Runs startup maintenance tasks."""
+    """Runs startup maintenance tasks.
+
+    This function initializes the script by parsing command-line arguments,
+    setting up logging, checking software requirements, and retrieving git user
+    information. It also changes the working directory to the repository path
+    and initializes the git repository.
+
+    Raises:
+        SystemExit: If the git repository initialization fails.
+    """
+    # Parse command-line arguments
     parser = argparse.ArgumentParser(
         description="Git repository status checker and committer."
     )
@@ -133,32 +181,40 @@ def startup_tasks() -> None:
         action="store_true",
         help="Run the script without committing or pushing changes",
     )
+    # Make args global to access throughout the script
     global args
     args = parser.parse_args()
 
+    # Set logging level for httpx to WARNING
     logging.getLogger("httpx").setLevel(logging.WARNING)
 
     if args.debug:
         log_tools.set_default_style("pre-commit")
         logger.setLevel(logging.DEBUG)
 
+    # Check and install required software
     check_software_requirements()
 
+    # Retrieve git user information
     user_name, user_email = get_git_user_info()
     logger.info(message="Using git user name:", status=f"{user_name}")
     logger.info(message="Using git user email:", status=f"{user_email}")
 
+    # Make repo_path global to access throughout the script
     global repo_path
     repo_path = args.repo_path
     os.chdir(repo_path)
 
+    # Initialize git repository and get status
     global repo, untracked_files, modified_files
     repo = git_get_toplevel()
 
     if repo is None:
+        # Log error and exit if repository initialization fails
         logger.error("Failed to initialize git repository.")
         sys.exit(1)
 
+    # Get git status
     (
         deleted_files,
         untracked_files,
@@ -166,80 +222,62 @@ def startup_tasks() -> None:
         staged_files,
         committed_not_pushed,
     ) = git_get_status(repo)
+    # Log git statistics
     log_git_stats()
+    # Clean up lock file
     cleanup_lock_file(repo_path)
 
 
-def main():
-    """Main function to run the push script."""
-    # Run startup tasks
+def main() -> None:
+    """Main function to run the push script.
+
+    This function initializes the script, processes files based on the provided
+    command-line arguments, and performs git operations such as staging, committing,
+    and pushing files.
+
+    Raises:
+        SystemExit: If any critical operation fails.
+    """
+    # Run startup tasks to initialize the script
     startup_tasks()
 
     global repo
 
     if args.file_name:
-        # Log processing mode
+        # Process a single file if --file-name is provided
         logger.info("File name mode enabled", status=args.file_name)
-
-        # Unstage any staged files
         git_unstage_files(repo)
-
-        # Set file name
         file = args.file_name
-
-        # Log processing mode
         logger.info(message="Processing single file", status=f"{file}")
-
-        # Process File
         workflow_process_file(file, repo)
 
-    # If --oneshot is provided
     elif args.oneshot:
-        # Log processing mode
+        # Process only one file if --oneshot is provided
         logger.info("One-shot mode enabled", status="🎯")
-
-        # Unstage any staged files
         git_unstage_files(repo)
-
-        # Merge untracked and modified files
         files_to_process = untracked_files + modified_files
 
-        # Make sure that there are files to process
         if not files_to_process:
             logger.info("No untracked or modified files to process.")
         else:
-            # Get first file in files_to_process
             file = files_to_process[0]
-
-            # Log processing mode
             logger.info(message="Processing first file", status=f"{file}")
-
-            # Process File
             workflow_process_file(file, repo)
 
-    # If no file selector arguments exist
     else:
-        # Log processing mode
+        # Process all untracked and modified files in batch mode
         logger.info("Batch mode enabled", status="📦 ")
-
-        # Unstage any staged files
         git_unstage_files(repo)
-
-        # Commit deleted files
         git_commit_deletes(repo)
 
-        # Process untracked and modified files
         for file in untracked_files + modified_files:
-            # Log file processing
             logger.info(message="Processing file", status=f"{file}")
-
-            # Process file
             workflow_process_file(file, repo)
 
-    # If there are committed not pushed files and no other classes of files
     if committed_not_pushed and not (
         deleted_files or untracked_files or modified_files or staged_files
     ):
+        # Push committed but not pushed files if no other files are present
         logger.info(
             message="Only committed not pushed files found. Running git push.",
             status="🚀",
