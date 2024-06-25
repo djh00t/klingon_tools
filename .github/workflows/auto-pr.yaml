@@ -1,9 +1,12 @@
-name: "🔄 Auto PR"
-true:
+name: '🔄 Auto PR'
+
+on:
+  # Push to all but main and master
   push:
     branches-ignore:
-    - main
-    - master
+      - main
+      - master
+
 jobs:
   create-pr:
     runs-on: ubuntu-latest
