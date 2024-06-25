@@ -1,3 +1,18 @@
+"""Module for pushing changes to a remote Git repository.
+
+This module provides functionality to push changes to a remote Git repository
+after performing several checks and operations such as validating commit messages,
+stashing unstaged changes, rebasing, and applying stashed changes back.
+
+Typical usage example:
+
+    import git
+    from klingon_tools.git_push import git_push
+
+    repo = git.Repo('/path/to/repo')
+    git_push(repo)
+"""
+
 import git
 from git import GitCommandError
 from klingon_tools.logger import logger
@@ -5,7 +20,21 @@ from klingon_tools.git_validate_commit import validate_commit_messages
 
 
 def git_push(repo: git.Repo) -> None:
-    """Pushes changes to the remote repository."""
+    """Pushes changes to the remote repository.
+
+    This function performs several steps to ensure that the local repository
+    is in sync with the remote repository before pushing changes. It validates
+    commit messages, stashes any unstaged changes, rebases the current branch
+    on top of the remote branch, and then pushes the changes. If there were
+    any stashed changes, it attempts to apply them back.
+
+    Args:
+        repo (git.Repo): The Git repository object.
+
+    Raises:
+        GitCommandError: If any git command fails.
+        Exception: For any unexpected errors.
+    """
     try:
         # Validate commit messages
         if not validate_commit_messages(repo):

@@ -7,6 +7,7 @@ setup(
     entry_points={
         "console_scripts": [
             "push=klingon_tools.push:main",
+            "gh-actions-update=klingon_tools.gh_actions_update:main",
         ],
     },
     install_requires=[
