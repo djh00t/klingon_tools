@@ -1,3 +1,19 @@
+"""Module for various Git operations and utilities.
+
+This module provides functions to interact with a Git repository, including
+staging, committing, pushing changes, and running pre-commit hooks. It also
+includes functions to retrieve the status of the repository and handle
+deleted files.
+
+Typical usage example:
+
+    from klingon_tools.git_tools import git_get_toplevel, git_commit_file
+
+    repo = git_get_toplevel()
+    if repo:
+        git_commit_file('example.txt', repo)
+"""
+
 import os
 import sys
 import subprocess
