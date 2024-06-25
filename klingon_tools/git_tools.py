@@ -130,6 +130,10 @@ def git_commit_deletes(repo: Repo) -> None:
                 status="⚠️",
             )
             diff = repo.git.diff("HEAD")
+            diff = repo.git.diff("HEAD")
+            diff = repo.git.diff("HEAD")
+            diff = repo.git.diff("HEAD")
+            diff = repo.git.diff("HEAD")
             commit_message = generate_commit_message(diff)
 
         if not is_commit_message_signed_off(commit_message):
@@ -260,7 +264,7 @@ def git_commit_file(file_name: str, commit_message: str, repo: Repo) -> None:
     repo.index.add([file_name])
 
     try:
-        repo.index.commit(commit_message)
+        repo.index.commit(commit_message.strip())
         logger.info(message="File committed", status="✅")
     except Exception as e:
         logger.error(message="Failed to commit file", status="❌")
