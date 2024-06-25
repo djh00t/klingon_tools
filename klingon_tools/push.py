@@ -20,7 +20,11 @@ from klingon_tools.git_tools import (
     cleanup_lock_file,
 )
 from klingon_tools.git_push import git_push
-from klingon_tools.openai_tools import generate_commit_message
+from klingon_tools.openai_tools import (
+    generate_commit_message,
+    generate_pull_request_title,
+    generate_release_body,
+)
 from klingon_tools.logger import logger
 
 deleted_files = []
@@ -56,17 +60,33 @@ def workflow_process_file(file_name: str, repo: Repo) -> None:
     # Generate a diff for the file
     diff = git_stage_diff(file_name, repo)
 
-    # Generate a commit message from the diff
+    diff = repo.git.diff("HEAD")
     commit_message = generate_commit_message(diff)
 
     # Run pre-commit hooks on the file
     success = git_pre_commit(file_name, repo)
 
     if success:
-        # Commit the file
-        git_commit_file(file_name, commit_message, repo)
-        # Push the commit
-        git_push(repo)
+        if args.dryrun:
+            logger.info(
+                message="Dry run mode enabled. Skipping commit and push.", status="🚫"
+            )
+        else:
+            if args.dryrun:
+                logger.info(
+                    message="Dry run mode enabled. Skipping commit and push.",
+                    status="🚫",
+                )
+            else:
+                # Commit the file
+                git_commit_file(file_name, commit_message, repo)
+                # Push the commit
+                if args.dryrun:
+                    logger.info(
+                        message="Dry run mode enabled. Skipping push.", status="🚫"
+                    )
+                else:
+                    git_push(repo)
     else:
         # Log pre-commit hook failure
         logger.error(message="Pre-commit hooks failed. Exiting script.", status="❌")
@@ -107,6 +127,11 @@ def startup_tasks() -> None:
         "--oneshot",
         action="store_true",
         help="Process and commit only one file then exit",
+    )
+    parser.add_argument(
+        "--dryrun",
+        action="store_true",
+        help="Run the script without committing or pushing changes",
     )
     global args
     args = parser.parse_args()
@@ -219,7 +244,10 @@ def main():
             message="Only committed not pushed files found. Running git push.",
             status="🚀",
         )
-        git_push(repo)
+        if args.dryrun:
+            logger.info(message="Dry run mode enabled. Skipping push.", status="🚫")
+        else:
+            git_push(repo)
 
     # Log script completion
     logger.info(
