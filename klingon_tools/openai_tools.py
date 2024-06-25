@@ -63,21 +63,45 @@ def format_message(message: str) -> str:
         ]
     )
 
-    commit_type, commit_scope = commit_message.split(":")[0].split("(")
-    commit_scope = commit_scope.rstrip(")")
-    emoticon_prefix = {
-        "feat": "✨",
-        "fix": "🐛",
-        "docs": "📚",
-        "style": "💄",
-        "refactor": "♻️",
-        "perf": "🚀",
-        "test": "🚨",
-        "build": "🛠️",
-        "ci": "⚙️",
-        "chore": "🔧",
-        "revert": "⏪",
-    }.get(commit_type, "")
+    try:
+        parts = commit_message.split(":")
+        if len(parts) < 2:
+            logger.error(
+                "Commit message format is incorrect. Expected format: type(scope): description"
+            )
+            raise ValueError(
+                "Commit message format is incorrect. Expected format: type(scope): description"
+            )
+
+        commit_type_scope = parts[0]
+        commit_description = parts[1].strip()
+
+        if "(" in commit_type_scope and ")" in commit_type_scope:
+            commit_type, commit_scope = commit_type_scope.split("(")
+            commit_scope = commit_scope.rstrip(")")
+        else:
+            commit_type = commit_type_scope
+            commit_scope = ""
+
+        emoticon_prefix = {
+            "feat": "✨",
+            "fix": "🐛",
+            "docs": "📚",
+            "style": "💄",
+            "refactor": "♻️",
+            "perf": "🚀",
+            "test": "🚨",
+            "build": "🛠️",
+            "ci": "⚙️",
+            "chore": "🔧",
+            "revert": "⏪",
+        }.get(commit_type, "")
+    except ValueError as e:
+        logger.error(f"Commit message format error: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        raise
 
     signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
     formatted_message = f"{emoticon_prefix} {commit_type}({commit_scope}): {commit_message.split(':', 1)[1].strip()}{signoff}"
