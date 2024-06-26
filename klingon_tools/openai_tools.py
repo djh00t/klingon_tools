@@ -308,42 +308,41 @@ class OpenAITools:
                     ["git", "commit", "-m", formatted_message, file], check=True
                 )
 
-        else:
-            # Generate the commit message content using the OpenAI API
-            generated_message = self.generate_content("commit_message_user", diff)
+        # Generate the commit message content using the OpenAI API
+        generated_message = self.generate_content("commit_message_user", diff)
 
-            try:
-                # Format the generated commit message
+        try:
+            # Format the generated commit message
+            formatted_message = self.format_message(generated_message)
+            formatted_message = self.signoff_message(formatted_message)
+        except ValueError as e:
+            # Log and handle errors related to the commit message format
+            logger.error(f"Error formatting commit message: {e}")
+
+            # Handle the case where the scope is missing by asking for a specific scope
+            if "must include a scope" in str(e):
+                commit_type, commit_description = generated_message.split(":", 1)
+                # Here we would ideally use some logic to determine the most specific scope
+                # For now, we will use a placeholder
+                commit_scope = "specific-scope"
+                generated_message = (
+                    f"{commit_type}({commit_scope}): {commit_description.strip()}"
+                )
                 formatted_message = self.format_message(generated_message)
                 formatted_message = self.signoff_message(formatted_message)
-            except ValueError as e:
-                # Log and handle errors related to the commit message format
-                logger.error(f"Error formatting commit message: {e}")
+                logger.info(
+                    message=f"Scope was missing. Please provide a more specific scope such as application name, file name, class name, method/function name, or feature name.",
+                    status="",
+                )
 
-                # Handle the case where the scope is missing by asking for a specific scope
-                if "must include a scope" in str(e):
-                    commit_type, commit_description = generated_message.split(":", 1)
-                    # Here we would ideally use some logic to determine the most specific scope
-                    # For now, we will use a placeholder
-                    commit_scope = "specific-scope"
-                    generated_message = (
-                        f"{commit_type}({commit_scope}): {commit_description.strip()}"
-                    )
-                    formatted_message = self.format_message(generated_message)
-                    formatted_message = self.signoff_message(formatted_message)
-                    logger.info(
-                        message=f"Scope was missing. Please provide a more specific scope such as application name, file name, class name, method/function name, or feature name.",
-                        status="",
-                    )
+        # Log the generated commit message
+        logger.info(message=80 * "-", status="")
+        logger.info(
+            message=f"Generated commit message:\n\n{formatted_message}\n", status=""
+        )
+        logger.info(message=80 * "-", status="")
 
-            # Log the generated commit message
-            logger.info(message=80 * "-", status="")
-            logger.info(
-                message=f"Generated commit message:\n\n{formatted_message}\n", status=""
-            )
-            logger.info(message=80 * "-", status="")
-
-            return formatted_message
+        return formatted_message
 
     def generate_pull_request_title(self, diff: str, dryrun: bool = False) -> str:
         """Generates a pull request title from the git log differences between
