@@ -1,14 +1,9 @@
-name: "🔄 Auto PR"
-
-on:
-  # Push to all but main and master
+name: "\U0001F504 Auto PR"
+true:
   push:
     branches-ignore:
-      - main
-      - master
-
-
-
+    - main
+    - master
 jobs:
   create-pr:
     runs-on: ubuntu-latest
@@ -16,7 +11,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4.1.7
       with:
-        fetch-depth: 0  # Fetch all branches
+        fetch-depth: 0
     - name: Cache APT packages
       uses: actions/cache@v4.0.2
       with:
@@ -24,40 +19,41 @@ jobs:
         path: /var/cache/apt
         restore-keys: ${{ runner.os }}-apt-
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5.1.0
       with:
-        python-version: '3.x'
+        python-version: 3.x
     - name: Install dependencies
-      run: |
-        sudo apt-get update
+      run: 'sudo apt-get update
+
         sudo apt-get install -y gh
+
+        '
     - name: Install dependencies
-      run: |
-        make install
-    - name: Authenticate with GitHub CLI
-      env:
-        GH_TOKEN: ""
-      run: |
-        unset GH_TOKEN
+      run: 'make install
+
+        '
+    - env:
+        GH_TOKEN: ''
+      name: Authenticate with GitHub CLI
+      run: 'unset GH_TOKEN
+
         GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
+
         echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
         gh auth status
-    - name: Set up environment variables
-      run: echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
-      env:
+
+        '
+    - env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      name: Set up environment variables
+      run: echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
     - name: Create or Update Pull Request
-      run: |
-        pip install -e .
-        PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
-        if [ -z "$PR_URL" ]; then
-          # No PR exists, create one
-          PR_TITLE=$(pr-title-generate)
-          PR_BODY=$(pr-body-generate)
-          gh pr create --base main --head ${{ github.ref }} --title "$PR_TITLE" --body "This PR is automatically created for the new branch ${{ github.ref }} created by @${{ github.actor }}.\n\n## Changes\n\n${PR_BODY}"
-        else
-          # PR exists, update it
-          PR_TITLE=$(pr-title-generate)
-          PR_BODY=$(pr-body-generate)
-          gh pr edit $PR_URL --title "$PR_TITLE" --body "$PR_BODY"
-        fi
+      run: "pip install -e .\nPR_URL=$(gh pr list --json url --jq '.[0].url' || echo\
+        \ \"\")\nif [ -z \"$PR_URL\" ]; then\n  # No PR exists, create one\n  PR_TITLE=$(pr-title-generate)\n\
+        \  PR_BODY=$(pr-body-generate)\n  gh pr create --base main --head ${{ github.ref\
+        \ }} --title \"$PR_TITLE\" --body \"This PR is automatically created for the\
+        \ new branch ${{ github.ref }} created by @${{ github.actor }}.\\n\\n## Changes\\\
+        n\\n${PR_BODY}\"\nelse\n  # PR exists, update it\n  PR_TITLE=$(pr-title-generate)\n\
+        \  PR_BODY=$(pr-body-generate)\n  gh pr edit $PR_URL --title \"$PR_TITLE\"\
+        \ --body \"$PR_BODY\"\nfi\n"
