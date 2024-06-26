@@ -65,9 +65,6 @@ def git_push(repo: git.Repo) -> None:
             )
             return
 
-        # Perform the push operation at the end
-        push_changes(repo)
-
         # Generate and commit messages for each file individually
         for file in repo.untracked_files:
             try:
@@ -85,6 +82,9 @@ def git_push(repo: git.Repo) -> None:
             except subprocess.CalledProcessError as e:
                 logger.error(f"Failed to generate commit message for {file}: {e}")
                 continue
+
+        # Perform the push operation at the end
+        push_changes(repo)
 
     except GitCommandError as e:
         logger.error(
