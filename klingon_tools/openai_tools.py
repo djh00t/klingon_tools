@@ -104,7 +104,8 @@ class OpenAITools:
 
         # Extract the generated content from the API response
         generated_content = response.choices[0].message.content.strip()
-        return generated_content
+        # Remove any backticks from the generated content
+        return generated_content.replace("```", "").strip()
 
     def format_message(self, message: str) -> str:
         """Formats a message with line wrapping.
