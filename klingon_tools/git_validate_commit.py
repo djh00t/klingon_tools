@@ -14,7 +14,8 @@ import re
 from git import Repo, GitCommandError
 from klingon_tools.logger import logger
 from klingon_tools.git_user_info import get_git_user_info
-from klingon_tools.openai_tools import generate_commit_message
+from klingon_tools.openai_tools import OpenAITools
+from klingon_tools.openai_tools import OpenAITools
 
 
 def is_commit_message_signed_off(commit_message: str) -> bool:
@@ -44,7 +45,7 @@ def is_conventional_commit(commit_message: str) -> bool:
     return re.match(conventional_commit_pattern, commit_message) is not None
 
 
-def validate_commit_messages(repo: Repo) -> bool:
+def validate_commit_messages(repo: Repo, openai_tools: OpenAITools) -> bool:
     """Validate all commit messages to ensure they are signed off and follow the Conventional Commits standard.
 
     Args:
