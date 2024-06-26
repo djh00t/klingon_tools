@@ -46,7 +46,9 @@ class OpenAITools:
             Breaking Changes: Include a BREAKING CHANGE: footer or append ! after type/scope for commits that introduce breaking API changes.
             Footers: Use a convention similar to git trailer format for additional footers.
             Ensure the commit message generation handles diverse scenarios effectively and prompts for necessary inputs when ambiguities arise.
-            Do not add "Co-authored-by" or other footers unless explicitly required.
+            Do not add "Co-authored-by" or other footers unless explicitly
+            required.
+            If the change is to a markdown file, the type should be `docs` and the scope should be the file name.
             """,
             "commit_message_user": """
             Generate a git commit message based on these diffs:
@@ -58,6 +60,16 @@ class OpenAITools:
             them. Keep the summary high level extremely terse and limit it to
             72 characters. You do not need to include the commit type or scope
             in the title.
+            \"{diff}\"
+            """,
+            "pull_request_body": """
+            Look at the conventional commit messages provided and generate a
+            pull request body that clearly summarizes the changes included in
+            them.
+            Group changes by the conventional commit type and scope, and
+            provide a brief description of each change and a link to the
+            commit, also mention the committing party using an @mention after
+            the commit title.
             \"{diff}\"
             """,
             "release_body": """
@@ -466,17 +478,10 @@ class OpenAITools:
         for commit in commits_ahead:
             commits += commit + "\n"
 
-        # Generate the pull request title content using the OpenAI API
-        generated_title = self.generate_content("pull_request_title", commits)
+        # Generate the pull request body content using the OpenAI API
+        generated_body = self.generate_content("pull_request_body", commits)
 
-        # Format the generated pull request title
-        formatted_title = self.format_pr_title(generated_title)
-
-        if dryrun:
-            # Unstage all files if dryrun is True
-            self.unstage_files()
-
-        return formatted_title
+        return generated_body
 
     def unstage_files(self):
         """Unstages all staged files.
