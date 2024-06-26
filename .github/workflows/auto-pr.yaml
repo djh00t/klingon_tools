@@ -48,11 +48,12 @@ jobs:
     - name: Create or Update Pull Request
       run: |
         pip install -e .
-        PR_TITLE=$(gh-pr-gen-title)
         PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
         if [ -z "$PR_URL" ]; then
           # No PR exists, create one
-          gh pr create --base main --head ${{ github.ref }} --title "$PR_TITLE" --body "This PR is automatically created for the new branch ${{ github.ref }} created by @${{ github.actor }}.\n\n**Changes:**\n${{ steps.commit_messages.outputs.commits }}"
+          PR_TITLE=$(pr-title-generate)
+          PR_BODY=$(pr-body-generate)
+          gh pr create --base main --head ${{ github.ref }} --title "$PR_TITLE" --body "This PR is automatically created for the new branch ${{ github.ref }} created by @${{ github.actor }}.\n\n**Changes:**\n${{ steps.commit_messages.outputs.commits }}\n\n${PR_BODY}"
         else
           # PR exists, update it
           # Get the existing PR body
@@ -60,10 +61,14 @@ jobs:
           # Check if the PR body is broken
           if [[ "$EXISTING_BODY" == *"No conventional commits found."* ]]; then
             echo "Regenerating PR body as it has a broken body."
-            NEW_BODY="REGENERATED: This PR is automatically created for the new branch ${{ github.ref }}.\n\n**Changes:**\n${{ steps.commit_messages.outputs.commits }}"
+            PR_TITLE=$(pr-title-generate)
+            PR_BODY=$(pr-body-generate)
+            NEW_BODY="REGENERATED: This PR is automatically created for the new branch ${{ github.ref }}.\n\n**Changes:**\n${{ steps.commit_messages.outputs.commits }}\n\n${PR_BODY}"
             gh pr edit $PR_URL --title "$PR_TITLE" --body "$NEW_BODY"
           else
-            UPDATED_BODY="$EXISTING_BODY\n${{ steps.commit_messages.outputs.commits }}"
+            PR_TITLE=$(pr-title-generate)
+            PR_BODY=$(pr-body-generate)
+            UPDATED_BODY="$EXISTING_BODY\n${{ steps.commit_messages.outputs.commits }}\n\n${PR_BODY}"
             gh pr edit $PR_URL --title "$PR_TITLE" --body "$UPDATED_BODY"
           fi
         fi
