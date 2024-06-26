@@ -68,9 +68,9 @@ class OpenAITools:
             them.
             Group changes by the conventional commit type and scope, and
             provide a brief description of each change and a link to the
-            commit, also mention the committing party using an @mention after
+            commit, also mention the committing party using an @\"{git_user}\" after
             the commit title.
-            \"{diff}\"
+            \"{commits}\"
             """,
             "release_body": """
             Generate a release body based on the changes included in this release:
@@ -455,6 +455,9 @@ class OpenAITools:
             ).returncode
             == 0
         )
+
+        # Get the git user name
+        git_user = get_git_user_info()[0]
 
         if branch_exists:
             # Get a log of all changes that this PR is ahead of main by.
