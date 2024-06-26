@@ -17,6 +17,7 @@ import git
 from git import GitCommandError
 from klingon_tools.logger import logger
 from klingon_tools.git_validate_commit import validate_commit_messages
+from klingon_tools.openai_tools import OpenAITools
 
 
 def git_push(repo: git.Repo) -> None:
@@ -37,7 +38,9 @@ def git_push(repo: git.Repo) -> None:
     """
     try:
         # Validate commit messages
-        if not validate_commit_messages(repo):
+        openai_tools = OpenAITools()
+        openai_tools = OpenAITools()
+        if not validate_commit_messages(repo, openai_tools):
             logger.error(
                 message="Commit message validation failed. Aborting push.", status="❌"
             )
