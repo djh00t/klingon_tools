@@ -53,7 +53,7 @@ jobs:
           # No PR exists, create one
           PR_TITLE=$(pr-title-generate)
           PR_BODY=$(pr-body-generate)
-          gh pr create --base main --head ${{ github.ref }} --title "$PR_TITLE" --body "This PR is automatically created for the new branch ${{ github.ref }} created by @${{ github.actor }}.\n\n**Changes:**\n${{ steps.commit_messages.outputs.commits }}\n\n${PR_BODY}"
+          gh pr create --base main --head ${{ github.ref }} --title "$PR_TITLE" --body "This PR is automatically created for the new branch ${{ github.ref }} created by @${{ github.actor }}.\n\n## Changes\n\n${PR_BODY}"
         else
           # PR exists, update it
           # Get the existing PR body
