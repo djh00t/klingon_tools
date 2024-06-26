@@ -65,20 +65,23 @@ def git_push(repo: git.Repo) -> None:
             )
             return
 
-        # Generate the commit message for the final commit
-        all_diffs = subprocess.run(
-            ["git", "diff"],
-            capture_output=True,
-            text=True,
-            check=True,
-        ).stdout
-        commit_message = openai_tools.generate_commit_message(all_diffs)
-
-        # Stage all changes
-        repo.git.add(A=True)
-
-        # Commit all changes with the generated message
-        repo.index.commit(commit_message)
+        # Generate and commit messages for each file individually
+        for file in repo.untracked_files:
+            try:
+                # Generate the commit message for the file
+                file_diff = subprocess.run(
+                    ["git", "diff", file],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                ).stdout
+                commit_message = openai_tools.generate_commit_message(file_diff)
+                # Commit the file with the generated message
+                repo.git.add(file)
+                repo.index.commit(commit_message)
+            except subprocess.CalledProcessError as e:
+                logger.error(f"Failed to generate commit message for {file}: {e}")
+                continue
 
         # Perform the push operation at the end
         push_changes(repo)
