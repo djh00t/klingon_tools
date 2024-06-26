@@ -8,7 +8,7 @@ on:
     - synchronize
     - reopened
     - ready_for_review
-  workflow_dispatch:
+  workflow_run:
 
 jobs:
   test:
