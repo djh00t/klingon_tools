@@ -16,6 +16,7 @@ Typical usage example:
 import git
 from git import GitCommandError
 from klingon_tools.logger import logger
+import subprocess
 from klingon_tools.git_validate_commit import validate_commit_messages
 from klingon_tools.openai_tools import OpenAITools
 
@@ -37,7 +38,25 @@ def git_push(repo: git.Repo) -> None:
         Exception: For any unexpected errors.
     """
     try:
-        # Validate commit messages
+        # Handle file deletions
+        deleted_files = subprocess.run(
+            ["git", "ls-files", "--deleted"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.splitlines()
+
+        if deleted_files:
+            for file in deleted_files:
+                try:
+                    # Stage the deleted file
+                    repo.git.add(file)
+                    # Commit the deletion with a specific message
+                    commit_message = f"chore({file}): Handle deletions"
+                    repo.index.commit(commit_message)
+                except subprocess.CalledProcessError as e:
+                    logger.error(f"Failed to handle deletion for {file}: {e}")
+                    continue
         openai_tools = OpenAITools()
         openai_tools = OpenAITools()
         if not validate_commit_messages(repo, openai_tools):
