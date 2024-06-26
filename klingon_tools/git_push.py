@@ -57,7 +57,14 @@ def git_push(repo: git.Repo) -> None:
                 except subprocess.CalledProcessError as e:
                     logger.error(f"Failed to handle deletion for {file}: {e}")
                     continue
+        # Validate commit messages
         openai_tools = OpenAITools()
+        if not validate_commit_messages(repo, openai_tools):
+            logger.error(
+                "Commit message validation failed. Aborting push.", status="❌"
+            )
+            return
+
         # Generate and commit messages for each file individually
         for file in repo.untracked_files:
             try:
@@ -75,12 +82,6 @@ def git_push(repo: git.Repo) -> None:
             except subprocess.CalledProcessError as e:
                 logger.error(f"Failed to generate commit message for {file}: {e}")
                 continue
-        # Validate commit messages
-        if not validate_commit_messages(repo, openai_tools):
-            logger.error(
-                "Commit message validation failed. Aborting push.", status="❌"
-            )
-            return
 
         # Perform the push operation at the end
         push_changes(repo)
