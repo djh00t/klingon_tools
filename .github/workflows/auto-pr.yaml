@@ -1,4 +1,4 @@
-name: '🔄 Auto PR'
+name: "🔄 Auto PR"
 
 on:
   # Push to all but main and master
@@ -10,7 +10,6 @@ on:
 jobs:
   create-pr:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4.1.7
@@ -19,52 +18,42 @@ jobs:
       with:
         key: ${{ runner.os }}-apt
         path: /var/cache/apt
-        restore-keys: '${{ runner.os }}-apt-
-
-          '
+        restore-keys: ${{ runner.os }}-apt-
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
     - name: Install dependencies
-      run: 'sudo apt-get update
-
+      run: |
+        sudo apt-get update
         sudo apt-get install -y gh
-
-        '
-    - id: commit_messages
-      name: Fetch commit messages
-      run: 'git fetch origin main
-
-        COMMITS=$(git log origin/main..HEAD --pretty=format:"- %s" || echo "No conventional
-        commits found.")
-
-        COMMITS=$(echo "$COMMITS" | sed -E ''s/^-\s([a-z]+)(\([^\)]*\))?:\s/- **\1**\2:
-        /'')
-
-        echo "::set-output name=commits::$COMMITS"
-
-        '
-    - env:
-        GH_TOKEN: ''
-      name: Authenticate with GitHub CLI
-      run: 'unset GH_TOKEN
-
-        GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
-
+    - name: Install dependencies
+      run: |
+        make install
+    - name: Authenticate with GitHub CLI
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
         echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
-
         gh auth status
-
-        '
     - name: Create or Update Pull Request
-      run: "PR_URL=$(gh pr list --json url --jq '.[0].url' || echo \"\")\n\nif [ -z\
-        \ \"$PR_URL\" ]; then\n# No PR exists, create one\ngh pr create --base main\
-        \ --head ${{ github.ref }} --title \"\U0001F504 Pull Request for new branch\
-        \ `git rev-parse --abbrev-ref HEAD` created by @${{ github.actor }}\" --body\
-        \ \"This PR is automatically created for the new branch ${{ github.ref }}\
-        \ created by @${{ github.actor }}.\n\n**Changes:**\n${{ steps.commit_messages.outputs.commits\
-        \ }}\"\nelse\n# PR exists, update it\n# Get the existing PR body\nEXISTING_BODY=$(gh\
-        \ pr view $PR_URL --json body --jq '.body')\n\n# Check if the PR body is broken\n\
-        if [[ \"$EXISTING_BODY\" == *\"No conventional commits found.\"* ]];\nthen\n\
-        echo \"Regenerating PR body as it has a broken body.\"\nNEW_BODY=\"REGENERATED:\
-        \ This PR is automatically created for the new branch ${{ github.ref }}.\n\
-        \n**Changes:**\n${{ steps.commit_messages.outputs.commits }}\"\ngh pr edit\
-        \ $PR_URL --body \"$NEW_BODY\"\nelse\nUPDATED_BODY=\"$EXISTING_BODY\n${{ steps.commit_messages.outputs.commits\
-        \ }}\"\n\ngh pr edit $PR_URL --body \"$UPDATED_BODY\"\nfi\nfi\n"
+      run: |
+        PR_TITLE=$(gh-pr-gen-title)
+        PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
+        if [ -z "$PR_URL" ]; then
+          # No PR exists, create one
+          gh pr create --base main --head ${{ github.ref }} --title "$PR_TITLE" --body "This PR is automatically created for the new branch ${{ github.ref }} created by @${{ github.actor }}.\n\n**Changes:**\n${{ steps.commit_messages.outputs.commits }}"
+        else
+          # PR exists, update it
+          # Get the existing PR body
+          EXISTING_BODY=$(gh pr view $PR_URL --json body --jq '.body')
+          # Check if the PR body is broken
+          if [[ "$EXISTING_BODY" == *"No conventional commits found."* ]]; then
+            echo "Regenerating PR body as it has a broken body."
+            NEW_BODY="REGENERATED: This PR is automatically created for the new branch ${{ github.ref }}.\n\n**Changes:**\n${{ steps.commit_messages.outputs.commits }}"
+            gh pr edit $PR_URL --title "$PR_TITLE" --body "$NEW_BODY"
+          else
+            UPDATED_BODY="$EXISTING_BODY\n${{ steps.commit_messages.outputs.commits }}"
+            gh pr edit $PR_URL --title "$PR_TITLE" --body "$UPDATED_BODY"
+          fi
+        fi
