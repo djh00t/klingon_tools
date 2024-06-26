@@ -228,7 +228,24 @@ def git_commit_deletes(repo: Repo) -> None:
             diff = repo.git.diff("HEAD")
             commit_message = generate_commit_message(diff)
         # Commit the deleted files with the generated commit message
-        repo.git.commit("-S", "-m", commit_message)
+        try:
+            repo.git.commit("-S", "-m", commit_message)
+        except GitCommandError as e:
+            if "gpg failed to sign the data" in str(e):
+                logger.warning(
+                    message="GPG signing failed. Retrying commit without GPG signing.",
+                    status="⚠️",
+                )
+                try:
+                    repo.git.commit("-m", commit_message)
+                except GitCommandError as e:
+                    logger.error(message="Failed to commit deleted files", status="❌")
+                    logger.exception(message=f"{e}")
+                    raise
+            else:
+                logger.error(message="Failed to commit deleted files", status="❌")
+                logger.exception(message=f"{e}")
+                raise
 
         # Log the successful commit
         logger.info(
@@ -257,7 +274,7 @@ def git_unstage_files(repo: Repo) -> None:
     # Iterate over each staged file and un-stage it
     for file in staged_files:
         try:
-            repo.git.reset(file)
+            repo.git.reset("--", file)
             logger.info(message="Un-staging file", status=f"{file}")
         except git_exc.GitCommandError as e:
             logger.error(message="Error un-staging file", status=f"{file}")
