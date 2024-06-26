@@ -39,6 +39,10 @@ jobs:
         GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
         echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
         gh auth status
+    - name: Set up environment variables
+      run: echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     - name: Create or Update Pull Request
       run: |
         pip install -e .
