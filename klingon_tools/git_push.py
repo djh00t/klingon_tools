@@ -74,8 +74,10 @@ def git_push(repo: git.Repo) -> None:
         ).stdout
         commit_message = openai_tools.generate_commit_message(all_diffs)
 
-        # Commit all changes with the generated message
+        # Stage all changes
         repo.git.add(A=True)
+
+        # Commit all changes with the generated message
         repo.index.commit(commit_message)
 
         # Perform the push operation at the end
