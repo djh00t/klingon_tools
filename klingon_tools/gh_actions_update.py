@@ -17,7 +17,7 @@ import os
 import re
 
 import requests
-import yaml
+from ruamel.yaml import YAML
 from git import Repo
 from tabulate import tabulate
 
@@ -241,8 +241,10 @@ def find_github_actions(args: argparse.Namespace) -> dict:
 
     # Process each YAML file to find GitHub Actions
     for file_path in yaml_files:
+        yaml = YAML()
+        yaml.preserve_quotes = True
         with open(file_path, "r") as f:
-            workflow_data = yaml.safe_load(f)
+            workflow_data = yaml.load(f)
             logger.debug(f"Processing file: {file_path}")
             logger.debug(f"Workflow data: {workflow_data}")
 
@@ -342,8 +344,10 @@ def update_action_version(
     )
 
     # Read the YAML file content
+    yaml = YAML()
+    yaml.preserve_quotes = True
     with open(file_path, "r") as file:
-        content = yaml.safe_load(file)
+        content = yaml.load(file)
 
     updated = False
 
@@ -364,7 +368,7 @@ def update_action_version(
             file_path,
         )
         with open(file_path, "w") as file:
-            yaml.dump(content, file, default_flow_style=False)
+            yaml.dump(content, file)
     else:
         logger.warning(
             "No updates made for action %s in file %s",
