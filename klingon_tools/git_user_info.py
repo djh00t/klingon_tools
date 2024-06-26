@@ -15,6 +15,7 @@ Usage Example:
 import subprocess
 import git
 import sys
+import os
 from typing import Tuple
 from klingon_tools.logger import logger
 from git import GitCommandError
@@ -43,16 +44,23 @@ def get_git_user_info() -> Tuple[str, str]:
         return result.stdout.strip()
 
     try:
-        user_name = get_config_value("git config --get user.name")
-        user_email = get_config_value("git config --get user.email")
+        # Check if running in GitHub Actions
+        if os.getenv("GITHUB_ACTIONS"):
+            user_name = "github-actions"
+            user_email = "github-actions@github.com"
+        else:
+            user_name = get_config_value("git config --get user.name")
+            user_email = get_config_value("git config --get user.email")
 
-        # Check if user name or email are set to default values
-        if not user_name or user_name == "Your Name":
-            logger.error("Git user name is not set or is set to default value.")
-            raise ValueError("Git user name is not set or is set to default value.")
-        if not user_email or user_email == "your.email@example.com":
-            logger.error("Git user email is not set or is set to default value.")
-            raise ValueError("Git user email is not set or is set to default value.")
+            # Check if user name or email are set to default values
+            if not user_name or user_name == "Your Name":
+                logger.error("Git user name is not set or is set to default value.")
+                raise ValueError("Git user name is not set or is set to default value.")
+            if not user_email or user_email == "your.email@example.com":
+                logger.error("Git user email is not set or is set to default value.")
+                raise ValueError(
+                    "Git user email is not set or is set to default value."
+                )
 
         return user_name, user_email
     except GitCommandError as e:
