@@ -63,13 +63,9 @@ class OpenAITools:
             \"{diff}\"
             """,
             "pull_request_body": """
-            Look at the conventional commit messages provided and generate a
-            pull request body that clearly summarizes the changes included in
-            them.
-            Group changes by the conventional commit type and scope, and
-            provide a brief description of each change and a link to the
-            commit, also mention the committing party using an @\"{git_user}\" after
-            the commit title.
+            Look at the conventional commit messages provided and generate a pull request body that clearly summarizes the changes included in them.
+            Group changes by the conventional commit type and scope, and provide a brief description of each change and a link to the commit.
+            Mention the committing party using an @ followed by their username after the commit title.
             \"{commits}\"
             """,
             "release_body": """
@@ -409,10 +405,22 @@ class OpenAITools:
         # Split the result by lines to get individual commit messages
         commits_ahead = commit_result.stdout.splitlines()
 
-        # Save the commits to a single variable
-        commits = ""
-        for commit in commits_ahead:
-            commits += commit + "\n"
+        # Get the commit details including author
+        commit_details = subprocess.run(
+            [
+                "git",
+                "--no-pager",
+                "log",
+                "origin/main..HEAD",
+                "--pretty=format:%s by @%an",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.splitlines()
+
+        # Save the commit details to a single variable
+        commits = "\n".join(commit_details)
 
         # Generate the pull request title content using the OpenAI API
         generated_title = self.generate_content("pull_request_title", commits)
