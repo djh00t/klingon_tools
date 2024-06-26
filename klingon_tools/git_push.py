@@ -52,7 +52,7 @@ def git_push(repo: git.Repo) -> None:
                     # Stage the deleted file
                     repo.git.add(file)
                     # Commit the deletion with a specific message
-                    commit_message = f"chore({file}): Handle deletions"
+                    commit_message = f"🔧 chore({file}): Handle deletions"
                     repo.index.commit(commit_message)
                 except subprocess.CalledProcessError as e:
                     logger.error(f"Failed to handle deletion for {file}: {e}")
