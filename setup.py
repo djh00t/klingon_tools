@@ -8,7 +8,8 @@ setup(
         "console_scripts": [
             "push=klingon_tools.push:main",
             "gh-actions-update=klingon_tools.gh_actions_update:main",
-            "gh-pr-gen-title=klingon_tools.entrypoints:gh_pr_gen_title",
+            "pr-title-generate=klingon_tools.entrypoints:gh_pr_gen_title",
+            "pr-body-generate=klingon_tools.entrypoints:gh_pr_gen_body",
         ],
     },
     install_requires=[
