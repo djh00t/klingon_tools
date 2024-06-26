@@ -65,8 +65,7 @@ class OpenAITools:
             "pull_request_body": """
             Look at the conventional commit messages provided and generate a pull request body that clearly summarizes the changes included in them.
             Group changes by the conventional commit type and scope, and provide a brief description of each change and a link to the commit.
-            Mention the committing party using an @ followed by their username after the commit title.
-            \"{commits}\"
+            \"{diff}\"
             """,
             "release_body": """
             Generate a release body based on the changes included in this release:
