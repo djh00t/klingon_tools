@@ -365,13 +365,29 @@ class OpenAITools:
         Raises:
             ValueError: If the pull request title format is incorrect.
         """
-        # Get a log of all changes that this PR is ahead of main by.
-        commit_result = subprocess.run(
-            ["git", "--no-pager", "log", "origin/main..HEAD", "--pretty=format:%s"],
-            capture_output=True,
-            text=True,
-            check=True,
+        # Check if the origin/main branch exists
+        branch_exists = (
+            subprocess.run(
+                ["git", "rev-parse", "--verify", "origin/main"],
+                capture_output=True,
+                text=True,
+            ).returncode
+            == 0
         )
+
+        if branch_exists:
+            # Get a log of all changes that this PR is ahead of main by.
+            commit_result = subprocess.run(
+                ["git", "--no-pager", "log", "origin/main..HEAD", "--pretty=format:%s"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        else:
+            logger.warning("The branch 'origin/main' does not exist.")
+            commit_result = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout=""
+            )
 
         # Split the result by lines to get individual commit messages
         commits_ahead = commit_result.stdout.splitlines()
