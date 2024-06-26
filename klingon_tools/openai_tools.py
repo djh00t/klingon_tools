@@ -349,11 +349,75 @@ class OpenAITools:
         """Generates a pull request title from the git log differences between
         current branch and origin/main..HEAD.
 
-        This function generates a pull request title based on the provided diff
-        using the OpenAI API. It formats the generated title and handles any
-        errors related to the title format.
+        This function generates a pull request title based on the provided
+        commit messages using the OpenAI API. It formats the generated title
+        and handles any errors related to the title format.
 
         Entrypoint: pr-title-generate
+
+        Args:
+            diff (str): The diff to include in the generated pull request title.
+            dryrun (bool): If True, unstages all files after generating the title.
+
+        Returns:
+            str: The formatted pull request title.
+
+        Raises:
+            ValueError: If the pull request title format is incorrect.
+        """
+        # Check if the origin/main branch exists
+        branch_exists = (
+            subprocess.run(
+                ["git", "rev-parse", "--verify", "origin/main"],
+                capture_output=True,
+                text=True,
+            ).returncode
+            == 0
+        )
+
+        if branch_exists:
+            # Get a log of all changes that this PR is ahead of main by.
+            commit_result = subprocess.run(
+                ["git", "--no-pager", "log", "origin/main..HEAD", "--pretty=format:%s"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        else:
+            logger.warning("The branch 'origin/main' does not exist.")
+            commit_result = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout=""
+            )
+
+        # Split the result by lines to get individual commit messages
+        commits_ahead = commit_result.stdout.splitlines()
+
+        # Save the commits to a single variable
+        commits = ""
+        for commit in commits_ahead:
+            commits += commit + "\n"
+
+        # Generate the pull request title content using the OpenAI API
+        generated_title = self.generate_content("pull_request_title", commits)
+
+        # Format the generated pull request title
+        formatted_title = self.format_pr_title(generated_title)
+
+        if dryrun:
+            # Unstage all files if dryrun is True
+            self.unstage_files()
+
+        return formatted_title
+
+    def generate_pull_request_body(self, diff: str, dryrun: bool = False) -> str:
+        """Generates a pull request body from the git log differences between
+        current branch and origin/main..HEAD.
+
+        This function generates a pull request body based on the provided git
+        messages using the OpenAI API. It formats the generated title and
+        handles any errors related to the title format.
+
+        Entrypoint: pr-body-generate
 
         Args:
             diff (str): The diff to include in the generated pull request title.
