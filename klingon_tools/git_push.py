@@ -58,6 +58,23 @@ def git_push(repo: git.Repo) -> None:
                     logger.error(f"Failed to handle deletion for {file}: {e}")
                     continue
         openai_tools = OpenAITools()
+        # Generate and commit messages for each file individually
+        for file in repo.untracked_files:
+            try:
+                # Generate the commit message for the file
+                file_diff = subprocess.run(
+                    ["git", "diff", file],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                ).stdout
+                commit_message = openai_tools.generate_commit_message(file_diff)
+                # Commit the file with the generated message
+                repo.git.add(file)
+                repo.index.commit(commit_message)
+            except subprocess.CalledProcessError as e:
+                logger.error(f"Failed to generate commit message for {file}: {e}")
+                continue
         openai_tools = OpenAITools()
         if not validate_commit_messages(repo, openai_tools):
             logger.error(
@@ -79,9 +96,6 @@ def git_push(repo: git.Repo) -> None:
         # Rebase the current branch on top of the remote branch
         repo.git.rebase(f"origin/{current_branch}")
 
-        # Push the changes to the remote repository
-        repo.remotes.origin.push()
-
         # Apply the stashed changes back if they were stashed
         if stash_needed:
             try:
@@ -93,6 +107,9 @@ def git_push(repo: git.Repo) -> None:
                     reason=str(e),
                 )
                 # If there are conflicts, you can handle them here or manually resolve them
+
+        # Push the changes to the remote repository
+        repo.remotes.origin.push()
 
         logger.info(message="Pushed changes to remote repository", status="✅")
     except GitCommandError as e:
