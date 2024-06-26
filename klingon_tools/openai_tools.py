@@ -64,7 +64,7 @@ class OpenAITools:
             """,
             "pull_request_body": """
             Look at the conventional commit messages provided and generate a pull request body that clearly summarizes the changes included in them.
-            Group changes by the conventional commit type and scope, and provide a brief description of each change and a link to the commit.
+            Group changes by the conventional commit type and scope, and provide a brief description of each change.
             \"{diff}\"
             """,
             "release_body": """
