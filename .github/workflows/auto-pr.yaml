@@ -40,6 +40,7 @@ jobs:
         gh auth status
     - name: Create or Update Pull Request
       run: |
+        pip install -e .
         PR_TITLE=$(gh-pr-gen-title)
         PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
         if [ -z "$PR_URL" ]; then
