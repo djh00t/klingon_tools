@@ -12,7 +12,17 @@ setup(
         ],
     },
     install_requires=[
-        # No external dependencies required
+        "openai",
+        "argparse",
+        "requests",
+        "httpx",
+        "gitpython",
+        "pandas",
+        "flask",
+        "curses",
+        "watchdog",
+        "pyyaml",
+        "pytest",
     ],
     include_package_data=True,
     description="A set of utilities for running and logging shell commands in a user-friendly manner.",
