@@ -13,6 +13,7 @@ Usage Example:
 """
 
 import subprocess
+import git
 import sys
 from typing import Tuple
 from klingon_tools.logger import logger
