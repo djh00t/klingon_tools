@@ -322,13 +322,23 @@ class OpenAITools:
                     ["git", "commit", "-m", formatted_message, file], check=True
                 )
 
-        # Generate the commit message content using the OpenAI API
-        generated_message = self.generate_content("commit_message_user", diff)
-
         try:
+            # Generate the commit message content using the OpenAI API
+            generated_message = self.generate_content("commit_message_user", diff)
+
             # Format the generated commit message
             formatted_message = self.format_message(generated_message)
             formatted_message = self.signoff_message(formatted_message)
+
+            # Log the generated commit message
+            logger.info(message=80 * "-", status="")
+            logger.info(
+                message=f"Generated commit message:\n\n{formatted_message}\n", status=""
+            )
+            logger.info(message=80 * "-", status="")
+
+            return formatted_message
+
         except ValueError as e:
             # Log and handle errors related to the commit message format
             logger.error(f"Error formatting commit message: {e}")
@@ -349,14 +359,19 @@ class OpenAITools:
                     status="",
                 )
 
-        # Log the generated commit message
-        logger.info(message=80 * "-", status="")
-        logger.info(
-            message=f"Generated commit message:\n\n{formatted_message}\n", status=""
-        )
-        logger.info(message=80 * "-", status="")
+                # Log the generated commit message
+                logger.info(message=80 * "-", status="")
+                logger.info(
+                    message=f"Generated commit message:\n\n{formatted_message}\n",
+                    status="",
+                )
+                logger.info(message=80 * "-", status="")
 
-        return formatted_message
+                return formatted_message
+
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            raise
 
     def generate_pull_request_title(self, diff: str, dryrun: bool = False) -> str:
         """Generates a pull request title from the git log differences between
