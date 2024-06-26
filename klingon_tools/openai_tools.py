@@ -90,8 +90,14 @@ class OpenAITools:
         if not template:
             raise ValueError(f"Template '{template_key}' not found.")
 
-        # Format the template with the provided diff
-        role_user_content = template.format(diff=diff)
+        # Truncate the diff if it exceeds a certain length
+        max_diff_length = 10000  # Adjust this value as needed
+        truncated_diff = (
+            diff if len(diff) <= max_diff_length else diff[:max_diff_length]
+        )
+
+        # Format the template with the truncated diff
+        role_user_content = template.format(diff=truncated_diff)
 
         # Send a request to the OpenAI API to generate the content
         response = self.client.chat.completions.create(
