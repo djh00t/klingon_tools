@@ -39,11 +39,7 @@ from klingon_tools.git_tools import (
     cleanup_lock_file,
 )
 from klingon_tools.git_push import git_push
-from klingon_tools.openai_tools import (
-    generate_commit_message,
-    generate_pull_request_title,
-    generate_release_body,
-)
+from klingon_tools.openai_tools import OpenAITools
 from klingon_tools.logger import logger
 
 deleted_files = []
@@ -103,7 +99,8 @@ def workflow_process_file(file_name: str, repo: Repo) -> None:
 
     # Generate a commit message using the diff
     diff = repo.git.diff("HEAD")
-    commit_message = generate_commit_message(diff)
+    openai_tools = OpenAITools()
+    commit_message = openai_tools.generate_commit_message(diff)
 
     # Run pre-commit hooks on the file
     success = git_pre_commit(file_name, repo)

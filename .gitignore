@@ -208,9 +208,15 @@ $RECYCLE.BIN/
 *.obj
 *.pyd
 
+# Ignore node_modules
+node_modules/**
+
 # Ignore CSV's in domainsearch
 domainsearch/*.csv
 
 # Ignore deploy keys
 *-deploy-key*
 merman.md
+
+# Ignore archives
+archive/**

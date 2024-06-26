@@ -10,6 +10,7 @@ Attributes:
     logger (LogTools.LogMessage): A logger instance for logging messages.
 """
 
+import logging
 from klingon_tools import LogTools
 
 # Initialize logging

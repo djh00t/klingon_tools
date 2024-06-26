@@ -1,0 +1,17 @@
+{
+  "branches": ["main"],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    "@semantic-release/changelog",
+    ["@semantic-release/git", {
+      "assets": ["CHANGELOG.md", "setup.py", "version.py"],
+      "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+    }],
+    ["@semantic-release/exec", {
+      "prepareCmd": "python setup.py sdist bdist_wheel",
+      "publishCmd": "twine upload -u __token__ -p $PYPI_USER_AGENT dist/*"
+    }],
+    "@semantic-release/github"
+  ]
+}

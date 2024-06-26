@@ -33,7 +33,7 @@ from klingon_tools.git_validate_commit import (
     is_commit_message_signed_off,
     is_conventional_commit,
 )
-from klingon_tools.openai_tools import generate_commit_message
+from klingon_tools.openai_tools import OpenAITools
 from klingon_tools.git_push import git_push
 from klingon_tools.git_validate_commit import validate_commit_messages
 
@@ -211,7 +211,8 @@ def git_commit_deletes(repo: Repo) -> None:
             )
             diff = repo.git.diff("HEAD")
             # Generate the commit message using the diff
-            commit_message = generate_commit_message(diff)
+            openai_tools = OpenAITools()
+            commit_message = openai_tools.generate_commit_message(diff)
 
         # Re-check and sign off the commit message if necessary
         if not is_commit_message_signed_off(commit_message):
@@ -226,7 +227,7 @@ def git_commit_deletes(repo: Repo) -> None:
                 status="⚠️",
             )
             diff = repo.git.diff("HEAD")
-            commit_message = generate_commit_message(diff)
+            commit_message = openai_tools.generate_commit_message(diff)
         # Commit the deleted files with the generated commit message
         try:
             repo.git.commit("-S", "-m", commit_message)
@@ -405,7 +406,8 @@ def git_commit_file(file_name: str, repo: Repo) -> None:
         # Generate the diff for the staged file
         diff = repo.git.diff("HEAD", file_name)
         try:
-            commit_message = generate_commit_message(diff)
+            openai_tools = OpenAITools()
+            commit_message = openai_tools.generate_commit_message(diff)
             # Commit the file with the generated commit message
             repo.index.commit(commit_message.strip())
             # Log the successful commit

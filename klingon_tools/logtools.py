@@ -87,6 +87,30 @@ class LogTools:
             )
         self.default_style = style
 
+    def configure_logging(self):
+        """Configures logging to use the custom ContextualLogHandler."""
+        handler = self.ContextualLogHandler()
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        handler.setFormatter(formatter)
+        logging.basicConfig(level=logging.INFO, handlers=[handler])
+
+    def set_default_style(self, style):
+        """Sets the default style for log messages.
+
+        Args:
+            style (str): The style to use for log messages.
+
+        Raises:
+            ValueError: If the provided style is not valid.
+        """
+        if style not in self.VALID_STYLES:
+            raise ValueError(
+                f"Invalid style '{style}'. Valid styles are: {', '.join(self.VALID_STYLES)}"
+            )
+        self.default_style = style
+
     def __init__(self, debug=False):
         """Initializes LogTools with an optional debug flag.
 
