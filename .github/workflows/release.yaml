@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - main
+    - main
 
 
 jobs:
@@ -53,7 +53,7 @@ jobs:
         git push --set-upstream origin release-branch
 
     - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v4
+      uses: peter-evans/create-pull-request@v6.1.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         branch: release-branch
@@ -65,7 +65,7 @@ jobs:
         PYPI_USER_AGENT: ${{ secrets.PYPI_USER_AGENT }}
 
     - name: Auto-merge Release PR
-      uses: peter-evans/merge-pull-request@v3
+      uses: peter-evans/merge-pull-request@Unknown
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         pull-request: ${{ steps.create-pull-request.outputs.pull-request-number }}
