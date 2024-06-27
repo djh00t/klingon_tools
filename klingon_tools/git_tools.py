@@ -386,7 +386,7 @@ def git_pre_commit(file_name: str, repo: Repo) -> bool:
     return False  # Return False if pre-commit hooks did not pass
 
 
-def git_commit_file(file_name: str, repo: Repo) -> None:
+def git_commit_file(file_name: str, commit_message: str, repo: Repo) -> None:
     """Commits a file with a generated commit message.
 
     This function stages the specified file, generates a commit message using
@@ -405,25 +405,34 @@ def git_commit_file(file_name: str, repo: Repo) -> None:
     try:
         # Generate the diff for the staged file
         diff = repo.git.diff("HEAD", file_name)
-        try:
-            openai_tools = OpenAITools()
-            commit_message = openai_tools.generate_commit_message(diff)
-            # Commit the file with the generated commit message
-            repo.index.commit(commit_message.strip())
-            # Log the successful commit
-            logger.info(message="File committed", status="✅")
-        except ValueError as ve:
-            # Log an error message if the commit message format is invalid
-            logger.error(message="Commit message format error", status="❌")
-            logger.exception(message=f"{ve}")
-        except Exception as e:
-            # Log an error message if the commit fails
-            logger.error(message="Failed to commit file", status="❌")
-            logger.exception(message=f"{e}")
+        openai_tools = OpenAITools()
+        commit_message = openai_tools.generate_commit_message(diff)
+        if not commit_message or not is_conventional_commit(commit_message):
+            logger.error(
+                message="Commit message format is incorrect. Expected format: type(scope): description",
+                status="❌",
+            )
+            commit_message = (
+                "chore: " + commit_message
+            )  # Prepend 'chore: ' to make it conventional
+            logger.warning(
+                message=f"Commit message adjusted to: {commit_message}",
+                status="⚠️",
+            )
+        # Commit the file with the generated commit message
+        repo.index.commit(commit_message.strip())
+        # Log the successful commit
+        logger.info(message="File committed", status="✅")
+    except ValueError as ve:
+        # Log an error message if the commit message format is invalid
+        logger.error(message="Commit message format error", status="❌")
+        logger.exception(message=f"{ve}")
+        raise
     except Exception as e:
-        # Log an error message if adding the file to the index fails
-        logger.error(message="Failed to add file to index", status="❌")
+        # Log an error message if the commit fails
+        logger.error(message="Failed to commit file", status="❌")
         logger.exception(message=f"{e}")
+        raise
 
 
 def log_git_stats() -> None:
