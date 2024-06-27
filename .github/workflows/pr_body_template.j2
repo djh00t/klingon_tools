@@ -11,80 +11,80 @@ This PR is automatically created for the new branch {{ branch_name }} created by
 ## Issue Links
 {% for link in issue_links %}
 - {{ link }}
-{% endfor %}
-{% endif %}
+{%- endfor %}
+{%- endif %}
 
 ## Types of Changes
-{% if types.build %}
+{%- if types.build %}
 - [ ] `build`: 🛠️ Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)
-    {% for change in types.build %}
+    {%- for change in types.build %}
     - {{ change }}
-    {% endfor %}
-{% endif %}
-{% if types.chore %}
+    {%- endfor %}
+{%- endif %}
+{%- if types.chore %}
 - [ ] `chore`: 🔧 Other changes that don't modify src or test files
-    {% for change in types.chore %}
+    {%- for change in types.chore %}
     - {{ change }}
-    {% endfor %}
-{% endif %}
-{% if types.ci %}
+    {%- endfor %}
+{%- endif %}
+{%- if types.ci %}
 - [ ] `ci`: ⚙️ Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)
-    {% for change in types.ci %}
+    {%- for change in types.ci %}
     - {{ change }}
-    {% endfor %}
-{% endif %}
-{% if types.docs %}
+    {%- endfor %}
+{%- endif %}
+{%- if types.docs %}
 - [ ] `docs`: 📚 Documentation only changes
-    {% for change in types.docs %}
+    {%- for change in types.docs %}
     - {{ change }}
-    {% endfor %}
-{% endif %}
-{% if types.feat %}
+    {%- endfor %}
+{%- endif %}
+{%- if types.feat %}
 - [ ] `feat`: ✨ A new feature
-    {% for change in types.feat %}
+    {%- for change in types.feat %}
     - {{ change }}
-    {% endfor %}
-{% endif %}
-{% if types.fix %}
+    {%- endfor %}
+{%- endif %}
+{%- if types.fix %}
 - [ ] `fix`: 🐛 A bug fix
-    {% for change in types.fix %}
+    {%- for change in types.fix %}
     - {{ change }}
-    {% endfor %}
-{% endif %}
-{% if types.perf %}
+    {%- endfor %}
+{%- endif %}
+{%- if types.perf %}
 - [ ] `perf`: 🚀 A code change that improves performance
-    {% for change in types.perf %}
+    {%- for change in types.perf %}
     - {{ change }}
-    {% endfor %}
-{% endif %}
-{% if types.refactor %}
+    {%- endfor %}
+{%- endif %}
+{%- if types.refactor %}
 - [ ] `refactor`: ♻️ A code change that neither fixes a bug nor adds a feature
-    {% for change in types.refactor %}
+    {%- for change in types.refactor %}
     - {{ change }}
-    {% endfor %}
-{% endif %}
-{% if types.revert %}
+    {%- endfor %}
+{%- endif %}
+{%- if types.revert %}
 - [ ] `revert`: ⏪ Reverts a previous commit
-    {% for change in types.revert %}
+    {%- for change in types.revert %}
     - {{ change }}
-    {% endfor %}
-{% endif %}
-{% if types.style %}
+    {%- endfor %}
+{%- endif %}
+{%- if types.style %}
 - [ ] `style`: 💄 Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
-    {% for change in types.style %}
+    {%- for change in types.style %}
     - {{ change }}
-    {% endfor %}
-{% endif %}
-{% if types.test %}
+    {%- endfor %}
+{%- endif %}
+{%- if types.test %}
 - [ ] `test`: 🚨 Adding missing or correcting existing tests
-    {% for change in types.test %}
+    {%- for change in types.test %}
     - {{ change }}
-    {% endfor %}
-{% endif %}
-{% if types.other %}
+    {%- endfor %}
+{%- endif %}
+{%- if types.other %}
 - [ ] `other`: ⚠️ Changes that don't fit into the above categories
-    {% for change in types.other %}
+    {%- for change in types.other %}
     - {{ change }}
-    {% endfor %}
-{% endif %}
+    {%- endfor %}
+{%- endif %}
 <!-- END OF TEMPLATE -->
