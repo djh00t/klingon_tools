@@ -83,8 +83,6 @@ jobs:
         echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
         gh auth status
     - name: Generate PR Summary and Context
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
         PR_BODY_DESCRIPTION=$(pr-summary-generate)
         PR_BODY_MOTIVATION_AND_CONTEXT=$(pr-context-generate)
