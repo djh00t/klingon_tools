@@ -89,12 +89,53 @@ jobs:
           with open(template_path) as file_:
               template = Template(file_.read())
 
+          import re
+
+          commit_messages = os.popen('git log --pretty=format:"%s"').read().split('\n')
+          changes = {
+              "feat": [],
+              "fix": [],
+              "docs": [],
+              "style": [],
+              "refactor": [],
+              "perf": [],
+              "test": [],
+              "build": [],
+              "ci": [],
+              "chore": [],
+              "revert": [],
+              "other": []
+          }
+          emoji_mapping = {
+              "feat": "✨",
+              "fix": "🐛",
+              "docs": "📚",
+              "style": "💄",
+              "refactor": "♻️",
+              "perf": "🚀",
+              "test": "🚨",
+              "build": "🛠️",
+              "ci": "⚙️",
+              "chore": "🔧",
+              "revert": "⏪"
+          }
+
+          for message in commit_messages:
+              matched = False
+              for change_type, emoji in emoji_mapping.items():
+                  if re.match(f"^{emoji} {change_type}|^{change_type}", message):
+                      changes[change_type].append(message)
+                      matched = True
+                      break
+              if not matched:
+                  changes["other"].append(message)
+
           pr_body = template.render(
               branch_name=os.getenv('GITHUB_REF'),
               actor=os.getenv('GITHUB_ACTOR'),
               description=os.getenv('PR_BODY_DESCRIPTION'),
               motivation_context=os.getenv('PR_BODY_MOTIVATION_AND_CONTEXT'),
-              changes='List of changes here'
+              changes=changes
           )
           print(pr_body)
           " > pr_body.txt
