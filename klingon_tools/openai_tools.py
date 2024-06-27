@@ -65,7 +65,7 @@ class OpenAITools:
             "pull_request_body": """
             Look at the conventional commit messages provided and generate a
             pull request body using the following markdown as a template:
-            ```
+
             # Pull Request Summary
 
             ## Description
@@ -92,7 +92,7 @@ class OpenAITools:
             - [ ] `ci`: ⚙️ Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)
             - [ ] `chore`: 🔧 Other changes that don't modify src or test files
             - [ ] `revert`: ⏪ Reverts a previous commit
-            ```
+
             \"{diff}\"
             """,
             "release_body": """
