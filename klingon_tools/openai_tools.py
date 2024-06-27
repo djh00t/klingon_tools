@@ -63,9 +63,8 @@ class OpenAITools:
             """,
             "pull_request_summary": """
             Look at the conventional commit messages provided and generate an
-            extremely concise pull request summary of no more than 2
-            paragraphs. Keep the summary to the point and avoid unnecessary
-            details.
+            extremely concise pull request summary. Keep the summary to the
+            point and avoid unnecessary details.
 
             The reader is busy and must be able to read and understand the
             content quickly & without fuss.
