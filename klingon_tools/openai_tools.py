@@ -48,7 +48,6 @@ class OpenAITools:
             Ensure the commit message generation handles diverse scenarios effectively and prompts for necessary inputs when ambiguities arise.
             Do not add "Co-authored-by" or other footers unless explicitly
             required.
-            If the change is to a markdown file, the type should be `docs` and the scope should be the file name.
             """,
             "commit_message_user": """
             Generate a git commit message based on these diffs:
