@@ -66,8 +66,6 @@ class OpenAITools:
             Look at the conventional commit messages provided and generate a
             pull request body using the following markdown as a template:
 <!-- START OF TEMPLATE -->
-# Pull Request Summary
-
 ## Description
 <!-- A brief description of the changes introduced by this PR -->
 
