@@ -15,75 +15,75 @@ This PR is automatically created for the new branch {{ branch_name }} created by
 {% endif %}
 
 ## Types of Changes
-{% if changes.build %}
+{% if types.build %}
 - [ ] `build`: 🛠️ Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)
-    {% for change in changes.build %}
+    {% for change in types.build %}
     - {{ change }}
     {% endfor %}
 {% endif %}
-{% if changes.chore %}
+{% if types.chore %}
 - [ ] `chore`: 🔧 Other changes that don't modify src or test files
-    {% for change in changes.chore %}
+    {% for change in types.chore %}
     - {{ change }}
     {% endfor %}
 {% endif %}
-{% if changes.ci %}
+{% if types.ci %}
 - [ ] `ci`: ⚙️ Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)
-    {% for change in changes.ci %}
+    {% for change in types.ci %}
     - {{ change }}
     {% endfor %}
 {% endif %}
-{% if changes.docs %}
+{% if types.docs %}
 - [ ] `docs`: 📚 Documentation only changes
-    {% for change in changes.docs %}
+    {% for change in types.docs %}
     - {{ change }}
     {% endfor %}
 {% endif %}
-{% if changes.feat %}
+{% if types.feat %}
 - [ ] `feat`: ✨ A new feature
-    {% for change in changes.feat %}
+    {% for change in types.feat %}
     - {{ change }}
     {% endfor %}
 {% endif %}
-{% if changes.fix %}
+{% if types.fix %}
 - [ ] `fix`: 🐛 A bug fix
-    {% for change in changes.fix %}
+    {% for change in types.fix %}
     - {{ change }}
     {% endfor %}
 {% endif %}
-{% if changes.perf %}
+{% if types.perf %}
 - [ ] `perf`: 🚀 A code change that improves performance
-    {% for change in changes.perf %}
+    {% for change in types.perf %}
     - {{ change }}
     {% endfor %}
 {% endif %}
-{% if changes.refactor %}
+{% if types.refactor %}
 - [ ] `refactor`: ♻️ A code change that neither fixes a bug nor adds a feature
-    {% for change in changes.refactor %}
+    {% for change in types.refactor %}
     - {{ change }}
     {% endfor %}
 {% endif %}
-{% if changes.revert %}
+{% if types.revert %}
 - [ ] `revert`: ⏪ Reverts a previous commit
-    {% for change in changes.revert %}
+    {% for change in types.revert %}
     - {{ change }}
     {% endfor %}
 {% endif %}
-{% if changes.style %}
+{% if types.style %}
 - [ ] `style`: 💄 Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
-    {% for change in changes.style %}
+    {% for change in types.style %}
     - {{ change }}
     {% endfor %}
 {% endif %}
-{% if changes.test %}
+{% if types.test %}
 - [ ] `test`: 🚨 Adding missing or correcting existing tests
-    {% for change in changes.test %}
+    {% for change in types.test %}
     - {{ change }}
     {% endfor %}
 {% endif %}
-{% if changes.other %}
+{% if types.other %}
 - [ ] `other`: ⚠️ Changes that don't fit into the above categories
-    {% for change in changes.other %}
+    {% for change in types.other %}
     - {{ change }}
     {% endfor %}
 {% endif %}
