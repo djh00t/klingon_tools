@@ -63,7 +63,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PYPI_USER_AGENT: ${{ secrets.PYPI_USER_AGENT }}
-      run: npx semantic-release
 
     - name: Auto-merge Release PR
       uses: peter-evans/merge-pull-request@v3
