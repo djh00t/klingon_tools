@@ -123,12 +123,7 @@ jobs:
             'test': [],
         }
 
-        emoji_pattern = re.compile(
-            "[\U0001F300-\U0001F5FF\u2000-\u3300]", flags=re.UNICODE
-        )
         for message in commit_messages:
-            # Remove leading spaces and Unicode emojis
-            message = emoji_pattern.sub("", message).strip()
             matched = False
             for change_type in types.keys():
                 if re.match(rf'^[\U0001F300-\U0001F5FF\u2000-\u3300]*{change_type}\(\S+\):', message, re.UNICODE) or re.match(rf'^[\U0001F300-\U0001F5FF\u2000-\u3300]*{change_type}:', message, re.UNICODE):
