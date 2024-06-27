@@ -128,7 +128,7 @@ jobs:
           for message in commit_messages:
               matched = False
               for change_type, emoji in emoji_mapping.items():
-                  if re.match(f'^{emoji} {change_type}|^{change_type}', message):
+                  if re.match(f'^{emoji} {change_type}\(|^{change_type}\(', message):
                       changes[change_type].append(message)
                       matched = True
                       break
