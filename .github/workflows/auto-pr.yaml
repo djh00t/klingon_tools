@@ -75,58 +75,46 @@ jobs:
 
           os.system('git fetch origin main')
           commit_messages = os.popen('git log origin/main..HEAD --pretty=format:\"%s\"').read().split('\n')
-          changes = {
+          types = {
+              'build': [],
+              'chore': [],
+              'ci': [],
+              'docs': [],
               'feat': [],
               'fix': [],
-              'docs': [],
-              'style': [],
-              'refactor': [],
+              'other': [],
               'perf': [],
-              'test': [],
-              'build': [],
-              'ci': [],
-              'chore': [],
+              'refactor': [],
               'revert': [],
-              'other': []
-          }
-          emoji_mapping = {
-              'feat': ':sparkles:',
-              'fix': ':bug:',
-              'docs': ':books:',
-              'style': ':lipstick:',
-              'refactor': ':recycle:',
-              'perf': ':rocket:',
-              'test': ':rotating_light:',
-              'build': ':hammer_and_wrench:',
-              'ci': ':gear:',
-              'chore': ':wrench:',
-              'revert': ':rewind:'
+              'style': [],
+              'test': [],
           }
 
           for message in commit_messages:
               matched = False
-              for change_type in changes.keys():
-                  if re.match(f'^{change_type}\(', message):
-                      changes[change_type].append(message)
+              for change_type in types.keys():
+                  if re.match(f'^{change_type}[\u2000-\u3300]?\(', message):
+                      types[change_type].append(message)
                       matched = True
                       break
               if not matched:
-                  # Remove the first two characters and try matching again
-                  message = message[2:]
-                  for change_type in changes.keys():
-                      if re.match(f'^{change_type}\(', message):
-                          changes[change_type].append(message)
-                          matched = True
-                          break
+                  # Remove the first and second character if the second char is a space and try matching again
+                  if len(message) > 1 and message[1] == ' ':
+                      message = message[2:]
+                      for change_type in types.keys():
+                          if re.match(f'^{change_type}[\u2000-\u3300]?\(', message):
+                              types[change_type].append(message)
+                              matched = True
+                              break
               if not matched:
-                  changes['other'].append(message)
+                  types['other'].append(message)
 
           pr_body = template.render(
               branch_name=os.getenv('GITHUB_REF'),
               actor=os.getenv('GITHUB_ACTOR'),
               description=os.getenv('PR_BODY_DESCRIPTION'),
               motivation_context=os.getenv('PR_BODY_MOTIVATION_AND_CONTEXT'),
-              changes=changes
+              types=types
           )
           print(pr_body)
           " > pr_body.txt
