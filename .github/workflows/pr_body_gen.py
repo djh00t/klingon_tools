@@ -107,8 +107,6 @@ def get_branch_name():
         text=True,
     )
     return result.stdout.strip()
-    result = subprocess.run(["pr-summary-generate"], capture_output=True, text=True)
-    return result.stdout.strip()
 
 
 def get_pr_number():
