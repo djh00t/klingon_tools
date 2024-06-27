@@ -99,21 +99,5 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         PR_TITLE: ${{ env.PR_TITLE }}
       run: |
-        PR_BODY=$(python3 .github/workflows/pr_body_gen.py > pr_body.txt)
+        PR_BODY=$(python3 .github/workflows/pr_body_gen.py)
         gh pr edit $PR_URL --title "$PR_TITLE" --body "$PR_BODY"
-
-
-#       - name: Generate PR Title from Template with OpenAI
-#         run: |
-#           pip install -e .
-#           PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
-#           if [ -z "$PR_TITLE" ]; then
-#             PR_TITLE=$(pr-title-generate)
-#           fi
-#           if [ -z "$PR_URL" ]; then
-#             # No PR exists, create one
-#             gh pr create --base main --head ${{ github.ref }} --title "$PR_TITLE" --body "$(cat pr_body.txt)"
-#           else
-#             # PR exists, update it
-#             gh pr edit $PR_URL --title "$PR_TITLE" --body "$(cat pr_body.txt)"
-#           fi
