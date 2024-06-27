@@ -48,7 +48,7 @@ jobs:
           echo "PR TITLE: $PR_TITLE"
           # Get Current PR Body
           PR_BODY=$(gh pr list --json body --jq '.[0].body' || echo "")
-          echo "PR_BODY=$PR_BODY" >> $GITHUB_ENV
+          echo "PR_BODY=$(echo "$PR_BODY" | sed ':a;N;$!ba;s/\n/\\n/g')" >> $GITHUB_ENV
           echo "PR BODY: $PR_BODY"
           # Get Current PR URL
           PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
@@ -57,11 +57,11 @@ jobs:
           # Get Current PR Body Description (Text between "## Description" and
           # "## Motivation and Context" lines)
           PR_BODY_DESCRIPTION=$(echo "$PR_BODY" | sed -n '/## Description/,/## Motivation and Context/p' | sed '1d;$d')
-          echo "PR_BODY_DESCRIPTION=$PR_BODY_DESCRIPTION" >> $GITHUB_ENV
+          echo "PR_BODY_DESCRIPTION=$(echo "$PR_BODY_DESCRIPTION" | sed ':a;N;$!ba;s/\n/\\n/g')" >> $GITHUB_ENV
           echo "PR BODY DESCRIPTION: $PR_BODY_DESCRIPTION"
           # Get Current PR Body Motivation and Context (Text between "## Motivation and Context" and the next heading)
           PR_BODY_MOTIVATION_AND_CONTEXT=$(echo "$PR_BODY" | sed -n '/## Motivation and Context/,/##/p' | sed '1d;$d')
-          echo "PR_BODY_MOTIVATION_AND_CONTEXT=$PR_BODY_MOTIVATION_AND_CONTEXT" >> $GITHUB_ENV
+          echo "PR_BODY_MOTIVATION_AND_CONTEXT=$(echo "$PR_BODY_MOTIVATION_AND_CONTEXT" | sed ':a;N;$!ba;s/\n/\\n/g')" >> $GITHUB_ENV
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
