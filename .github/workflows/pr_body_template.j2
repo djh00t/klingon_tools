@@ -15,7 +15,7 @@ This PR is automatically created for the new branch {{ branch_name }} created by
 {%- endif %}
 ## Types of Changes
 {%- if types.build %}
-- [ ] 🛠️ `build`: ***Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)***
+- [ ] 🛠️ `build`: ***Changes that affect the build system or external dependencies***
     {%- for change in types.build %}
     - {{ change }}
     {%- endfor %}
@@ -27,7 +27,7 @@ This PR is automatically created for the new branch {{ branch_name }} created by
     {%- endfor %}
 {%- endif %}
 {%- if types.ci %}
-- [ ] ⚙️ `ci`: ***Changes to CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)***
+- [ ] ⚙️ `ci`: ***Changes to CI configuration files and scripts***
     {%- for change in types.ci %}
     - {{ change }}
     {%- endfor %}
