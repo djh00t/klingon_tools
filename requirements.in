@@ -5,3 +5,4 @@ wheel
 pytest
 pytest-mock
 iniconfig
+ruamel.yaml
