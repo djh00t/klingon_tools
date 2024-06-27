@@ -1,9 +1,9 @@
 name: Release
 
 on:
-  push:
+  pull_request:
     branches:
-    - main
+      - main
 
 jobs:
   release:
@@ -33,8 +33,37 @@ jobs:
         python -m pip install --upgrade pip
         pip install twine
 
+    - name: Configure Git user
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Check if triggered by PR
+      id: check_pr
+      run: echo "is_pr=${{ github.event_name == 'pull_request' }}" >> $GITHUB_ENV
+
+    - name: Create new branch
+      if: env.is_pr == 'false'
+      run: |
+        git checkout -b release-branch
+
     - name: Semantic Release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PYPI_USER_AGENT: ${{ secrets.PYPI_USER_AGENT }}
       run: npx semantic-release
+
+    - name: Push changes to new branch
+      if: env.is_pr == 'false'
+      run: |
+        git push --set-upstream origin release-branch
+
+    - name: Create Pull Request
+      if: env.is_pr == 'false'
+      uses: peter-evans/create-pull-request@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: release-branch
+        title: "Release PR"
+        body: "This PR contains the changes for the new release."
+        labels: release
