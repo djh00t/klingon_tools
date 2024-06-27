@@ -95,9 +95,6 @@ jobs:
 
     - name: Generate PR Body from Template
       shell: /usr/bin/bash -e {0}
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        PR_TITLE: ${{ env.PR_TITLE }}
       run: |
         python3 -c "
         import os
