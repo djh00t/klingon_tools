@@ -27,37 +27,37 @@ This PR is automatically created for the new branch {{ branch_name }} created by
     {%- endfor %}
 {%- endif %}
 {%- if types.ci %}
-- [ ] ⚙️ `ci`: ***Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)***
+- [ ] ⚙️ `ci`: ***Changes to CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)***
     {%- for change in types.ci %}
     - {{ change }}
     {%- endfor %}
 {%- endif %}
 {%- if types.docs %}
-- [ ] 📚 `docs`: ***Documentation only changes***
+- [ ] 📚 `docs`: ***Documentation changes***
     {%- for change in types.docs %}
     - {{ change }}
     {%- endfor %}
 {%- endif %}
 {%- if types.feat %}
-- [ ] ✨ `feat`: ***A new feature***
+- [ ] ✨ `feat`: ***New features***
     {%- for change in types.feat %}
     - {{ change }}
     {%- endfor %}
 {%- endif %}
 {%- if types.fix %}
-- [ ] 🐛 `fix`: ***A bug fix***
+- [ ] 🐛 `fix`: ***Bug fixes***
     {%- for change in types.fix %}
     - {{ change }}
     {%- endfor %}
 {%- endif %}
 {%- if types.perf %}
-- [ ] 🚀 `perf`: ***A code change that improves performance***
+- [ ] 🚀 `perf`: ***Code changes that improve performance***
     {%- for change in types.perf %}
     - {{ change }}
     {%- endfor %}
 {%- endif %}
 {%- if types.refactor %}
-- [ ] ♻️ `refactor`: ***A code change that neither fixes a bug nor adds a feature***
+- [ ] ♻️ `refactor`: ***Code changes that neither fix bugs nor add features***
     {%- for change in types.refactor %}
     - {{ change }}
     {%- endfor %}
