@@ -1,4 +1,4 @@
-name: "🔄 Auto PR"
+name: Auto PR
 
 on:
   # Push to all but main and master
@@ -76,59 +76,55 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
-
-
-
       - name: Generate PR Body from Template
         run: |
           python3 -c "
           import os
           from jinja2 import Template
+          import re
 
           template_path = '.github/workflows/pr_body_template.j2'
           with open(template_path) as file_:
               template = Template(file_.read())
 
-          import re
-
-          commit_messages = os.popen('git log --pretty=format:"%s"').read().split('\n')
+          commit_messages = os.popen('git log --pretty=format:\"%s\"').read().split('\n')
           changes = {
-              "feat": [],
-              "fix": [],
-              "docs": [],
-              "style": [],
-              "refactor": [],
-              "perf": [],
-              "test": [],
-              "build": [],
-              "ci": [],
-              "chore": [],
-              "revert": [],
-              "other": []
+              'feat': [],
+              'fix': [],
+              'docs': [],
+              'style': [],
+              'refactor': [],
+              'perf': [],
+              'test': [],
+              'build': [],
+              'ci': [],
+              'chore': [],
+              'revert': [],
+              'other': []
           }
           emoji_mapping = {
-              "feat": "✨",
-              "fix": "🐛",
-              "docs": "📚",
-              "style": "💄",
-              "refactor": "♻️",
-              "perf": "🚀",
-              "test": "🚨",
-              "build": "🛠️",
-              "ci": "⚙️",
-              "chore": "🔧",
-              "revert": "⏪"
+              'feat': ':sparkles:',
+              'fix': ':bug:',
+              'docs': ':books:',
+              'style': ':lipstick:',
+              'refactor': ':recycle:',
+              'perf': ':rocket:',
+              'test': ':rotating_light:',
+              'build': ':hammer_and_wrench:',
+              'ci': ':gear:',
+              'chore': ':wrench:',
+              'revert': ':rewind:'
           }
 
           for message in commit_messages:
               matched = False
               for change_type, emoji in emoji_mapping.items():
-                  if re.match(f"^{emoji} {change_type}|^{change_type}", message):
+                  if re.match(f'^{emoji} {change_type}|^{change_type}', message):
                       changes[change_type].append(message)
                       matched = True
                       break
               if not matched:
-                  changes["other"].append(message)
+                  changes['other'].append(message)
 
           pr_body = template.render(
               branch_name=os.getenv('GITHUB_REF'),
@@ -139,19 +135,52 @@ jobs:
           )
           print(pr_body)
           " > pr_body.txt
+                  shell: /usr/bin/bash -e {0}
+                  env:
+                    pythonLocation: /opt/hostedtoolcache/Python/3.12.4/x64
+                    LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.4/x64/lib
+                    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+                    PR_TITLE: ${{ env.PR_TITLE }}
+                    PR_BODY: ${{ env.PR_BODY }}
+                    PR_URL: ${{ env.PR_URL }}
+                    PR_BODY_DESCRIPTION: ${{ env.PR_BODY_DESCRIPTION }}
+                    PR_BODY_MOTIVATION_AND_CONTEXT: ${{ env.PR_BODY_MOTIVATION_AND_CONTEXT }}
 
 
-      - name: Generate PR Title from Template with OpenAI
-        run: |
-          pip install -e .
-          PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
-          if [ -z "$PR_TITLE" ]; then
-            PR_TITLE=$(pr-title-generate)
-          fi
-          if [ -z "$PR_URL" ]; then
-            # No PR exists, create one
-            gh pr create --base main --head ${{ github.ref }} --title "$PR_TITLE" --body "$(cat pr_body.txt)"
-          else
-            # PR exists, update it
-            gh pr edit $PR_URL --title "$PR_TITLE" --body "$(cat pr_body.txt)"
-          fi
+#       - name: Generate PR Title from Template with OpenAI
+#         run: |
+#           pip install -e .
+#           PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
+#           if [ -z "$PR_TITLE" ]; then
+#             PR_TITLE=$(pr-title-generate)
+#           fi
+#           if [ -z "$PR_URL" ]; then
+#             # No PR exists, create one
+#             gh pr create --base main --head ${{ github.ref }} --title "$PR_TITLE" --body "$(cat pr_body.txt)"
+#           else
+#             # PR exists, update it
+#             gh pr edit $PR_URL --title "$PR_TITLE" --body "$(cat pr_body.txt)"
+#           fi
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4.1.7
+    - name: Set up Python
+      uses: actions/setup-python@v5.1.0
+      with:
+        python-version: 3.x
+    - name: Cache pip
+      uses: actions/cache@v4.0.2
+      with:
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        path: ~/.cache/pip
+        restore-keys: '${{ runner.os }}-pip-
+
+          '
+    - name: Run make check-packages
+      run: make check-packages
+    - name: Install klingon_tools
+      run: make install
+    - name: Run tests
+      run: make test
