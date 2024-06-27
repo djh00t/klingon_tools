@@ -39,6 +39,7 @@ setup(
         "watchdog",
         "pyyaml",
         "pytest",
+        "ruamel.yaml",
     ],
     include_package_data=True,
     description="A set of utilities for running and logging shell commands in a user-friendly manner.",
