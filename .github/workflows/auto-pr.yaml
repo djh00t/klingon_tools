@@ -11,53 +11,107 @@ jobs:
   create-pr:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4.1.7
-      with:
-        fetch-depth: 0  # Fetch all branches
-    - name: Cache APT packages
-      uses: actions/cache@v4.0.2
-      with:
-        key: ${{ runner.os }}-apt
-        path: /var/cache/apt
-        restore-keys: ${{ runner.os }}-apt-
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gh
-    - name: Install dependencies
-      run: |
-        make install
-    - name: Authenticate with GitHub CLI
-      env:
-        GH_TOKEN: ""
-      run: |
-        unset GH_TOKEN
-        GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
-        echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
-        gh auth status
-    - name: Set up environment variables
-      run: echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-    - name: Create or Update Pull Request
-      run: |
-        pip install -e .
-        PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
-        PR_TITLE=$(pr-title-generate)
-        PR_BODY=$(pr-body-generate)
-        if [ -z "$PR_URL" ]; then
-          # No PR exists, create one
-          gh pr create --base main --head ${{ github.ref }} --title "$PR_TITLE" --body "# Pull Request Summary
-          This PR is automatically created for the new branch ${{ github.ref }} created by @${{ github.actor }}
-          ${PR_BODY}"
-        else
-          # PR exists, update it
-          gh pr edit $PR_URL --title "$PR_TITLE" --body "# Pull Request Summary
-          This PR is automatically created for the new branch ${{ github.ref }} created by @${{ github.actor }}
-          ${PR_BODY}"
-        fi
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.7
+        with:
+          fetch-depth: 0  # Fetch all branches
+      - name: Cache APT packages
+        uses: actions/cache@v4.0.2
+        with:
+          key: ${{ runner.os }}-apt
+          path: /var/cache/apt
+          restore-keys: ${{ runner.os }}-apt-
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+          make install
+      - name: Authenticate with GitHub CLI
+        env:
+          GH_TOKEN: ""
+        run: |
+          unset GH_TOKEN
+          GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+          gh auth status
+      - name: Set up environment variables
+        run: |
+          # Setup OpenAI API Key
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
+          # Get Current PR Title
+          PR_TITLE=$(gh pr list --json title --jq '.[0].title' || echo "")
+          echo $PR_TITLE
+          # Get Current PR Body
+          PR_BODY=$(gh pr list --json body --jq '.[0].body' || echo "")
+          echo $PR_BODY
+          # Get Current PR URL
+          PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
+          echo $PR_URL
+          # Get Current PR Body Description (Text between "## Description" and
+          # "## Motivation and Context" lines)
+          PR_BODY_DESCRIPTION=$(echo "$PR_BODY" | sed -n '/## Description/,/## Motivation and Context/p' | sed '1d;$d')
+          echo $PR_BODY_DESCRIPTION
+
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+
+
+
+      - name: Generate PR Body from Template
+        run: |
+          python3 -c "
+          import os
+          from jinja2 import Template
+
+          template_path = '.github/workflows/pr_body_template.j2'
+          with open(template_path) as file_:
+              template = Template(file_.read())
+
+          pr_body = template.render(branch_name=os.getenv('GITHUB_REF'), actor=os.getenv('GITHUB_ACTOR'), changes='List of changes here')
+          print(pr_body)
+          " > pr_body.txt
+      - name: Authenticate with GitHub CLI
+        env:
+          GH_TOKEN: ""
+        run: |
+          unset GH_TOKEN
+          GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+          gh auth status
+
+      - name: Generate PR Body from Template
+        run: |
+          python3 -c "
+          import os
+          from jinja2 import Template
+
+          template_path = '.github/workflows/pr_body_template.j2'
+          with open(template_path) as file_:
+              template = Template(file_.read())
+
+          pr_body = template.render(branch_name=os.getenv('GITHUB_REF'), actor=os.getenv('GITHUB_ACTOR'), changes='List of changes here')
+          print(pr_body)
+          " > pr_body.txt
+
+
+      - name: Generate PR Title from Template with OpenAI
+        run: |
+          pip install -e .
+          PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
+          PR_TITLE=$(pr-title-generate)
+          if [ -z "$PR_URL" ]; then
+            # No PR exists, create one
+            gh pr create --base main --head ${{ github.ref }} --title "$PR_TITLE" --body "# Pull Request Summary
+            This PR is automatically created for the new branch ${{ github.ref }} created by @${{ github.actor }}
+            ${PR_BODY}"
+          else
+            # PR exists, update it
+            gh pr edit $PR_URL --title "$PR_TITLE" --body "# Pull Request Summary
+            This PR is automatically created for the new branch ${{ github.ref }} created by @${{ github.actor }}
+            ${PR_BODY}"
+          fi
