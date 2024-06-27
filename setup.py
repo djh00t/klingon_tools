@@ -22,6 +22,8 @@ setup(
             "push=klingon_tools.push:main",
             "gh-actions-update=klingon_tools.gh_actions_update:main",
             "pr-title-generate=klingon_tools.entrypoints:gh_pr_gen_title",
+            "pr-summary-generate=klingon_tools.entrypoints:gh_pr_gen_summary",
+            "pr-context-generate=klingon_tools.entrypoints:gh_pr_gen_context",
             "pr-body-generate=klingon_tools.entrypoints:gh_pr_gen_body",
         ],
     },
