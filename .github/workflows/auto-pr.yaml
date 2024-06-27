@@ -29,7 +29,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-
     - name: Set up Python
-      uses: actions/setup-python@v5.1.0
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
     - name: Install dependencies
@@ -57,6 +57,10 @@ jobs:
         key: ${{ runner.os }}-apt
         path: /var/cache/apt
         restore-keys: ${{ runner.os }}-apt-
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
     - name: Cache pip packages
       uses: actions/cache@v4.0.2
       with:
@@ -64,10 +68,6 @@ jobs:
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
-    - name: Set up Python
-      uses: actions/setup-python@v5.1.0
-      with:
-        python-version: '3.x'
     - name: Install dependencies
       run: |
         sudo apt-get update
