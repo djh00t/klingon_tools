@@ -104,11 +104,11 @@ jobs:
         from jinja2 import Template
         import re
 
-        template_path = ".github/workflows/pr_body_template.j2"
+        template_path = '.github/workflows/pr_body_template.j2'
         with open(template_path) as file_:
             template = Template(file_.read())
 
-        os.system("git fetch origin main")
+        os.system('git fetch origin main')
         commit_messages = (
             os.popen('git log origin/main..HEAD --pretty=format:"%s"').read().split("\n")
         )
