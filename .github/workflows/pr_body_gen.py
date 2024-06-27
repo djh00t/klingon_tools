@@ -96,7 +96,7 @@ def generate_summary():
 
 
 def generate_motivation_context():
-    result = subprocess.run(["pr-summary-context"], capture_output=True, text=True)
+    result = subprocess.run(["pr-context-generate"], capture_output=True, text=True)
     return result.stdout.strip()
 
 
