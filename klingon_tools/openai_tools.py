@@ -72,9 +72,9 @@ class OpenAITools:
             \"{diff}\"
             """,
             "pull_request_summary": """
-            Look at the conventional commit messages provided and generate an
-            extremely concise pull request summary. Keep the summary to the
-            point and avoid unnecessary details.
+            Look at the conventional commit messages provided and generate a
+            concise pull request summary. Keep the summary to the point and
+            avoid unnecessary details. Use bullet points where possible.
 
             The reader is busy and must be able to read and understand the
             content quickly & without fuss.
@@ -85,9 +85,10 @@ class OpenAITools:
             \"{diff}\"
             """,
             "pull_request_context": """
-            Look at the conventional commit messages provided and generate an
-            extremely concise context statement for the changes in the pull
-            request that clearly explains why the changes have been made.
+            Look at the conventional commit messages provided and generate a
+            concise context statement for the changes in the pull request that
+            clearly explains why the changes have been made. Use bullet points
+            where possible.
 
             Content should be returned as markdown without headings or font
             styling, bullet points and plain paragraph text are ok.
