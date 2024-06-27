@@ -44,18 +44,25 @@ jobs:
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
           # Get Current PR Title
           PR_TITLE=$(gh pr list --json title --jq '.[0].title' || echo "")
+          # If there is no value in PR_TITLE, generate one using pr-title-generate
+          if [ -z "$PR_TITLE" ]; then
+            PR_TITLE=$(pr-title-generate)
+          fi
+          echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
           echo "PR TITLE: $PR_TITLE"
           # Get Current PR Body
           PR_BODY=$(gh pr list --json body --jq '.[0].body' || echo "")
+          echo "PR_BODY=$PR_BODY" >> $GITHUB_ENV
           echo "PR BODY: $PR_BODY"
           # Get Current PR URL
           PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
+          echo "PR_URL=$PR_URL" >> $GITHUB_ENV
           echo "PR URL: $PR_URL"
           # Get Current PR Body Description (Text between "## Description" and
           # "## Motivation and Context" lines)
           PR_BODY_DESCRIPTION=$(echo "$PR_BODY" | sed -n '/## Description/,/## Motivation and Context/p' | sed '1d;$d')
+          echo "PR_BODY_DESCRIPTION=$PR_BODY_DESCRIPTION" >> $GITHUB_ENV
           echo "PR BODY DESCRIPTION: $PR_BODY_DESCRIPTION"
-
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
