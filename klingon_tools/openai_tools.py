@@ -62,11 +62,15 @@ class OpenAITools:
             \"{diff}\"
             """,
             "pull_request_summary": """
-            Look at the conventional commit messages provided and generate a
-            high level pull request summary of no more than 3 paragraphs. Keep the
-            summary to the point and avoid unnecessary details. The reader is
-            busy and must be able to read and understand the content quickly &
-            without fuss. Content should be returned as markdown without
+            Look at the conventional commit messages provided and generate an
+            extremely concise pull request summary of no more than 2
+            paragraphs. Keep the summary to the point and avoid unnecessary
+            details.
+
+            The reader is busy and must be able to read and understand the
+            content quickly & without fuss.
+
+            Content should be returned as markdown without
             headings or font styling, bullet points and plain paragraph text
             are ok.
             \"{diff}\"
