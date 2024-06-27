@@ -115,4 +115,4 @@ jobs:
         PR_TITLE: ${{ env.PR_TITLE }}
       run: |
         PR_BODY=$(python3 .github/workflows/pr_body_gen.py)
-        gh pr edit $PR_URL --title "$PR_TITLE" --body "$PR_BODY"
+        gh pr edit $PR_URL --title "${{ env.PR_TITLE }}" --body "$PR_BODY"
