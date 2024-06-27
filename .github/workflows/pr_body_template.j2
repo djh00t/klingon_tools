@@ -1,0 +1,84 @@
+# Pull Request Summary
+This PR is automatically created for the new branch {{ branch_name }} created by @{{ actor }}
+
+## Description
+{{ description }}
+
+## Motivation and Context
+{{ motivation_context }}
+
+{% if issue_links %}
+## Issue Links
+{% for link in issue_links %}
+- {{ link }}
+{% endfor %}
+{% endif %}
+
+## Types of Changes
+{% if changes.build %}
+- [ ] `build`: 🛠️ Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)
+    {% for change in changes.build %}
+    - {{ change }}
+    {% endfor %}
+{% endif %}
+{% if changes.chore %}
+- [ ] `chore`: 🔧 Other changes that don't modify src or test files
+    {% for change in changes.chore %}
+    - {{ change }}
+    {% endfor %}
+{% endif %}
+{% if changes.ci %}
+- [ ] `ci`: ⚙️ Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)
+    {% for change in changes.ci %}
+    - {{ change }}
+    {% endfor %}
+{% endif %}
+{% if changes.docs %}
+- [ ] `docs`: 📚 Documentation only changes
+    {% for change in changes.docs %}
+    - {{ change }}
+    {% endfor %}
+{% endif %}
+{% if changes.feat %}
+- [ ] `feat`: ✨ A new feature
+    {% for change in changes.feat %}
+    - {{ change }}
+    {% endfor %}
+{% endif %}
+{% if changes.fix %}
+- [ ] `fix`: 🐛 A bug fix
+    {% for change in changes.fix %}
+    - {{ change }}
+    {% endfor %}
+{% endif %}
+{% if changes.perf %}
+- [ ] `perf`: 🚀 A code change that improves performance
+    {% for change in changes.perf %}
+    - {{ change }}
+    {% endfor %}
+{% endif %}
+{% if changes.refactor %}
+- [ ] `refactor`: ♻️ A code change that neither fixes a bug nor adds a feature
+    {% for change in changes.refactor %}
+    - {{ change }}
+    {% endfor %}
+{% endif %}
+{% if changes.revert %}
+- [ ] `revert`: ⏪ Reverts a previous commit
+    {% for change in changes.revert %}
+    - {{ change }}
+    {% endfor %}
+{% endif %}
+{% if changes.style %}
+- [ ] `style`: 💄 Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+    {% for change in changes.style %}
+    - {{ change }}
+    {% endfor %}
+{% endif %}
+{% if changes.test %}
+- [ ] `test`: 🚨 Adding missing or correcting existing tests
+    {% for change in changes.test %}
+    - {{ change }}
+    {% endfor %}
+{% endif %}
+<!-- END OF TEMPLATE -->
