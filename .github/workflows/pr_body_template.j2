@@ -81,4 +81,10 @@ This PR is automatically created for the new branch {{ branch_name }} created by
     - {{ change }}
     {% endfor %}
 {% endif %}
+{% if changes.other %}
+- [ ] `other`: 🔄 Changes that don't fit into the above categories
+    {% for change in changes.other %}
+    - {{ change }}
+    {% endfor %}
+{% endif %}
 <!-- END OF TEMPLATE -->
