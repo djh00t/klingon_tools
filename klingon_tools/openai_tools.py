@@ -72,14 +72,9 @@ class OpenAITools:
             \"{diff}\"
             """,
             "pull_request_context": """
-            Look at the conventional commit messages provided and generate a
-            high level motivation and context statement for the changes in the
-            pull request of no more than 3 paragraphs that clearly explains why the
-            changes have been made.
-
-            Keep the summary terse and to the point, avoiding unnecessary
-            details. The reader is busy and must be able to read and understand
-            the content quickly & without fuss.
+            Look at the conventional commit messages provided and generate an
+            extremely concise context statement for the changes in the pull
+            request that clearly explains why the changes have been made.
 
             Content should be returned as markdown without headings or font
             styling, bullet points and plain paragraph text are ok.
