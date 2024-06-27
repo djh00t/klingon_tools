@@ -94,6 +94,10 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     - name: Generate PR Body from Template
+      shell: /usr/bin/bash -e {0}
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        PR_TITLE: ${{ env.PR_TITLE }}
       run: |
         python3 -c "
         import os
@@ -154,10 +158,7 @@ jobs:
         )
         print(pr_body)
         " > pr_body.txt
-      shell: /usr/bin/bash -e {0}
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        PR_TITLE: ${{ env.PR_TITLE }}
+
     - name: Update PR Body
       run: |
         PR_BODY=$(cat pr_body.txt)
