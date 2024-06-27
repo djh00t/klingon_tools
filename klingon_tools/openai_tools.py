@@ -65,34 +65,54 @@ class OpenAITools:
             "pull_request_body": """
             Look at the conventional commit messages provided and generate a
             pull request body using the following markdown as a template:
-            <!-- START OF TEMPLATE -->
-            # Pull Request Summary
+<!-- START OF TEMPLATE -->
+# Pull Request Summary
 
-            ## Description
-            <!-- A brief description of the changes introduced by this PR -->
+## Description
+<!-- A brief description of the changes introduced by this PR -->
 
-            ## Motivation and Context
-            <!-- Why is this change required? What problem does it solve? -->
+## Motivation and Context
+<!-- Why is this change required? What problem does it solve? -->
 
-            ## Issue Link
-            <!-- Link to any related related issues (optional) -->
+## Issue Link
+<!-- Link to any related related issues (optional) -->
 
-            ## Types of Changes
-            <!-- What types of changes does your code introduce? Put an `x` in all the boxes that apply and add indented bullet point descriptions for each change of that type under it -->
-            - [ ] `feat`: ✨ A new feature
-                - Change 1
-                - Change 2
-            - [ ] `fix`: 🐛 A bug fix
-            - [ ] `docs`: 📚 Documentation only changes
-            - [ ] `style`: 💄 Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
-            - [ ] `refactor`: ♻️ A code change that neither fixes a bug nor adds a feature
-            - [ ] `perf`: 🚀 A code change that improves performance
-            - [ ] `test`: 🚨 Adding missing or correcting existing tests
-            - [ ] `build`: 🛠️ Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)
-            - [ ] `ci`: ⚙️ Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)
-            - [ ] `chore`: 🔧 Other changes that don't modify src or test files
-            - [ ] `revert`: ⏪ Reverts a previous commit
-            <!-- END OF TEMPLATE -->
+## Types of Changes
+<!-- What types of changes does your code introduce? Put an `x` in all the boxes that apply and add indented bullet point descriptions for each change of that type under it -->
+- [ ] `feat`: ✨ A new feature
+    - Change 1
+    - Change 2
+- [ ] `fix`: 🐛 A bug fix
+    - Change 1
+    - Change 2
+- [ ] `docs`: 📚 Documentation only changes
+    - Change 1
+    - Change 2
+- [ ] `style`: 💄 Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+    - Change 1
+    - Change 2
+- [ ] `refactor`: ♻️ A code change that neither fixes a bug nor adds a feature
+    - Change 1
+    - Change 2
+- [ ] `perf`: 🚀 A code change that improves performance
+    - Change 1
+    - Change 2
+- [ ] `test`: 🚨 Adding missing or correcting existing tests
+    - Change 1
+    - Change 2
+- [ ] `build`: 🛠️ Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)
+    - Change 1
+    - Change 2
+- [ ] `ci`: ⚙️ Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)
+    - Change 1
+    - Change 2
+- [ ] `chore`: 🔧 Other changes that don't modify src or test files
+    - Change 1
+    - Change 2
+- [ ] `revert`: ⏪ Reverts a previous commit
+    - Change 1
+    - Change 2
+<!-- END OF TEMPLATE -->
             \"{diff}\"
             """,
             "release_body": """
