@@ -62,6 +62,23 @@ class OpenAITools:
             the contributor, commit type or scope in the title.
             \"{diff}\"
             """,
+            "pull_request_summary": """
+            Look at the conventional commit messages provided and generate a
+            high level pull request summary of up to 3 paragraphs. Keep the
+            summary to the point and avoid unnecessary details. The reader is
+            busy and must be able to read and understand the content quickly &
+            without fuss.
+            \"{diff}\"
+            """,
+            "pull_request_context": """
+            Look at the conventional commit messages provided and generate a
+            high level motivation and context statement for the changes in the
+            pull request up to 2 paragraphs that clearly explains why the
+            changes are happening. Keep the summary to the point and
+            avoid unnecessary details. The reader is busy and must be able to
+            read and understand the content quickly & without fuss.
+            \"{diff}\"
+            """,
             "pull_request_body": """
             Look at the conventional commit messages provided and generate a
             pull request body using the following markdown as a template:
@@ -494,25 +511,25 @@ class OpenAITools:
 
         return formatted_title
 
-    def generate_pull_request_body(self, diff: str, dryrun: bool = False) -> str:
-        """Generates a pull request body from the git log differences between
+    def generate_pull_request_summary(self, diff: str, dryrun: bool = False) -> str:
+        """Generates a pull request summary from the git log differences between
         current branch and origin/main..HEAD.
 
-        This function generates a pull request body based on the provided git
-        messages using the OpenAI API. It formats the generated title and
-        handles any errors related to the title format.
+        This function generates a pull request summary based on the provided git
+        commit messages using the OpenAI API. It formats the generated summary and
+        handles any errors related to the summary format.
 
-        Entrypoint: pr-body-generate
+        Entrypoint: pr-summary-generate
 
         Args:
-            diff (str): The diff to include in the generated pull request title.
-            dryrun (bool): If True, unstages all files after generating the title.
+            diff (str): The diff to include in the generated pull request summary.
+            dryrun (bool): If True, unstages all files after generating the summary.
 
         Returns:
-            str: The formatted pull request title.
+            str: The formatted pull request summary.
 
         Raises:
-            ValueError: If the pull request title format is incorrect.
+            ValueError: If the pull request summary format is incorrect.
         """
         # Check if the origin/main branch exists
         branch_exists = (
@@ -524,8 +541,119 @@ class OpenAITools:
             == 0
         )
 
-        # Get the git user name
-        git_user = get_git_user_info()[0]
+        if branch_exists:
+            # Get a log of all changes that this PR is ahead of main by.
+            commit_result = subprocess.run(
+                ["git", "--no-pager", "log", "origin/main..HEAD", "--pretty=format:%s"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        else:
+            logger.warning("The branch 'origin/main' does not exist.")
+            commit_result = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout=""
+            )
+
+        # Split the result by lines to get individual commit messages
+        commits_ahead = commit_result.stdout.splitlines()
+
+        # Save the commits to a single variable
+        commits = ""
+        for commit in commits_ahead:
+            commits += commit + "\n"
+
+        # Generate the pull request summary content using the OpenAI API
+        generated_summary = self.generate_content("pull_request_summary", commits)
+
+        return generated_summary
+
+    def generate_pull_request_context(self, diff: str, dryrun: bool = False) -> str:
+        """Generates a pull request context from the git log differences between
+        current branch and origin/main..HEAD.
+
+        This function generates a pull request context based on the provided git
+        commit messages using the OpenAI API. It formats the generated context and
+        handles any errors related to the context format.
+
+        Entrypoint: pr-context-generate
+
+        Args:
+            diff (str): The diff to include in the generated pull request context.
+            dryrun (bool): If True, unstages all files after generating the context.
+
+        Returns:
+            str: The formatted pull request context.
+
+        Raises:
+            ValueError: If the pull request context format is incorrect.
+        """
+        # Check if the origin/main branch exists
+        branch_exists = (
+            subprocess.run(
+                ["git", "rev-parse", "--verify", "origin/main"],
+                capture_output=True,
+                text=True,
+            ).returncode
+            == 0
+        )
+
+        if branch_exists:
+            # Get a log of all changes that this PR is ahead of main by.
+            commit_result = subprocess.run(
+                ["git", "--no-pager", "log", "origin/main..HEAD", "--pretty=format:%s"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        else:
+            logger.warning("The branch 'origin/main' does not exist.")
+            commit_result = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout=""
+            )
+
+        # Split the result by lines to get individual commit messages
+        commits_ahead = commit_result.stdout.splitlines()
+
+        # Save the commits to a single variable
+        commits = ""
+        for commit in commits_ahead:
+            commits += commit + "\n"
+
+        # Generate the pull request context content using the OpenAI API
+        generated_context = self.generate_content("pull_request_context", commits)
+
+        return generated_context
+
+    def generate_pull_request_body(self, diff: str, dryrun: bool = False) -> str:
+        """Generates a pull request body from the git log differences between
+        current branch and origin/main..HEAD.
+
+        This function generates a pull request body based on the provided git
+        messages using the OpenAI API. It formats the generated body and
+        handles any errors related to the body format.
+
+        Entrypoint: pr-body-generate
+
+        Args:
+            diff (str): The diff to include in the generated pull request body.
+            dryrun (bool): If True, unstages all files after generating the body.
+
+        Returns:
+            str: The formatted pull request body.
+
+        Raises:
+            ValueError: If the pull request body format is incorrect.
+        """
+        # Check if the origin/main branch exists
+        branch_exists = (
+            subprocess.run(
+                ["git", "rev-parse", "--verify", "origin/main"],
+                capture_output=True,
+                text=True,
+            ).returncode
+            == 0
+        )
 
         if branch_exists:
             # Get a log of all changes that this PR is ahead of main by.
