@@ -82,16 +82,14 @@ jobs:
         GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
         echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
         gh auth status
-    - name: Set up environment variables
+    - name: Generate PR Summary and Context
       run: |
-        # Setup OpenAI API Key
-        echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
-        # Get Current PR Title
-        PR_TITLE=$(gh pr list --json title --jq '.[0].title' || echo "")
-        echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
-        echo "PR TITLE: $PR_TITLE"
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        PR_BODY_DESCRIPTION=$(pr-summary-generate)
+        PR_BODY_MOTIVATION_AND_CONTEXT=$(pr-context-generate)
+        echo "PR_BODY_DESCRIPTION=$PR_BODY_DESCRIPTION" >> $GITHUB_ENV
+        echo "PR_BODY_MOTIVATION_AND_CONTEXT=$PR_BODY_MOTIVATION_AND_CONTEXT" >> $GITHUB_ENV
+        echo "PR_BODY_DESCRIPTION: $PR_BODY_DESCRIPTION"
+        echo "PR_BODY_MOTIVATION_AND_CONTEXT: $PR_BODY_MOTIVATION_AND_CONTEXT"
 
     - name: Generate PR Body from Template
       shell: /usr/bin/bash -e {0}
@@ -147,8 +145,8 @@ jobs:
         pr_body = template.render(
             branch_name=os.getenv('GITHUB_REF'),
             actor=os.getenv('GITHUB_ACTOR'),
-            description=os.getenv('PR_BODY_DESCRIPTION'),
-            motivation_context=os.getenv('PR_BODY_MOTIVATION_AND_CONTEXT'),
+            description=os.getenv('PR_BODY_DESCRIPTION', ''),
+            motivation_context=os.getenv('PR_BODY_MOTIVATION_AND_CONTEXT', ''),
             types=types
         )
         print(pr_body)
