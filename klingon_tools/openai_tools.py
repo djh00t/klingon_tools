@@ -39,15 +39,25 @@ class OpenAITools:
             <type>(scope): <description>
 
             ```
-            Ensure the following:
 
-            Type and Scope: Select the most specific of application name, file name, class name, method/function name, or feature name for the commit scope. If in doubt, use the name of the file being modified.
-            Types: Use fix: for patches that fix bugs, feat: for introducing new features, and other recognized types as per conventions (build:, chore:, ci:, docs:, style:, refactor:, perf:, test:, etc.).
+            Consider the following when selecting commit types:
+                build: Changes that affect the build system or external dependencies
+                chore: Other changes that don't modify src or test files
+                ci: Changes to CI configuration files and scripts
+                docs: Documentation changes
+                feat: New features
+                fix: Bug fixes
+                perf: Code changes that improve performance
+                refactor: Code changes that neither fix bugs nor add features
+                revert: Reverts a previous commit
+                style: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+                test: Adding missing or correcting existing tests
+                other: Changes that don't fit into the above categories
+
+            Scope: Select the most specific of application name, file name, class name, method/function name, or feature name for the commit scope. If in doubt, use the name of the file being modified.
             Breaking Changes: Include a BREAKING CHANGE: footer or append ! after type/scope for commits that introduce breaking API changes.
-            Footers: Use a convention similar to git trailer format for additional footers.
-            Ensure the commit message generation handles diverse scenarios effectively and prompts for necessary inputs when ambiguities arise.
-            Do not add "Co-authored-by" or other footers unless explicitly
-            required.
+            Footers: Breaking change is the only footer permitted.
+            Do not add "Co-authored-by" or other footers unless explicitly requested.
             """,
             "commit_message_user": """
             Generate a git commit message based on these diffs:
