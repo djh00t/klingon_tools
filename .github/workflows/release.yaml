@@ -65,8 +65,7 @@ jobs:
         PYPI_USER_AGENT: ${{ secrets.PYPI_USER_AGENT }}
 
     - name: Auto-merge Release PR
-      uses: peter-evans/merge-pull-request@Unknown
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        pull-request: ${{ steps.create-pull-request.outputs.pull-request-number }}
-        merge-method: squash
+      run: |
+        gh pr merge ${{ steps.create-pull-request.outputs.pull-request-number }} --squash --admin
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
