@@ -67,7 +67,7 @@ class OpenAITools:
             Look at the conventional commit messages provided and generate a
             pull request title that clearly summarizes the changes included in
             them. Keep the summary high level extremely terse and you MUST
-            limit it to no more than 72 characters. You do not need to include
+            limit it to no more than 72 characters. Do not include
             the contributor, commit type or scope in the title.
             \"{diff}\"
             """,
