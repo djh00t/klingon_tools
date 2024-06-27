@@ -44,7 +44,7 @@ jobs:
       run: make test
 
   create-pr:
-    # needs: test
+    needs: test
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
