@@ -74,7 +74,7 @@ jobs:
               template = Template(file_.read())
 
           os.system('git fetch origin main')
-          commit_messages = os.popen('git log origin/main..HEAD --pretty=format:\"%s\"').read().split('\n')
+          commit_messages = os.open('git log origin/main..HEAD --pretty=format:\"%s\"').read().split('\n')
           types = {
               'build': [],
               'chore': [],
@@ -93,7 +93,7 @@ jobs:
           for message in commit_messages:
               matched = False
               for change_type in types.keys():
-                  if re.match(f'^{change_type}[\u2000-\u3300]?\(', message):
+                  if re.match(f'^[\u2000-\u3300]*{change_type}(\(|: )', message):
                       types[change_type].append(message)
                       matched = True
                       break
@@ -102,7 +102,7 @@ jobs:
                   if len(message) > 1 and message[1] == ' ':
                       message = message[2:]
                       for change_type in types.keys():
-                          if re.match(f'^{change_type}[\u2000-\u3300]?\(', message):
+                          if re.match(f'^[\u2000-\u3300]*{change_type}(\(|: )', message):
                               types[change_type].append(message)
                               matched = True
                               break
