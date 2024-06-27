@@ -90,6 +90,9 @@ class OpenAITools:
             concise context statement for the changes in the pull request that
             clearly explains why the changes have been made.
 
+            Use bullet points to list the reasons for the changes, but use as
+            few as possible to keep the context concise.
+
             Content should be returned as markdown without headings or font
             styling, bullet points and plain paragraph text are ok.
             \"{diff}\"
