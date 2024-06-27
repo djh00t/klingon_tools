@@ -8,7 +8,43 @@ on:
       - master
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.7
+        with:
+          fetch-depth: 0  # Fetch all branches
+      - name: Cache APT packages
+        uses: actions/cache@v4.0.2
+        with:
+          key: ${{ runner.os }}-apt
+          path: /var/cache/apt
+          restore-keys: ${{ runner.os }}-apt-
+      - name: Cache pip packages
+        uses: actions/cache@v4.0.2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+          pip install -r requirements.txt
+          make install
+      - name: Install klingon_tools
+        run: make install
+      - name: Run tests
+        run: make test
+
   create-pr:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -143,38 +179,3 @@ jobs:
 #             # PR exists, update it
 #             gh pr edit $PR_URL --title "$PR_TITLE" --body "$(cat pr_body.txt)"
 #           fi
-  test:
-    needs: create-pr
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4.1.7
-        with:
-          fetch-depth: 0  # Fetch all branches
-      - name: Cache APT packages
-        uses: actions/cache@v4.0.2
-        with:
-          key: ${{ runner.os }}-apt
-          path: /var/cache/apt
-          restore-keys: ${{ runner.os }}-apt-
-      - name: Cache pip packages
-        uses: actions/cache@v4.0.2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
-          pip install -r requirements.txt
-          make install
-      - name: Install klingon_tools
-        run: make install
-      - name: Run tests
-        run: make test
