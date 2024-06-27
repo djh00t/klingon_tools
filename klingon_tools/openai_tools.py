@@ -63,8 +63,36 @@ class OpenAITools:
             \"{diff}\"
             """,
             "pull_request_body": """
-            Look at the conventional commit messages provided and generate a pull request body that clearly summarizes the changes included in them.
-            Group changes by the conventional commit type and scope, and provide a brief description of each change.
+            Look at the conventional commit messages provided and generate a
+            pull request body using the following markdown as a template:
+            ```
+            # Pull Request Summary
+
+            ## Description
+            <!-- A brief description of the changes introduced by this PR -->
+
+            ## Motivation and Context
+            <!-- Why is this change required? What problem does it solve? -->
+
+            ## Issue Link
+            <!-- Link to any related related issues (optional) -->
+
+            ## Types of Changes
+            <!-- What types of changes does your code introduce? Put an `x` in all the boxes that apply and add indented bullet point descriptions for each change of that type under it -->
+            - [ ] `feat`: ✨ A new feature
+                - Change 1
+                - Change 2
+            - [ ] `fix`: 🐛 A bug fix
+            - [ ] `docs`: 📚 Documentation only changes
+            - [ ] `style`: 💄 Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+            - [ ] `refactor`: ♻️ A code change that neither fixes a bug nor adds a feature
+            - [ ] `perf`: 🚀 A code change that improves performance
+            - [ ] `test`: 🚨 Adding missing or correcting existing tests
+            - [ ] `build`: 🛠️ Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)
+            - [ ] `ci`: ⚙️ Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)
+            - [ ] `chore`: 🔧 Other changes that don't modify src or test files
+            - [ ] `revert`: ⏪ Reverts a previous commit
+            ```
             \"{diff}\"
             """,
             "release_body": """
