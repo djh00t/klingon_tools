@@ -121,7 +121,7 @@ jobs:
             'test': [],
         }
 
-        print("Commit messages fetched:")
+        # print("Commit messages fetched:")
         for message in commit_messages:
             print(f"Raw commit message: {message}")
             matched = False
