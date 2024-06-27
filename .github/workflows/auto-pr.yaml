@@ -141,8 +141,14 @@ jobs:
             "]+", flags=re.UNICODE
         )
 
+        def remove_emojis_and_leading_spaces(text):
+            text = emoji_pattern.sub("", text).strip()
+            if len(text) > 1 and text[1] == ' ':
+                text = text[2:]
+            return text
+
         for message in commit_messages:
-            message = emoji_pattern.sub("", message).strip()
+            message = remove_emojis_and_leading_spaces(message)
             matched = False
             for change_type in types.keys():
                 if re.match(rf'^[\U0001F300-\U0001F5FF\u2000-\u3300]*{change_type}\(\S+\):', message, re.UNICODE) or re.match(rf'^[\U0001F300-\U0001F5FF\u2000-\u3300]*{change_type}:', message, re.UNICODE):
