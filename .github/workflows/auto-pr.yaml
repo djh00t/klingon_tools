@@ -125,9 +125,7 @@ jobs:
             'test': [],
         }
 
-        # print("Commit messages fetched:")
         for message in commit_messages:
-            print(f"Raw commit message: {message}")
             matched = False
             for change_type in types.keys():
                 if re.match(rf'^[\U0001F300-\U0001F5FF\u2000-\u3300]*{change_type}(\(|:)', message, re.UNICODE):
@@ -158,7 +156,7 @@ jobs:
         )
         print(pr_body)
         " > pr_body.txt
-
+        cat pr_body.txt
     - name: Update PR Body
       run: |
         PR_BODY=$(cat pr_body.txt)
