@@ -129,7 +129,6 @@ jobs:
             matched = False
             for change_type in types.keys():
                 if re.match(rf'^[\U0001F300-\U0001F5FF\u2000-\u3300]*{change_type}(\(|:)', message, re.UNICODE):
-                    # print(f"Matched commit message: {message} as type: {change_type}")
                     types[change_type].append(message)
                     matched = True
                     break
@@ -139,12 +138,10 @@ jobs:
                     message = message[2:]
                     for change_type in types.keys():
                         if re.match(rf'^[\U0001F300-\U0001F5FF\u2000-\u3300]*{change_type}(\(|:)', message, re.UNICODE):
-                            # print(f"Matched commit message after trimming: {message} as type: {change_type}")
                             types[change_type].append(message)
                             matched = True
                             break
             if not matched:
-                # print(f"Unmatched commit message: {message} classified as 'other'")
                 types['other'].append(message)
 
         pr_body = template.render(
