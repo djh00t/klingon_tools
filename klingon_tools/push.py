@@ -101,8 +101,8 @@ def workflow_process_file(file_name: str, repo: Repo) -> None:
     diff = repo.git.diff("HEAD")
     openai_tools = OpenAITools()
     commit_message = openai_tools.generate_commit_message(diff)
-    logger.debug(message=f"Generated commit message: {commit_message}", status="🐞")
 
+    # Run pre-commit hooks on the file
     success = git_pre_commit(file_name, repo)
 
     if success:
@@ -113,7 +113,7 @@ def workflow_process_file(file_name: str, repo: Repo) -> None:
             )
         else:
             # Commit the file
-            git_commit_file(file_name, commit_message, repo)
+            git_commit_file(file_name, repo)
             # Push the commit
             if args.dryrun:
                 # Log dry run mode and skip push
