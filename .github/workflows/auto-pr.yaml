@@ -4,164 +4,164 @@ on:
   # Push to all but main and master
   push:
     branches-ignore:
-      - main
-      - master
+    - main
+    - master
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4.1.7
-        with:
-          fetch-depth: 0  # Fetch all branches
-      - name: Cache APT packages
-        uses: actions/cache@v4.0.2
-        with:
-          key: ${{ runner.os }}-apt
-          path: /var/cache/apt
-          restore-keys: ${{ runner.os }}-apt-
-      - name: Cache pip packages
-        uses: actions/cache@v4.0.2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
-          pip install -r requirements.txt
-          make install
-      - name: Install klingon_tools
-        run: make install
-      - name: Run tests
-        run: make test
+    - name: Checkout repository
+      uses: actions/checkout@v4.1.7
+      with:
+        fetch-depth: 0    # Fetch all branches
+    - name: Cache APT packages
+      uses: actions/cache@v4.0.2
+      with:
+        key: ${{ runner.os }}-apt
+        path: /var/cache/apt
+        restore-keys: ${{ runner.os }}-apt-
+    - name: Cache pip packages
+      uses: actions/cache@v4.0.2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - name: Set up Python
+      uses: actions/setup-python@v5.1.0
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gh
+        pip install -r requirements.txt
+        make install
+    - name: Install klingon_tools
+      run: make install
+    - name: Run tests
+      run: make test
 
   create-pr:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4.1.7
-        with:
-          fetch-depth: 0  # Fetch all branches
-      - name: Cache APT packages
-        uses: actions/cache@v4.0.2
-        with:
-          key: ${{ runner.os }}-apt
-          path: /var/cache/apt
-          restore-keys: ${{ runner.os }}-apt-
-      - name: Cache pip packages
-        uses: actions/cache@v4.0.2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
-          pip install -r requirements.txt
-          make install
-      - name: Authenticate with GitHub CLI
-        env:
-          GH_TOKEN: ""
-        run: |
-          unset GH_TOKEN
-          GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
-          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
-          gh auth status
-      - name: Set up environment variables
-        run: |
-          # Setup OpenAI API Key
-          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
-          # Get Current PR Title
-          PR_TITLE=$(gh pr list --json title --jq '.[0].title' || echo "")
-          echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
-          echo "PR TITLE: $PR_TITLE"
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    - name: Checkout repository
+      uses: actions/checkout@v4.1.7
+      with:
+        fetch-depth: 0    # Fetch all branches
+    - name: Cache APT packages
+      uses: actions/cache@v4.0.2
+      with:
+        key: ${{ runner.os }}-apt
+        path: /var/cache/apt
+        restore-keys: ${{ runner.os }}-apt-
+    - name: Cache pip packages
+      uses: actions/cache@v4.0.2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - name: Set up Python
+      uses: actions/setup-python@v5.1.0
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gh
+        pip install -r requirements.txt
+        make install
+    - name: Authenticate with GitHub CLI
+      env:
+        GH_TOKEN: ""
+      run: |
+        unset GH_TOKEN
+        GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
+        echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+        gh auth status
+    - name: Set up environment variables
+      run: |
+        # Setup OpenAI API Key
+        echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
+        # Get Current PR Title
+        PR_TITLE=$(gh pr list --json title --jq '.[0].title' || echo "")
+        echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
+        echo "PR TITLE: $PR_TITLE"
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
-      - name: Generate PR Body from Template
-        run: |
-          python3 -c "
-          import os
-          from jinja2 import Template
-          import re
+    - name: Generate PR Body from Template
+      run: |
+        python3 -c "
+        import os
+        from jinja2 import Template
+        import re
 
-          template_path = '.github/workflows/pr_body_template.j2'
-          with open(template_path) as file_:
-              template = Template(file_.read())
+        template_path = '.github/workflows/pr_body_template.j2'
+        with open(template_path) as file_:
+            template = Template(file_.read())
 
-          os.system('git fetch origin main')
-          commit_messages = os.popen('git log origin/main..HEAD --pretty=format:\"%s\"').read().split('\n')
-          types = {
-              'build': [],
-              'chore': [],
-              'ci': [],
-              'docs': [],
-              'feat': [],
-              'fix': [],
-              'other': [],
-              'perf': [],
-              'refactor': [],
-              'revert': [],
-              'style': [],
-              'test': [],
-          }
+        os.system('git fetch origin main')
+        commit_messages = os.popen('git log origin/main..HEAD --pretty=format:\"%s\"').read().split('\n')
+        types = {
+            'build': [],
+            'chore': [],
+            'ci': [],
+            'docs': [],
+            'feat': [],
+            'fix': [],
+            'other': [],
+            'perf': [],
+            'refactor': [],
+            'revert': [],
+            'style': [],
+            'test': [],
+        }
 
-          print("Commit messages fetched:")
-          for message in commit_messages:
-              print(f"Raw commit message: {message}")
-              matched = False
-              for change_type in types.keys():
-                  if re.match(rf'^[\U0001F300-\U0001F5FF\u2000-\u3300]*{change_type}(\(|:)', message, re.UNICODE):
-                      print(f"Matched commit message: {message} as type: {change_type}")
-                      types[change_type].append(message)
-                      matched = True
-                      break
-              if not matched:
-                  # Remove the first and second character if the second char is a space and try matching again
-                  if len(message) > 1 and message[1] == ' ':
-                      message = message[2:]
-                      for change_type in types.keys():
-                          if re.match(rf'^[\U0001F300-\U0001F5FF\u2000-\u3300]*{change_type}(\(|:)', message, re.UNICODE):
-                              print(f"Matched commit message after trimming: {message} as type: {change_type}")
-                              types[change_type].append(message)
-                              matched = True
-                              break
-              if not matched:
-                  print(f"Unmatched commit message: {message} classified as 'other'")
-                  types['other'].append(message)
+        print("Commit messages fetched:")
+        for message in commit_messages:
+            print(f"Raw commit message: {message}")
+            matched = False
+            for change_type in types.keys():
+                if re.match(rf'^[\U0001F300-\U0001F5FF\u2000-\u3300]*{change_type}(\(|:)', message, re.UNICODE):
+                    print(f"Matched commit message: {message} as type: {change_type}")
+                    types[change_type].append(message)
+                    matched = True
+                    break
+            if not matched:
+                # Remove the first and second character if the second char is a space and try matching again
+                if len(message) > 1 and message[1] == ' ':
+                    message = message[2:]
+                    for change_type in types.keys():
+                        if re.match(rf'^[\U0001F300-\U0001F5FF\u2000-\u3300]*{change_type}(\(|:)', message, re.UNICODE):
+                            print(f"Matched commit message after trimming: {message} as type: {change_type}")
+                            types[change_type].append(message)
+                            matched = True
+                            break
+            if not matched:
+                print(f"Unmatched commit message: {message} classified as 'other'")
+                types['other'].append(message)
 
-          pr_body = template.render(
-              branch_name=os.getenv('GITHUB_REF'),
-              actor=os.getenv('GITHUB_ACTOR'),
-              description=os.getenv('PR_BODY_DESCRIPTION'),
-              motivation_context=os.getenv('PR_BODY_MOTIVATION_AND_CONTEXT'),
-              types=types
-          )
-          print(pr_body)
-          " > pr_body.txt
-                  shell: /usr/bin/bash -e {0}
-                  env:
-                    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-                    PR_TITLE: ${{ env.PR_TITLE }}
-                - name: Update PR Body
-                  run: |
-                    PR_BODY=$(cat pr_body.txt)
-                    gh pr edit $PR_URL --title "$PR_TITLE" --body "$PR_BODY"
+        pr_body = template.render(
+            branch_name=os.getenv('GITHUB_REF'),
+            actor=os.getenv('GITHUB_ACTOR'),
+            description=os.getenv('PR_BODY_DESCRIPTION'),
+            motivation_context=os.getenv('PR_BODY_MOTIVATION_AND_CONTEXT'),
+            types=types
+        )
+        print(pr_body)
+        " > pr_body.txt
+                shell: /usr/bin/bash -e {0}
+                env:
+                  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+                  PR_TITLE: ${{ env.PR_TITLE }}
+              - name: Update PR Body
+                run: |
+                  PR_BODY=$(cat pr_body.txt)
+                  gh pr edit $PR_URL --title "$PR_TITLE" --body "$PR_BODY"
 
 
 #       - name: Generate PR Title from Template with OpenAI
