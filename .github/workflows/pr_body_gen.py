@@ -1,6 +1,8 @@
+#!/usr/bin/env python3
 import os
 from jinja2 import Template
 import re
+import subprocess
 
 template_path = ".github/workflows/pr_body_template.j2"
 with open(template_path) as file_:
@@ -10,6 +12,7 @@ os.system("git fetch origin main")
 commit_messages = (
     os.popen('git log origin/main..HEAD --pretty=format:"%s"').read().split("\n")
 )
+
 types = {
     "build": [],
     "chore": [],
@@ -86,11 +89,49 @@ for message in commit_messages:
     if not matched:
         types["other"].append(message)
 
+
+def generate_summary():
+    result = subprocess.run(["pr-summary-generate"], capture_output=True, text=True)
+    return result.stdout.strip()
+
+
+def generate_motivation_context():
+    result = subprocess.run(["pr-summary-context"], capture_output=True, text=True)
+    return result.stdout.strip()
+
+
+def get_branch_name():
+    result = subprocess.run(
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip()
+    result = subprocess.run(["pr-summary-generate"], capture_output=True, text=True)
+    return result.stdout.strip()
+
+
+def get_pr_number():
+    result = subprocess.run(
+        ["gh", "pr", "view", "--json", "number", "--jq", ".number"],
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip()
+
+
+branch_name = get_branch_name()
+summary = generate_summary()
+motivation_context = generate_motivation_context()
+pr_number = get_pr_number()
+
 pr_body = template.render(
-    branch_name=os.getenv("GITHUB_REF"),
+    summary=summary,
+    branch_name=branch_name,
     actor=os.getenv("GITHUB_ACTOR"),
-    description=os.getenv("PR_BODY_DESCRIPTION"),
-    motivation_context=os.getenv("PR_BODY_MOTIVATION_AND_CONTEXT"),
+    pr_number=pr_number,
+    motivation_context=motivation_context,
     types=types,
 )
+
 print(pr_body)
