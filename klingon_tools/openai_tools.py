@@ -72,7 +72,7 @@ class OpenAITools:
 ## Motivation and Context
 <!-- Why is this change required? What problem does it solve? -->
 
-## Issue Link
+## Issue Link <!-- (optional) -->
 <!-- Link to any related related issues (optional) -->
 
 ## Types of Changes
