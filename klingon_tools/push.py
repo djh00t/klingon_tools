@@ -26,7 +26,6 @@ import logging
 import subprocess
 from git import Repo
 from klingon_tools import LogTools
-from klingon_tools.git_validate_commit import is_conventional_commit
 from klingon_tools.git_tools import (
     git_get_toplevel,
     get_git_user_info,
@@ -103,18 +102,6 @@ def workflow_process_file(file_name: str, repo: Repo) -> None:
     openai_tools = OpenAITools()
     commit_message = openai_tools.generate_commit_message(diff)
     logger.debug(message=f"Generated commit message: {commit_message}", status="🐞")
-    if not commit_message or not is_conventional_commit(commit_message):
-        logger.error(
-            message="Commit message format is incorrect. Expected format: type(scope): description",
-            status="❌",
-        )
-        commit_message = (
-            "chore: " + commit_message
-        )  # Prepend 'chore: ' to make it conventional
-        logger.warning(
-            message=f"Commit message adjusted to: {commit_message}",
-            status="⚠️",
-        )
 
     success = git_pre_commit(file_name, repo)
 
