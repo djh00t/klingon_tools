@@ -68,19 +68,22 @@ class OpenAITools:
             summary to the point and avoid unnecessary details. The reader is
             busy and must be able to read and understand the content quickly &
             without fuss. Content should be returned as markdown without
-            headings or font styling, bullet points and plain parragraph text
+            headings or font styling, bullet points and plain paragraph text
             are ok.
             \"{diff}\"
             """,
             "pull_request_context": """
             Look at the conventional commit messages provided and generate a
             high level motivation and context statement for the changes in the
-            pull request up to 2 paragraphs that clearly explains why the
-            changes are happening. Keep the summary to the point and
-            avoid unnecessary details. The reader is busy and must be able to
-            read and understand the content quickly & without fuss. Content
-            should be returned as markdown without headings or font styling,
-            bullet points and plain parragraph text are ok.
+            pull request of no more than 1 paragraph that clearly explains why the
+            changes have been made.
+
+            Keep the summary terse and to the point, avoiding unnecessary
+            details. The reader is busy and must be able to read and understand
+            the content quickly & without fuss.
+
+            Content should be returned as markdown without headings or font
+            styling, bullet points and plain paragraph text are ok.
             \"{diff}\"
             """,
             "pull_request_body": """
