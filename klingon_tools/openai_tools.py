@@ -39,16 +39,25 @@ class OpenAITools:
             <type>(scope): <description>
 
             ```
-            Ensure the following:
 
-            Type and Scope: Select the most specific of application name, file name, class name, method/function name, or feature name for the commit scope. If in doubt, use the name of the file being modified.
-            Types: Use fix: for patches that fix bugs, feat: for introducing new features, and other recognized types as per conventions (build:, chore:, ci:, docs:, style:, refactor:, perf:, test:, etc.).
+            Consider the following when selecting commit types:
+                build: Changes that affect the build system or external dependencies
+                chore: Other changes that don't modify src or test files
+                ci: Changes to CI configuration files and scripts
+                docs: Documentation changes
+                feat: New features
+                fix: Bug fixes
+                perf: Code changes that improve performance
+                refactor: Code changes that neither fix bugs nor add features
+                revert: Reverts a previous commit
+                style: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+                test: Adding missing or correcting existing tests
+                other: Changes that don't fit into the above categories
+
+            Scope: Select the most specific of application name, file name, class name, method/function name, or feature name for the commit scope. If in doubt, use the name of the file being modified.
             Breaking Changes: Include a BREAKING CHANGE: footer or append ! after type/scope for commits that introduce breaking API changes.
-            Footers: Use a convention similar to git trailer format for additional footers.
-            Ensure the commit message generation handles diverse scenarios effectively and prompts for necessary inputs when ambiguities arise.
-            Do not add "Co-authored-by" or other footers unless explicitly
-            required.
-            If the change is to a markdown file, the type should be `docs` and the scope should be the file name.
+            Footers: Breaking change is the only footer permitted.
+            Do not add "Co-authored-by" or other footers unless explicitly requested.
             """,
             "commit_message_user": """
             Generate a git commit message based on these diffs:
@@ -57,14 +66,86 @@ class OpenAITools:
             "pull_request_title": """
             Look at the conventional commit messages provided and generate a
             pull request title that clearly summarizes the changes included in
-            them. Keep the summary high level extremely terse and limit it to
-            72 characters. You do not need to include the commit type or scope
-            in the title.
+            them. Keep the summary high level extremely terse and you MUST
+            limit it to no more than 72 characters. You do not need to include
+            the contributor, commit type or scope in the title.
+            \"{diff}\"
+            """,
+            "pull_request_summary": """
+            Look at the conventional commit messages provided and generate a
+            concise pull request summary. Keep the summary specific and to the
+            point, avoiding unnecessary details.
+
+            Aim to use no more than 2 paragraphs of summary.
+
+            The reader is busy and must be able to read and understand the
+            content quickly & without fuss.
+
+            Content should be returned as markdown without headings or font
+            styling, bullet points and plain paragraph text are ok.
+            \"{diff}\"
+            """,
+            "pull_request_context": """
+            Look at the conventional commit messages provided and generate a
+            concise context statement for the changes in the pull request that
+            clearly explains why the changes have been made.
+
+            Use bullet points to list the reasons for the changes, but use as
+            few as possible to keep the context concise.
+
+            Content should be returned as markdown without headings or font
+            styling, bullet points and plain paragraph text are ok.
             \"{diff}\"
             """,
             "pull_request_body": """
-            Look at the conventional commit messages provided and generate a pull request body that clearly summarizes the changes included in them.
-            Group changes by the conventional commit type and scope, and provide a brief description of each change.
+            Look at the conventional commit messages provided and generate a
+            pull request body using the following markdown as a template:
+<!-- START OF TEMPLATE -->
+## Description
+<!-- A brief description of the changes introduced by this PR -->
+
+## Motivation and Context
+<!-- Why is this change required? What problem does it solve? -->
+
+## Issue Link <!-- (optional) -->
+<!-- Link to any related related issues (optional) -->
+
+## Types of Changes
+<!-- What types of changes does your code introduce? Put an `x` in all the boxes that apply and add indented bullet point descriptions for each change of that type under it -->
+- [ ] `feat`: ✨ A new feature
+    - Change 1
+    - Change 2
+- [ ] `fix`: 🐛 A bug fix
+    - Change 1
+    - Change 2
+- [ ] `docs`: 📚 Documentation only changes
+    - Change 1
+    - Change 2
+- [ ] `style`: 💄 Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+    - Change 1
+    - Change 2
+- [ ] `refactor`: ♻️ A code change that neither fixes a bug nor adds a feature
+    - Change 1
+    - Change 2
+- [ ] `perf`: 🚀 A code change that improves performance
+    - Change 1
+    - Change 2
+- [ ] `test`: 🚨 Adding missing or correcting existing tests
+    - Change 1
+    - Change 2
+- [ ] `build`: 🛠️ Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)
+    - Change 1
+    - Change 2
+- [ ] `ci`: ⚙️ Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)
+    - Change 1
+    - Change 2
+- [ ] `chore`: 🔧 Other changes that don't modify src or test files
+    - Change 1
+    - Change 2
+- [ ] `revert`: ⏪ Reverts a previous commit
+    - Change 1
+    - Change 2
+<!-- END OF TEMPLATE -->
             \"{diff}\"
             """,
             "release_body": """
@@ -448,25 +529,25 @@ class OpenAITools:
 
         return formatted_title
 
-    def generate_pull_request_body(self, diff: str, dryrun: bool = False) -> str:
-        """Generates a pull request body from the git log differences between
+    def generate_pull_request_summary(self, diff: str, dryrun: bool = False) -> str:
+        """Generates a pull request summary from the git log differences between
         current branch and origin/main..HEAD.
 
-        This function generates a pull request body based on the provided git
-        messages using the OpenAI API. It formats the generated title and
-        handles any errors related to the title format.
+        This function generates a pull request summary based on the provided git
+        commit messages using the OpenAI API. It formats the generated summary and
+        handles any errors related to the summary format.
 
-        Entrypoint: pr-body-generate
+        Entrypoint: pr-summary-generate
 
         Args:
-            diff (str): The diff to include in the generated pull request title.
-            dryrun (bool): If True, unstages all files after generating the title.
+            diff (str): The diff to include in the generated pull request summary.
+            dryrun (bool): If True, unstages all files after generating the summary.
 
         Returns:
-            str: The formatted pull request title.
+            str: The formatted pull request summary.
 
         Raises:
-            ValueError: If the pull request title format is incorrect.
+            ValueError: If the pull request summary format is incorrect.
         """
         # Check if the origin/main branch exists
         branch_exists = (
@@ -478,8 +559,119 @@ class OpenAITools:
             == 0
         )
 
-        # Get the git user name
-        git_user = get_git_user_info()[0]
+        if branch_exists:
+            # Get a log of all changes that this PR is ahead of main by.
+            commit_result = subprocess.run(
+                ["git", "--no-pager", "log", "origin/main..HEAD", "--pretty=format:%s"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        else:
+            logger.warning("The branch 'origin/main' does not exist.")
+            commit_result = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout=""
+            )
+
+        # Split the result by lines to get individual commit messages
+        commits_ahead = commit_result.stdout.splitlines()
+
+        # Save the commits to a single variable
+        commits = ""
+        for commit in commits_ahead:
+            commits += commit + "\n"
+
+        # Generate the pull request summary content using the OpenAI API
+        generated_summary = self.generate_content("pull_request_summary", commits)
+
+        return generated_summary
+
+    def generate_pull_request_context(self, diff: str, dryrun: bool = False) -> str:
+        """Generates a pull request context from the git log differences between
+        current branch and origin/main..HEAD.
+
+        This function generates a pull request context based on the provided git
+        commit messages using the OpenAI API. It formats the generated context and
+        handles any errors related to the context format.
+
+        Entrypoint: pr-context-generate
+
+        Args:
+            diff (str): The diff to include in the generated pull request context.
+            dryrun (bool): If True, unstages all files after generating the context.
+
+        Returns:
+            str: The formatted pull request context.
+
+        Raises:
+            ValueError: If the pull request context format is incorrect.
+        """
+        # Check if the origin/main branch exists
+        branch_exists = (
+            subprocess.run(
+                ["git", "rev-parse", "--verify", "origin/main"],
+                capture_output=True,
+                text=True,
+            ).returncode
+            == 0
+        )
+
+        if branch_exists:
+            # Get a log of all changes that this PR is ahead of main by.
+            commit_result = subprocess.run(
+                ["git", "--no-pager", "log", "origin/main..HEAD", "--pretty=format:%s"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        else:
+            logger.warning("The branch 'origin/main' does not exist.")
+            commit_result = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout=""
+            )
+
+        # Split the result by lines to get individual commit messages
+        commits_ahead = commit_result.stdout.splitlines()
+
+        # Save the commits to a single variable
+        commits = ""
+        for commit in commits_ahead:
+            commits += commit + "\n"
+
+        # Generate the pull request context content using the OpenAI API
+        generated_context = self.generate_content("pull_request_context", commits)
+
+        return generated_context
+
+    def generate_pull_request_body(self, diff: str, dryrun: bool = False) -> str:
+        """Generates a pull request body from the git log differences between
+        current branch and origin/main..HEAD.
+
+        This function generates a pull request body based on the provided git
+        messages using the OpenAI API. It formats the generated body and
+        handles any errors related to the body format.
+
+        Entrypoint: pr-body-generate
+
+        Args:
+            diff (str): The diff to include in the generated pull request body.
+            dryrun (bool): If True, unstages all files after generating the body.
+
+        Returns:
+            str: The formatted pull request body.
+
+        Raises:
+            ValueError: If the pull request body format is incorrect.
+        """
+        # Check if the origin/main branch exists
+        branch_exists = (
+            subprocess.run(
+                ["git", "rev-parse", "--verify", "origin/main"],
+                capture_output=True,
+                text=True,
+            ).returncode
+            == 0
+        )
 
         if branch_exists:
             # Get a log of all changes that this PR is ahead of main by.

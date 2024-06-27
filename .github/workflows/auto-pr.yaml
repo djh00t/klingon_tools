@@ -1,20 +1,56 @@
-name: "🔄 Auto PR"
+name: 🚀 Auto PR
 
 on:
   # Push to all but main and master
   push:
     branches-ignore:
-      - main
-      - master
+    - main
+    - master
 
 jobs:
-  create-pr:
+  test:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4.1.7
       with:
-        fetch-depth: 0  # Fetch all branches
+        fetch-depth: 0    # Fetch all branches
+    - name: Cache APT packages
+      uses: actions/cache@v4.0.2
+      with:
+        key: ${{ runner.os }}-apt
+        path: /var/cache/apt
+        restore-keys: ${{ runner.os }}-apt-
+    - name: Cache pip packages
+      uses: actions/cache@v4.0.2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gh
+        pip install -r requirements.txt
+        make install
+    - name: Install klingon_tools
+      run: make install
+    - name: Run tests
+      run: make test
+
+  create-pr:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4.1.7
+      with:
+        fetch-depth: 0    # Fetch all branches
     - name: Cache APT packages
       uses: actions/cache@v4.0.2
       with:
@@ -22,15 +58,21 @@ jobs:
         path: /var/cache/apt
         restore-keys: ${{ runner.os }}-apt-
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
+    - name: Cache pip packages
+      uses: actions/cache@v4.0.2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
     - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y gh
-    - name: Install dependencies
-      run: |
+        pip install -r requirements.txt
         make install
     - name: Authenticate with GitHub CLI
       env:
@@ -41,21 +83,21 @@ jobs:
         echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
         gh auth status
     - name: Set up environment variables
-      run: echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
+      run: |
+        # Setup OpenAI API Key
+        echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
+        # Get Current PR Title
+        PR_TITLE=$(gh pr list --json title --jq '.[0].title' || echo "")
+        echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
+        echo "PR TITLE: $PR_TITLE"
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-    - name: Create or Update Pull Request
+
+    - name: Update PR Body
+      shell: /usr/bin/bash -e {0}
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        PR_TITLE: ${{ env.PR_TITLE }}
       run: |
-        pip install -e .
-        PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
-        if [ -z "$PR_URL" ]; then
-          # No PR exists, create one
-          PR_TITLE=$(pr-title-generate)
-          PR_BODY=$(pr-body-generate)
-          gh pr create --base main --head ${{ github.ref }} --title "$PR_TITLE" --body "This PR is automatically created for the new branch ${{ github.ref }} created by @${{ github.actor }}.\n\n ## Changes\n\n${PR_BODY}"
-        else
-          # PR exists, update it
-          PR_TITLE=$(pr-title-generate)
-          PR_BODY=$(pr-body-generate)
-          gh pr edit $PR_URL --title "$PR_TITLE" --body "$PR_BODY"
-        fi
+        PR_BODY=$(python3 .github/workflows/pr_body_gen.py)
+        gh pr edit $PR_URL --title "$PR_TITLE" --body "$PR_BODY"
