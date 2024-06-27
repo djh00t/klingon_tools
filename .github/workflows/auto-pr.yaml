@@ -135,16 +135,16 @@ jobs:
           )
           print(pr_body)
           " > pr_body.txt
-                  shell: /usr/bin/bash -e {0}
-                  env:
-                    pythonLocation: /opt/hostedtoolcache/Python/3.12.4/x64
-                    LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.4/x64/lib
-                    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-                    PR_TITLE: ${{ env.PR_TITLE }}
-                    PR_BODY: ${{ env.PR_BODY }}
-                    PR_URL: ${{ env.PR_URL }}
-                    PR_BODY_DESCRIPTION: ${{ env.PR_BODY_DESCRIPTION }}
-                    PR_BODY_MOTIVATION_AND_CONTEXT: ${{ env.PR_BODY_MOTIVATION_AND_CONTEXT }}
+        shell: /usr/bin/bash -e {0}
+        env:
+          pythonLocation: /opt/hostedtoolcache/Python/3.12.4/x64
+          LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.4/x64/lib
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PR_TITLE: ${{ env.PR_TITLE }}
+          PR_BODY: ${{ env.PR_BODY }}
+          PR_URL: ${{ env.PR_URL }}
+          PR_BODY_DESCRIPTION: ${{ env.PR_BODY_DESCRIPTION }}
+          PR_BODY_MOTIVATION_AND_CONTEXT: ${{ env.PR_BODY_MOTIVATION_AND_CONTEXT }}
 
 
 #       - name: Generate PR Title from Template with OpenAI
