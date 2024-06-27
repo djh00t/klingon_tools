@@ -57,9 +57,9 @@ class OpenAITools:
             "pull_request_title": """
             Look at the conventional commit messages provided and generate a
             pull request title that clearly summarizes the changes included in
-            them. Keep the summary high level extremely terse and limit it to
-            72 characters. You do not need to include the commit type or scope
-            in the title.
+            them. Keep the summary high level extremely terse and you MUST
+            limit it to no more than 72 characters. You do not need to include
+            the contributor, commit type or scope in the title.
             \"{diff}\"
             """,
             "pull_request_body": """
