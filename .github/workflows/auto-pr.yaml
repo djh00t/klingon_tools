@@ -95,7 +95,8 @@ jobs:
           with open(template_path) as file_:
               template = Template(file_.read())
 
-          commit_messages = os.popen('git log --pretty=format:\"%s\"').read().split('\n')
+          os.system('git fetch origin main')
+          commit_messages = os.popen('git log origin/main..HEAD --pretty=format:\"%s\"').read().split('\n')
           changes = {
               'feat': [],
               'fix': [],
