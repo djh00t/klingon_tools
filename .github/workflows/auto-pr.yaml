@@ -44,17 +44,17 @@ jobs:
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
           # Get Current PR Title
           PR_TITLE=$(gh pr list --json title --jq '.[0].title' || echo "")
-          echo $PR_TITLE
+          echo "PR TITLE: $PR_TITLE"
           # Get Current PR Body
           PR_BODY=$(gh pr list --json body --jq '.[0].body' || echo "")
-          echo $PR_BODY
+          echo "PR BODY: $PR_BODY"
           # Get Current PR URL
           PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
-          echo $PR_URL
+          echo "PR URL: $PR_URL"
           # Get Current PR Body Description (Text between "## Description" and
           # "## Motivation and Context" lines)
           PR_BODY_DESCRIPTION=$(echo "$PR_BODY" | sed -n '/## Description/,/## Motivation and Context/p' | sed '1d;$d')
-          echo $PR_BODY_DESCRIPTION
+          echo "PR BODY DESCRIPTION: $PR_BODY_DESCRIPTION"
 
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
