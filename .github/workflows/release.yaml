@@ -37,12 +37,11 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      - name: Ensure release branch
+      - name: Create release branch
         run: |
-          if git rev-parse --verify release; then
-            git branch -D release
-          fi
-          git checkout -b release
+          EPOCH_TIME=$(date +%s)
+          RELEASE_BRANCH="release-${EPOCH_TIME}"
+          git checkout -b $RELEASE_BRANCH
 
       - name: Run semantic-release
         env:
