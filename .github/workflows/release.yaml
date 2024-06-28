@@ -37,27 +37,6 @@ jobs:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: npx semantic-release
 
-  create-pr:
-    needs: release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Setup gh CLI
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" > .github_token
-          gh auth login --with-token < .github_token
-
-      - name: Create Pull Request
-        run: |
-          RELEASE_BRANCH=$(git branch --show-current)
-          PR_TITLE="chore(release): $(git describe --tags)"
-          PR_BODY="This PR contains the changes for the release."
-          gh pr create --title "$PR_TITLE" --body "$PR_BODY" --base main --head $RELEASE_BRANCH
-
   merge-pr:
     needs: create-pr
     runs-on: ubuntu-latest
