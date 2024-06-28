@@ -85,7 +85,7 @@ jobs:
 
       - name: Create a new pull request
         run: |
-          gh pr create --title "Release ${EPOCH_TIME}" --body "Release created by Semantic Release" --base main --head $NEW_BRANCH
+          gh pr create --title "Release ${EPOCH_TIME}" --body "Release created by Semantic Release" --base main --head "${NEW_BRANCH}"
 
       - name: Merge the pull request
         run: |
