@@ -1,5 +1,6 @@
 # External dependencies
 pip-tools
+pre-commit
 twine
 wheel
 pytest
