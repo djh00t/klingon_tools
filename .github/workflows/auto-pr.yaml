@@ -13,8 +13,6 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4.1.7
-      with:
-        fetch-depth: 0    # Fetch all branches
     - name: Cache APT packages
       uses: actions/cache@v4.0.2
       with:
