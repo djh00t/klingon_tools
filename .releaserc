@@ -1,6 +1,6 @@
 {
   "branches": [
-    "release-${EPOCH_TIME}"
+    `release-${process.env.EPOCH_TIME}`
   ],
   "plugins": [
     "@semantic-release/commit-analyzer",
