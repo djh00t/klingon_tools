@@ -52,7 +52,9 @@ jobs:
       - name: Create Pull Request
         run: |
           RELEASE_BRANCH=$(git branch --show-current)
-          gh pr create --title "chore(release): $(git describe --tags)" --body "This PR contains the changes for the release." --base main --head $RELEASE_BRANCH
+          PR_TITLE="chore(release): $(git describe --tags)"
+          PR_BODY="This PR contains the changes for the release."
+          gh pr create --title "$PR_TITLE" --body "$PR_BODY" --base main --head $RELEASE_BRANCH
 
   merge-pr:
     needs: create-pr
