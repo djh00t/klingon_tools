@@ -1,8 +1,7 @@
 name: Release
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches:
       - main
 
@@ -48,8 +47,13 @@ jobs:
         run: |
           pip install twine
 
-      - name: Run semantic-release
+      - name: Check for changes before running semantic-release
+        run: |
+          if git diff-index --quiet HEAD --; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-        run: npx semantic-release
