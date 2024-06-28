@@ -44,7 +44,10 @@ jobs:
 
 
     - name: Create new release branch
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        gh auth login --with-token <<< $GITHUB_TOKEN
         gh repo clone ${{ github.repository }} temp-repo
         cd temp-repo
         git checkout -b release-branch
