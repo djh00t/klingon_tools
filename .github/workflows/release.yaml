@@ -60,12 +60,6 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Authenticate with GitHub CLI
-        run: |
-          unset GITHUB_TOKEN
-          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
-          gh auth status
-
       - name: Create new release branch
         run: |
           # Get the current epoch time
