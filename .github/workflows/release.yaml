@@ -14,11 +14,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.1.7
-        with:
-          ref: main
 
-      - name: Set up GitHub Token
-        run: echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
+      - name: Set up Node.js
+        uses: actions/setup-node@v4.0.2
+        with:
+          node-version: "21"
 
       - name: Cache Node.js modules
         uses: actions/cache@v3
@@ -28,15 +28,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4.0.2
-        with:
-          node-version: "21"
-
       - name: Install Node.js dependencies
-        run: |
-          npm install
-          npm install @semantic-release/exec
+        run: npm install
+
+      - name: Set up Python
+        uses: actions/setup-python@v5.1.0
+        with:
+          python-version: "3.x"
 
       - name: Cache pip packages
         uses: actions/cache@v4.0.2
@@ -46,58 +44,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Set up Python
-        uses: actions/setup-python@v5.1.0
-        with:
-          python-version: "3.x"
-
       - name: Install Python dependencies
         run: |
           pip install twine
 
-      - name: Configure Git user
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Create new release branch
-        run: |
-          # Get the current epoch time
-          EPOCH_TIME=$(date +%s)
-
-          # Create a new branch name with epoch time
-          NEW_BRANCH="${EPOCH_TIME}-release"
-
-          # Checkout a new branch
-          git checkout -b $NEW_BRANCH
-
-          # Push the new branch to the remote repository
-          git push -u origin $NEW_BRANCH
-
-      - name: Run semantic-release on release branch
-        if: github.ref == 'refs/heads/main'
+      - name: Run semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: npx semantic-release
-
-      - name: Commit changes
-        run: |
-          git add .
-          if git diff-index --quiet HEAD; then
-            echo "No changes to commit"
-          else
-            git commit -m "chore(release): release ${EPOCH_TIME}"
-            git push
-          fi
-
-      - name: Create a new pull request
-        run: |
-          gh pr create --title "Release ${EPOCH_TIME}" --body "Release created by Semantic Release" --base main --head "${NEW_BRANCH}"
-
-      - name: Merge the pull request
-        run: |
-          PR_NUMBER=$(gh pr list --head $NEW_BRANCH --json number --jq '.[0].number')
-          gh pr merge "$PR_NUMBER" --merge --delete-branch
-
-      - name: Clean up
-        run: |
-          git branch -d $NEW_BRANCH
-          git push origin --delete $NEW_BRANCH
