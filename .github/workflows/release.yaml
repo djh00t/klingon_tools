@@ -80,8 +80,12 @@ jobs:
       - name: Commit changes
         run: |
           git add .
-          git commit -m "chore(release): release ${EPOCH_TIME}"
-          git push
+          if git diff-index --quiet HEAD; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore(release): release ${EPOCH_TIME}"
+            git push
+          fi
 
       - name: Create a new pull request
         run: |
