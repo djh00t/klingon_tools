@@ -52,7 +52,7 @@ jobs:
 
       - name: Create new release branch
         run: |
-          gh repo clone ${{ github.repository }} temp-repo
+          gh repo clone https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} temp-repo
           cd temp-repo
           git checkout -b release-branch
           git push origin release-branch
