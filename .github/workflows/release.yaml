@@ -1,4 +1,4 @@
-name: 🚀 Release
+name: Release
 
 on:
   push:
@@ -32,10 +32,16 @@ jobs:
       - name: Install Node.js dependencies
         run: npm install
 
-      - name: Create and checkout release branch using github actions user.email and user.name
+      - name: Configure Git
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
+
+      - name: Ensure release branch
+        run: |
+          if git rev-parse --verify release; then
+            git branch -D release
+          fi
           git checkout -b release
 
       - name: Run semantic-release
@@ -52,6 +58,11 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
 
       - name: Setup gh CLI
         run: |
