@@ -7,6 +7,7 @@ on:
     - main
     - master
     - '*-release'
+  workflow_dispatch:
 
 jobs:
   create-pr:
@@ -57,7 +58,6 @@ jobs:
       - name: Check if PR exists
         id: pr
         run: |
-          echo "AAAA PR_TITLE: $PR_TITLE"
           if [ -z "$PR_TITLE" ]; then
             PR_TITLE=$(pr-title-generate)
             echo "PR_TITLE: $PR_TITLE"

@@ -1,9 +1,10 @@
-name: Release
+name: 🚀 Release
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   release:
@@ -31,10 +32,10 @@ jobs:
       - name: Install Node.js dependencies
         run: npm install
 
-      - name: Create and checkout release branch
+      - name: Create and checkout release branch using github actions user.email and user.name
         run: |
-          git config --global user.email "you@example.com"
-          git config --global user.name "Your Name"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
           git checkout -b release
 
       - name: Run semantic-release
