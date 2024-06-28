@@ -6,6 +6,7 @@ on:
     branches-ignore:
     - main
     - master
+    - '*-release'
 
 jobs:
   create-pr:
@@ -32,11 +33,11 @@ jobs:
 
       - name: Authenticate with GitHub CLI
         env:
-          GH_TOKEN: ""
+          GITHUB_TOKEN: ""
         run: |
-          unset GH_TOKEN
-          GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
-          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+          unset GITHUB_TOKEN
+          export GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          gh auth login --with-token <<< "$GITHUB_TOKEN"
           gh auth status
 
       - name: Set up environment variables
