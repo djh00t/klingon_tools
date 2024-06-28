@@ -1,6 +1,6 @@
 module.exports = {
   branches: [
-    `release-${process.env.EPOCH_TIME || 'default'}`
+    `${process.env.RELEASE_BRANCH || 'release'}`
   ],
   plugins: [
     "@semantic-release/commit-analyzer",
