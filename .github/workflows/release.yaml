@@ -42,13 +42,14 @@ jobs:
           EPOCH_TIME=$(date +%s)
           echo "EPOCH_TIME=$EPOCH_TIME" >> $GITHUB_ENV
           RELEASE_BRANCH="release-${EPOCH_TIME}"
+          echo "RELEASE_BRANCH=$RELEASE_BRANCH" >> $GITHUB_ENV
           git checkout -b $RELEASE_BRANCH
 
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-          EPOCH_TIME: ${{ env.EPOCH_TIME }}
+          RELEASE_BRANCH: ${{ env.RELEASE_BRANCH }}
         run: npx semantic-release
 
   merge-pr:
