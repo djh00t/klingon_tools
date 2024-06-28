@@ -75,6 +75,7 @@ jobs:
           git push -u origin $NEW_BRANCH
 
       - name: Run semantic-release on release branch
+        if: github.ref == 'refs/heads/main'
         run: npx semantic-release
 
       - name: Commit changes
