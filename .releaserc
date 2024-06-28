@@ -12,6 +12,15 @@
       }
     ],
     [
+      "semantic-release-pull-request",
+      {
+        "title": "chore(release): ${nextRelease.version}",
+        "body": "This PR contains the changes for the release of version ${nextRelease.version}.",
+        "base": "main",
+        "branch": "release/${nextRelease.version}"
+      }
+    ],
+    [
       "@semantic-release/exec",
       {
         "prepareCmd": "python setup.py sdist bdist_wheel",

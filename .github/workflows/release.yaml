@@ -29,38 +29,29 @@ jobs:
       - name: Install Node.js dependencies
         run: npm install
 
-      - name: Set up Python
-        uses: actions/setup-python@v5.1.0
-        with:
-          python-version: "3.x"
-
-      - name: Cache pip packages
-        uses: actions/cache@v4.0.2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install Python dependencies
-        run: |
-          pip install twine
-
       - name: Run semantic-release
-        run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: npx semantic-release
 
-      - name: Create Pull Request for changes
-        if: steps.semantic-release.outputs.changes_detected == 'true'
+  merge:
+    runs-on: ubuntu-latest
+    needs: release
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup gh CLI
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b release-branch
-          git add .
-          git commit -m "chore(release): create release PR"
-          git push --set-upstream origin release-branch
-          gh pr create --title "Release PR" --body "This PR contains the changes for the new release." --base main --head release-branch
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "${{ secrets.GITHUB_TOKEN }}" > .github_token
+          gh auth login --with-token < .github_token
+
+      - name: Merge Pull Request
+        run: |
+          PR=$(gh pr list --state open --json number --jq '.[0].number')
+          if [ -n "$PR" ]; then
+            gh pr merge $PR --merge
+          fi
