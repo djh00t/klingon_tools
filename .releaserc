@@ -1,8 +1,8 @@
-{
-  "branches": [
+module.exports = {
+  branches: [
     `release-${process.env.EPOCH_TIME}`
   ],
-  "plugins": [
+  plugins: [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
     "@semantic-release/changelog",
@@ -47,4 +47,4 @@
       }
     ]
   ]
-}
+};
