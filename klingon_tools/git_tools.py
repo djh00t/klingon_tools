@@ -386,7 +386,9 @@ def git_pre_commit(file_name: str, repo: Repo) -> bool:
     return False  # Return False if pre-commit hooks did not pass
 
 
-def git_commit_file(file_name: str, repo: Repo) -> None:
+def git_commit_file(
+    file_name: str, repo: Repo, commit_message: Optional[str] = None
+) -> None:
     """Commits a file with a generated commit message.
 
     This function stages the specified file, generates a commit message using
@@ -396,6 +398,7 @@ def git_commit_file(file_name: str, repo: Repo) -> None:
     Args:
         file_name: The name of the file to be committed.
         repo: An instance of the git.Repo object representing the repository.
+        commit_message: The commit message to use. If None, a new commit message will be generated.
 
     Returns:
         None
@@ -403,29 +406,26 @@ def git_commit_file(file_name: str, repo: Repo) -> None:
     repo.index.add([file_name])
 
     try:
-        # Generate the diff for the staged file
-        diff = repo.git.diff("HEAD", file_name)
-        try:
+        if commit_message is None:
+            # Generate the diff for the staged file
+            diff = repo.git.diff("HEAD", file_name)
             openai_tools = OpenAITools()
             commit_message = openai_tools.generate_commit_message(diff)
-            # Commit the file with the generated commit message
-            if commit_message:
-                repo.index.commit(commit_message.strip())
-            else:
-                raise ValueError("Commit message cannot be None")
-            # Log the successful commit
-            logger.info(message="File committed", status="✅")
-        except ValueError as ve:
-            # Log an error message if the commit message format is invalid
-            logger.error(message="Commit message format error", status="❌")
-            logger.exception(message=f"{ve}")
-        except Exception as e:
-            # Log an error message if the commit fails
-            logger.error(message="Failed to commit file", status="❌")
-            logger.exception(message=f"{e}")
+
+        # Commit the file with the generated commit message
+        if commit_message:
+            repo.index.commit(commit_message.strip())
+        else:
+            raise ValueError("Commit message cannot be None")
+        # Log the successful commit
+        logger.info(message="File committed", status="✅")
+    except ValueError as ve:
+        # Log an error message if the commit message format is invalid
+        logger.error(message="Commit message format error", status="❌")
+        logger.exception(message=f"{ve}")
     except Exception as e:
-        # Log an error message if adding the file to the index fails
-        logger.error(message="Failed to add file to index", status="❌")
+        # Log an error message if the commit fails
+        logger.error(message="Failed to commit file", status="❌")
         logger.exception(message=f"{e}")
 
 
