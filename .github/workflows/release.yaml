@@ -1,20 +1,24 @@
 name: Release
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches:
       - main
 
 jobs:
   release:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.1.7
+        with:
+          ref: main
 
       - name: Set up GitHub Token
-        run: echo "GH_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
+        run: echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
 
       - name: Set up Node.js
         uses: actions/setup-node@v4.0.2
@@ -33,7 +37,6 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          python -m pip install --upgrade pip
           pip install twine
 
       - name: Configure Git user
@@ -43,34 +46,43 @@ jobs:
 
       - name: Authenticate with GitHub CLI
         run: |
-          unset GH_TOKEN
+          unset GITHUB_TOKEN
           echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
           gh auth status
 
       - name: Create new release branch
         run: |
-          gh repo clone https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} temp-repo
-          cd temp-repo
-          git checkout -b release-branch
-          git push origin release-branch
+          # Get the current epoch time
+          EPOCH_TIME=$(date +%s)
 
-      - name: Push changes to new release branch
-        run: |
-          git push --set-upstream origin release-branch
+          # Create a new branch name with epoch time
+          NEW_BRANCH="${EPOCH_TIME}-release"
+
+          # Checkout a new branch
+          git checkout -b $NEW_BRANCH
+
+          # Push the new branch to the remote repository
+          git push -u origin $NEW_BRANCH
 
       - name: Run semantic-release on release branch
-        run: |
-          git checkout release-branch
-          npx semantic-release
+        run: npx semantic-release
 
-      - name: Create Pull Request
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Commit changes
         run: |
-          gh pr create --title "Release PR" --body "This PR contains the changes for the new release." --base main --head release-branch
+          git add .
+          git commit -m "chore(release): release ${EPOCH_TIME}"
+          git push
 
-      - name: Merge Release PR
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create a new pull request
         run: |
-          gh pr merge $(gh pr list --state open --head release-branch --json number --jq '.[0].number') --squash --admin
+          gh pr create --title "Release ${EPOCH_TIME}" --body "Release created by Semantic Release" --base main --head $NEW_BRANCH
+
+      - name: Merge the pull request
+        run: |
+          PR_NUMBER=$(gh pr list --head $NEW_BRANCH --json number --jq '.[0].number')
+          gh pr merge $PR_NUMBER --merge --delete-branch
+
+      - name: Clean up
+        run: |
+          git branch -d $NEW_BRANCH
+          git push origin --delete $NEW_BRANCH
