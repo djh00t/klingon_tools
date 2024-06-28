@@ -46,13 +46,21 @@ jobs:
         run: |
           pip install twine
 
-      - name: Check for changes before running semantic-release
-        run: |
-          if git diff-index --quiet HEAD --; then
-            echo "No changes to commit."
-            exit 0
-          fi
-          npx semantic-release
+      - name: Run semantic-release
+        run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+
+      - name: Create Pull Request for changes
+        if: steps.semantic-release.outputs.changes_detected == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b release-branch
+          git add .
+          git commit -m "chore(release): create release PR"
+          git push --set-upstream origin release-branch
+          gh pr create --title "Release PR" --body "This PR contains the changes for the new release." --base main --head release-branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
