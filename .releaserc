@@ -5,20 +5,39 @@
     "@semantic-release/release-notes-generator",
     "@semantic-release/changelog",
     [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "git checkout -b release && python setup.py sdist bdist_wheel"
+      }
+    ],
+    [
       "@semantic-release/git",
       {
         "assets": ["CHANGELOG.md", "setup.py", "version.py"],
-        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}",
-        "branch": "release"
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ],
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "python setup.py sdist bdist_wheel",
-        "publishCmd": "twine upload -u __token__ -p $PYPI_TOKEN dist/*"
+        "prepareCmd": "git add CHANGELOG.md setup.py version.py && git commit -m 'chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}' && git push origin release"
       }
     ],
-    "@semantic-release/github"
+    [
+      "@semantic-release/github",
+      {
+        "successComment": false,
+        "failComment": false,
+        "addReleases": "bottom",
+        "createRelease": true,
+        "assets": "dist/*"
+      }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "publishCmd": "gh pr create --title 'chore(release): ${nextRelease.version}' --body 'This PR includes the release ${nextRelease.version}.\n\n${nextRelease.notes}' --base main --head release"
+      }
+    ]
   ]
 }
