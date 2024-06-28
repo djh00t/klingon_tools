@@ -40,6 +40,7 @@ setup(
         "pyyaml",
         "pytest",
         "ruamel.yaml",
+        "pre-commit",
     ],
     include_package_data=True,
     description="A set of utilities for running and logging shell commands in a user-friendly manner.",

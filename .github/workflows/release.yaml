@@ -45,30 +45,28 @@ jobs:
 
     - name: Create new release branch
       run: |
+        gh repo clone ${{ github.repository }} temp-repo
+        cd temp-repo
         git checkout -b release-branch
-
-    - name: Update version numbers
-      run: |
-        npx semantic-release
+        git push origin release-branch
 
     - name: Push changes to new release branch
       run: |
         git push --set-upstream origin release-branch
 
+    - name: Run semantic-release on release branch
+      run: |
+        git checkout release-branch
+        npx semantic-release
+
     - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v6.1.0
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        branch: release-branch
-        title: "Release PR"
-        body: "This PR contains the changes for the new release."
-        labels: release
+      run: |
+        gh pr create --title "Release PR" --body "This PR contains the changes for the new release." --base main --head release-branch
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        PYPI_USER_AGENT: ${{ secrets.PYPI_USER_AGENT }}
 
-    - name: Auto-merge Release PR
+    - name: Merge Release PR
       run: |
-        gh pr merge ${{ steps.create-pull-request.outputs.pull-request-number }} --squash --admin
+        gh pr merge $(gh pr list --state open --head release-branch --json number --jq '.[0].number') --squash --admin
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
