@@ -113,7 +113,7 @@ def workflow_process_file(file_name: str, repo: Repo) -> None:
             )
         else:
             # Commit the file
-            git_commit_file(file_name, repo)
+            git_commit_file(file_name, repo, commit_message)
             # Push the commit
             if args.dryrun:
                 # Log dry run mode and skip push
