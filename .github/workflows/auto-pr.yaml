@@ -31,15 +31,10 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Authenticate with GitHub CLI
-        run: |
-          unset GITHUB_TOKEN
-          export GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
-          gh auth login --with-token <<< "$GITHUB_TOKEN"
-          gh auth status
-
       - name: Set up environment variables
         run: |
+          # Setup GITHUB_TOKEN
+          echo "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
           # Setup OpenAI API Key
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
           # Get Current PR Title
