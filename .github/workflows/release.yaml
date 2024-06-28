@@ -3,73 +3,77 @@ name: Release
 on:
   push:
     branches:
-    - main
-
+      - main
 
 jobs:
   release:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4.1.7
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.7
 
-    - name: Set up GitHub Token
-      run: echo "GH_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
+      - name: Set up GitHub Token
+        run: echo "GH_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_ENV
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4.0.2
-      with:
-        node-version: '21'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4.0.2
+        with:
+          node-version: "21"
 
-    - name: Install Node.js dependencies
-      run: |
-        npm install
-        npm install @semantic-release/exec
+      - name: Install Node.js dependencies
+        run: |
+          npm install
+          npm install @semantic-release/exec
 
-    - name: Set up Python
-      uses: actions/setup-python@v5.1.0
-      with:
-        python-version: '3.x'
+      - name: Set up Python
+        uses: actions/setup-python@v5.1.0
+        with:
+          python-version: "3.x"
 
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install twine
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install twine
 
-    - name: Configure Git user
-      run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Configure Git user
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Authenticate with GitHub CLI
+        env:
+          GH_TOKEN: ""
+        run: |
+          unset GH_TOKEN
+          GH_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+          gh auth status
 
-    - name: Create new release branch
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        gh auth login --with-token <<< $GITHUB_TOKEN
-        gh repo clone ${{ github.repository }} temp-repo
-        cd temp-repo
-        git checkout -b release-branch
-        git push origin release-branch
+      - name: Create new release branch
+        run: |
+          gh repo clone ${{ github.repository }} temp-repo
+          cd temp-repo
+          git checkout -b release-branch
+          git push origin release-branch
 
-    - name: Push changes to new release branch
-      run: |
-        git push --set-upstream origin release-branch
+      - name: Push changes to new release branch
+        run: |
+          git push --set-upstream origin release-branch
 
-    - name: Run semantic-release on release branch
-      run: |
-        git checkout release-branch
-        npx semantic-release
+      - name: Run semantic-release on release branch
+        run: |
+          git checkout release-branch
+          npx semantic-release
 
-    - name: Create Pull Request
-      run: |
-        gh pr create --title "Release PR" --body "This PR contains the changes for the new release." --base main --head release-branch
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Pull Request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create --title "Release PR" --body "This PR contains the changes for the new release." --base main --head release-branch
 
-    - name: Merge Release PR
-      run: |
-        gh pr merge $(gh pr list --state open --head release-branch --json number --jq '.[0].number') --squash --admin
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Merge Release PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr merge $(gh pr list --state open --head release-branch --json number --jq '.[0].number') --squash --admin
