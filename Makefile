@@ -63,11 +63,8 @@ uninstall:
 
 # Run tests
 test:
-	@echo "Installing test requirements..."
-	pip install -r requirements.txt
 	@echo "Running unit tests..."
 	pytest -v --disable-warnings tests/
-
 
 ## update-version: Read the version number from VERSION file and save it as
 ## CURRENT_VERSION variable it will look like A.B.C Increment the third (C)
@@ -105,6 +102,6 @@ update-version:
 generate-pyproject:
 	@echo "[build-system]" > pyproject.toml
 	@echo "requires = ['setuptools', 'wheel']" >> pyproject.toml
-	@echo "build-backend = 'setuptools.build_meta'" >> pyproject.toml``````````````````````````````````````````````````
+	@echo "build-backend = 'setuptools.build_meta'" >> pyproject.toml
 
 .PHONY: clean check-packages sdist wheel upload-test upload install uninstall test update-version generate-pyproject gh-actions
