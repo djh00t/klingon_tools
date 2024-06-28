@@ -1,6 +1,6 @@
 module.exports = {
   branches: [
-    `release-${process.env.EPOCH_TIME}`
+    `release-${process.env.EPOCH_TIME || 'default'}`
   ],
   plugins: [
     "@semantic-release/commit-analyzer",
@@ -21,13 +21,13 @@ module.exports = {
           "version.py"
         ],
         "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}",
-        "branch": `release-${process.env.EPOCH_TIME}`
+        "branch": `release-${process.env.EPOCH_TIME || 'default'}`
       }
     ],
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "git add CHANGELOG.md setup.py version.py && git commit -m 'chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}' && git push origin release-${process.env.EPOCH_TIME}"
+        "prepareCmd": "git add CHANGELOG.md setup.py version.py && git commit -m 'chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}' && git push origin release-${process.env.EPOCH_TIME || 'default'}"
       }
     ],
     [
@@ -43,7 +43,7 @@ module.exports = {
     [
       "@semantic-release/exec",
       {
-        "publishCmd": "gh pr create --title 'chore(release): ${nextRelease.version}' --body 'This PR includes the release ${nextRelease.version}.\n\n${nextRelease.notes}' --base main --head release-${process.env.EPOCH_TIME}"
+        "publishCmd": "gh pr create --title 'chore(release): ${nextRelease.version}' --body 'This PR includes the release ${nextRelease.version}.\n\n${nextRelease.notes}' --base main --head release-${process.env.EPOCH_TIME || 'default'}"
       }
     ]
   ]
