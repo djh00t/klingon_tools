@@ -38,7 +38,7 @@ jobs:
         run: npx semantic-release
 
   merge-pr:
-    needs: create-pr
+    needs: release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
