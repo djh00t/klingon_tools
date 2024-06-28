@@ -90,7 +90,7 @@ jobs:
       - name: Merge the pull request
         run: |
           PR_NUMBER=$(gh pr list --head $NEW_BRANCH --json number --jq '.[0].number')
-          gh pr merge $PR_NUMBER --merge --delete-branch
+          gh pr merge "$PR_NUMBER" --merge --delete-branch
 
       - name: Clean up
         run: |
