@@ -6,7 +6,8 @@ on:
     branches-ignore:
       - main
       - master
-      - "*-release"
+      - "release"
+      - "release-*"
   workflow_dispatch:
 
 jobs:
