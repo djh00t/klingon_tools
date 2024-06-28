@@ -32,8 +32,6 @@ jobs:
           python-version: '3.x'
 
       - name: Authenticate with GitHub CLI
-        env:
-          GITHUB_TOKEN: ""
         run: |
           unset GITHUB_TOKEN
           export GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
