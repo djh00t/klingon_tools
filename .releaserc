@@ -9,7 +9,7 @@
       {
         "assets": ["CHANGELOG.md", "setup.py", "version.py"],
         "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}",
-        "branch": "release/${nextRelease.version}"
+        "branch": "release"
       }
     ],
     [
