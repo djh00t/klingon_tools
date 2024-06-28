@@ -409,7 +409,10 @@ def git_commit_file(file_name: str, repo: Repo) -> None:
             openai_tools = OpenAITools()
             commit_message = openai_tools.generate_commit_message(diff)
             # Commit the file with the generated commit message
-            repo.index.commit(commit_message.strip())
+            if commit_message:
+                repo.index.commit(commit_message.strip())
+            else:
+                raise ValueError("Commit message cannot be None")
             # Log the successful commit
             logger.info(message="File committed", status="✅")
         except ValueError as ve:
