@@ -1,12 +1,12 @@
-import os
 import logging
-from klingon_tools.logger import logger, log_tools
+import os
+
+from klingon_tools.logger import log_tools, logger
+from klingon_tools.openai_tools import OpenAITools
 
 # Configure logging to include process name
 log_tools.configure_logging()
 
-
-from klingon_tools.openai_tools import OpenAITools
 
 # Suppress logging from the httpx library
 logging.getLogger("httpx").setLevel(logging.WARNING)
