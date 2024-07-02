@@ -11,6 +11,7 @@ Attributes:
 """
 
 import logging
+
 from klingon_tools import LogTools
 
 # Initialize logging

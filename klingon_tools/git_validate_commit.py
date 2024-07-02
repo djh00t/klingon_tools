@@ -11,10 +11,11 @@ Typical usage example:
 """
 
 import re
-from git import Repo, GitCommandError
-from klingon_tools.logger import logger
+
+from git import GitCommandError, Repo
+
 from klingon_tools.git_user_info import get_git_user_info
-from klingon_tools.openai_tools import OpenAITools
+from klingon_tools.logger import logger
 from klingon_tools.openai_tools import OpenAITools
 
 

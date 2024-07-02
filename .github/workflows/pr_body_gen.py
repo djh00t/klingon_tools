@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import os
-from jinja2 import Template
 import re
 import subprocess
+
+from jinja2 import Template
 
 template_path = ".github/workflows/pr_body_template.j2"
 with open(template_path) as file_:
@@ -70,7 +71,8 @@ for message in commit_messages:
             matched = True
             break
     if not matched:
-        # Remove the first and second character if the second char is a space and try matching again
+        # Remove the first and second character if the second char is a space
+        # and try matching again
         if len(message) > 1 and message[1] == " ":
             message = message[2:]
             for change_type in types.keys():

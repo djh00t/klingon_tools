@@ -15,11 +15,11 @@ Functions:
     _format_pre_commit: Formats the message in pre-commit style.
 """
 
+import io
 import logging
 import subprocess
-from functools import wraps
 import sys
-import io
+from functools import wraps
 
 
 class LogTools:
@@ -83,7 +83,9 @@ class LogTools:
         """
         if style not in self.VALID_STYLES:
             raise ValueError(
-                f"Invalid style '{style}'. Valid styles are: {', '.join(self.VALID_STYLES)}"
+                f"Invalid style '{style}'. Valid styles are: {
+                    ', '.join(
+                        self.VALID_STYLES)}"
             )
         self.default_style = style
 
@@ -107,7 +109,9 @@ class LogTools:
         """
         if style not in self.VALID_STYLES:
             raise ValueError(
-                f"Invalid style '{style}'. Valid styles are: {', '.join(self.VALID_STYLES)}"
+                f"Invalid style '{style}'. Valid styles are: {
+                    ', '.join(
+                        self.VALID_STYLES)}"
             )
         self.default_style = style
 
@@ -163,7 +167,9 @@ class LogTools:
                 )
             if style not in self.parent.VALID_STYLES:
                 raise ValueError(
-                    f"Invalid style '{style}'. Valid styles are: {', '.join(self.parent.VALID_STYLES)}"
+                    f"Invalid style '{style}'. Valid styles are: {
+                        ', '.join(
+                            self.parent.VALID_STYLES)}"
                 )
             if "message" in kwargs:
                 msg = kwargs.pop("message")
@@ -346,7 +352,10 @@ class LogTools:
                         elif style == "basic":
                             padding = 77 - len(f"Running {display_message} {status}")
                             print(
-                                f"\rRunning {display_message}{' ' * padding}{color}{status}{LogTools.RESET}"
+                                f"\rRunning {display_message}{
+                                    ' ' *
+                                    padding}{color}{status}{
+                                    LogTools.RESET}"
                             )
                         if self.DEBUG and stdout:
                             print(
@@ -360,7 +369,9 @@ class LogTools:
                             print(
                                 f"\rRunning {display_message}... "
                                 + " " * padding
-                                + f"{LogTools.BOLD_YELLOW}WARNING{LogTools.RESET}"
+                                + f"{
+                                    LogTools.BOLD_YELLOW}WARNING{
+                                    LogTools.RESET}"
                             )
                         if self.DEBUG and stdout:
                             self.log_message.warning(f"WARNING DEBUG:\n{stdout}")
@@ -382,7 +393,11 @@ class LogTools:
                     elif style == "basic":
                         padding = 77 - len(f"Running {display_message} {status}")
                         print(
-                            f"\rRunning {display_message}{' ' * padding}{LogTools.BOLD_RED}ERROR{LogTools.RESET}"
+                            f"\rRunning {display_message}{
+                                ' ' *
+                                padding}{
+                                LogTools.BOLD_RED}ERROR{
+                                LogTools.RESET}"
                         )
                     stderr = sys.stderr.getvalue()
                     if self.DEBUG and stderr:
@@ -505,7 +520,11 @@ class LogTools:
                     elif style == "basic":
                         padding = 77 - len(f"Running {display_name} {status}")
                         print(
-                            f"\rRunning {display_name}{' ' * padding}{LogTools.BOLD_RED}ERROR{LogTools.RESET}"
+                            f"\rRunning {display_name}{
+                                ' ' *
+                                padding}{
+                                LogTools.BOLD_RED}ERROR{
+                                LogTools.RESET}"
                         )
                     if self.DEBUG and stderr:
                         self.log_message.info(f"ERROR DEBUG:\n{stdout}")

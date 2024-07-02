@@ -13,11 +13,13 @@ Typical usage example:
     git_push(repo)
 """
 
+import subprocess
+
 import git
 from git import GitCommandError
-from klingon_tools.logger import logger
-import subprocess
+
 from klingon_tools.git_validate_commit import validate_commit_messages
+from klingon_tools.logger import logger
 from klingon_tools.openai_tools import OpenAITools
 
 
@@ -132,7 +134,8 @@ def push_changes(repo: git.Repo) -> None:
                 logger.error(
                     "Failed to apply stashed changes", status="❌", reason=str(e)
                 )
-                # If there are conflicts, you can handle them here or manually resolve them
+                # If there are conflicts, you can handle them here or manually
+                # resolve them
 
         # Push the changes to the remote repository
         repo.remotes.origin.push()

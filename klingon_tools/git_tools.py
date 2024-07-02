@@ -15,27 +15,24 @@ Typical usage example:
 """
 
 import os
-import sys
-import subprocess
 import re
+import subprocess
+import sys
 from typing import Optional, Tuple
+
 import git
-from git import (
-    Repo,
-    GitCommandError,
-    InvalidGitRepositoryError,
-    NoSuchPathError,
-    exc as git_exc,
-)
-from klingon_tools.logger import logger
+from git import GitCommandError, InvalidGitRepositoryError, NoSuchPathError, Repo
+from git import exc as git_exc
+
+from klingon_tools.git_push import git_push
 from klingon_tools.git_user_info import get_git_user_info
 from klingon_tools.git_validate_commit import (
     is_commit_message_signed_off,
     is_conventional_commit,
+    validate_commit_messages,
 )
+from klingon_tools.logger import logger
 from klingon_tools.openai_tools import OpenAITools
-from klingon_tools.git_push import git_push
-from klingon_tools.git_validate_commit import validate_commit_messages
 
 LOOP_MAX_PRE_COMMIT = 5
 
@@ -80,12 +77,16 @@ def git_get_toplevel() -> Optional[Repo]:
         tracking_branch = current_branch.tracking_branch()
         if tracking_branch is None:
             logger.info(
-                message=f"New branch detected: {current_branch.name}", status="🌱"
+                message=f"New branch detected: {
+                    current_branch.name}",
+                status="🌱",
             )
             # Push the new branch upstream
             repo.git.push("--set-upstream", "origin", current_branch.name)
             logger.info(
-                message=f"Branch {current_branch.name} pushed upstream", status="✅"
+                message=f"Branch {
+                    current_branch.name} pushed upstream",
+                status="✅",
             )
         # Return the initialized repository object
         return repo
@@ -142,7 +143,8 @@ def git_get_status(repo: Repo) -> Tuple[list, list, list, list, list]:
                 # Add the file to the committed but not pushed list
                 committed_not_pushed.append(item.a_path)
     except ValueError as e:
-        # Log an error message if there is an issue processing the diff-tree output
+        # Log an error message if there is an issue processing the diff-tree
+        # output
         logger.error(message="Error processing diff-tree output:", status="❌")
         logger.exception(message=f"{e}")
     except Exception as e:
@@ -187,7 +189,11 @@ def git_commit_deletes(repo: Repo) -> None:
             )
         )
         # Log the number of deleted files
-        logger.info(message="Deleted files", status=f"{len(all_deleted_files)}")
+        logger.info(
+            message="Deleted files",
+            status=f"{
+                len(all_deleted_files)}",
+        )
         logger.debug(message=f"Deleted files: {all_deleted_files}", status="🐞")
 
         # Stage the deleted files for commit
@@ -250,7 +256,9 @@ def git_commit_deletes(repo: Repo) -> None:
 
         # Log the successful commit
         logger.info(
-            message=f"Committed {len(all_deleted_files)} deleted files", status="✅"
+            message=f"Committed {
+                len(all_deleted_files)} deleted files",
+            status="✅",
         )
 
         # Push the commit to the remote repository
@@ -340,7 +348,8 @@ def git_pre_commit(file_name: str, repo: Repo) -> bool:
 
     while attempt < LOOP_MAX_PRE_COMMIT:
         env = os.environ.copy()  # Copy the current environment variables
-        env["PYTHONUNBUFFERED"] = "1"  # Set PYTHONUNBUFFERED to ensure real-time output
+        # Set PYTHONUNBUFFERED to ensure real-time output
+        env["PYTHONUNBUFFERED"] = "1"
 
         process = subprocess.Popen(  # Run the pre-commit hooks
             ["pre-commit", "run", "--files", file_name],

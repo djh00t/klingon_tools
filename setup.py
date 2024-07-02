@@ -1,13 +1,16 @@
-from setuptools import setup, find_packages
 import os
 import re
+
+from setuptools import find_packages, setup
 
 
 def get_version():
     version_file = os.path.join(os.path.dirname(__file__), "version.py")
     with open(version_file) as f:
         code = f.read()
-        version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", code, re.M)
+        version_match = re.search(
+            r"^__version__ = ['\"]([^'\"]*)['\"]", code, re.M
+        )
         if version_match:
             return version_match.group(1)
         raise RuntimeError("Unable to find version string.")
@@ -43,7 +46,10 @@ setup(
         "pre-commit",
     ],
     include_package_data=True,
-    description="A set of utilities for running and logging shell commands in a user-friendly manner.",
+    description=(
+        "A set of utilities for running and logging shell commands in a "
+        "user-friendly manner."
+    ),
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     author="David Hooton",

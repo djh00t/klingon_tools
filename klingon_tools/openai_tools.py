@@ -17,9 +17,11 @@ Functions:
 """
 
 import os
-import textwrap
-from openai import OpenAI
 import subprocess
+import textwrap
+
+from openai import OpenAI
+
 from klingon_tools.git_user_info import get_git_user_info
 from klingon_tools.logger import logger
 
@@ -286,7 +288,8 @@ class OpenAITools:
             raise
 
         # Construct the formatted message
-        formatted_message = f"{emoticon_prefix} {commit_type}({commit_scope}): {commit_message.split(':', 1)[1].strip()}"
+        formatted_message = f"{emoticon_prefix} {commit_type}({commit_scope}): {commit_message.split(':',
+                                                                                                     1)[1].strip()}"
 
         return formatted_message
 
@@ -374,10 +377,12 @@ class OpenAITools:
                     formatted_message = self.format_message(generated_message)
                     formatted_message = self.signoff_message(formatted_message)
                 except ValueError as e:
-                    # Log and handle errors related to the commit message format
+                    # Log and handle errors related to the commit message
+                    # format
                     logger.error(f"Error formatting commit message: {e}")
 
-                    # Handle the case where the scope is missing by asking for a specific scope
+                    # Handle the case where the scope is missing by asking for
+                    # a specific scope
                     if "must include a scope" in str(e):
                         commit_type, commit_description = generated_message.split(
                             ":", 1
@@ -427,7 +432,8 @@ class OpenAITools:
             # Log and handle errors related to the commit message format
             logger.error(f"Error formatting commit message: {e}")
 
-            # Handle the case where the scope is missing by asking for a specific scope
+            # Handle the case where the scope is missing by asking for a
+            # specific scope
             if "must include a scope" in str(e):
                 commit_type, commit_description = generated_message.split(":", 1)
                 # Here we would ideally use some logic to determine the most specific scope
