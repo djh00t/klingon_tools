@@ -3,9 +3,9 @@
 """
 This module provides a script for automating git operations.
 
-The script performs various git operations such as staging, committing, and pushing
-files. It also integrates with pre-commit hooks and generates commit messages using
-OpenAI's API.
+The script performs various git operations such as staging, committing, and
+pushing files. It also integrates with pre-commit hooks and generates commit
+messages using OpenAI's API.
 
 Typical usage example:
 
@@ -19,28 +19,30 @@ Attributes:
     committed_not_pushed (list): List of committed but not pushed files.
 """
 
-import os
-import sys
 import argparse
 import logging
+import os
 import subprocess
+import sys
+
 from git import Repo
+
 from klingon_tools import LogTools
-from klingon_tools.git_tools import (
-    git_get_toplevel,
-    get_git_user_info,
-    git_get_status,
-    git_commit_deletes,
-    git_unstage_files,
-    git_stage_diff,
-    git_pre_commit,
-    git_commit_file,
-    log_git_stats,
-    cleanup_lock_file,
-)
 from klingon_tools.git_push import git_push
-from klingon_tools.openai_tools import OpenAITools
+from klingon_tools.git_tools import (
+    cleanup_lock_file,
+    get_git_user_info,
+    git_commit_deletes,
+    git_commit_file,
+    git_get_status,
+    git_get_toplevel,
+    git_pre_commit,
+    git_stage_diff,
+    git_unstage_files,
+    log_git_stats,
+)
 from klingon_tools.logger import logger
+from klingon_tools.openai_tools import OpenAITools
 
 deleted_files = []
 untracked_files = []
@@ -50,29 +52,42 @@ committed_not_pushed = []
 
 
 def check_software_requirements() -> None:
-    """Checks and installs required software.
+    """Check and install required software.
 
     This function checks if the required software, specifically `pre-commit`,
     is installed. If it is not installed, the function installs it using pip.
 
     Raises:
-        subprocess.CalledProcessError: If the installation of `pre-commit` fails.
+        subprocess.CalledProcessError: If the installation of `pre-commit`
+        fails.
     """
+    logger.info(message="Checking for software requirements", status="🔍")
+    # Check if .cache/pre-commit directory exists, if not, create it
+    cache_dir = os.path.join(repo_path, ".cache", "pre-commit")
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+        logger.info(message="Created .cache/pre-commit directory", status="✅")
+
+    # Check if .cache/pre-commit/pre-commit.log exists, if not, create it
+    log_file = os.path.join(cache_dir, "pre-commit.log")
+    if not os.path.exists(log_file):
+        with open(log_file, "w") as f:
+            f.write("")
+        logger.info(message="Created .cache/pre-commit/pre-commit.log", status="✅")
+
     try:
         # Check if pre-commit is installed
-        # Install pre-commit using pip
         subprocess.run(
             ["pre-commit", "--version"],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        logger.info(message="Checking for software requirements", status="✅")
     except subprocess.CalledProcessError:
         # If pre-commit is not installed, log a warning and install it
         logger.warning(message="pre-commit is not installed.", status="Installing")
         subprocess.run(
-            [sys.executable, "-m", "pip", "install", "pre-commit"],
+            [sys.executable, "-m", "pip", "install", "-U", "pre-commit", "cfgv"],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -82,10 +97,10 @@ def check_software_requirements() -> None:
 
 
 def workflow_process_file(file_name: str, repo: Repo) -> None:
-    """Processes a single file through the workflow.
+    """Process a single file through the workflow.
 
-    This function stages the file, generates a commit message, runs pre-commit hooks,
-    commits the file, and pushes the commit if all checks pass.
+    This function stages the file, generates a commit message, runs pre-commit
+    hooks, commits the file, and pushes the commit if all checks pass.
 
     Args:
         file_name (str): The name of the file to process.
@@ -139,7 +154,7 @@ def workflow_process_file(file_name: str, repo: Repo) -> None:
     if args.debug:
         # Enable debug mode
         # Log debug mode and git status
-        logger.debug(message=f"Debug mode enabled", status="🐞 ")
+        logger.debug(message="Debug mode enabled", status="🐞 ")
         git_get_status(repo)
         log_git_stats()
 
@@ -149,7 +164,7 @@ log_tools = LogTools()
 
 
 def startup_tasks() -> None:
-    """Runs startup maintenance tasks.
+    """Run startup maintenance tasks.
 
     This function initializes the script by parsing command-line arguments,
     setting up logging, checking software requirements, and retrieving git user
@@ -226,15 +241,16 @@ def startup_tasks() -> None:
 
 
 def main() -> None:
-    """Main function to run the push script.
+    """Run the push script.
 
     This function initializes the script, processes files based on the provided
-    command-line arguments, and performs git operations such as staging, committing,
-    and pushing files.
+    command-line arguments, and performs git operations such as staging,
+    committing, and pushing files.
 
     Raises:
         SystemExit: If any critical operation fails.
     """
+
     # Run startup tasks to initialize the script
     startup_tasks()
 
