@@ -37,7 +37,6 @@ from klingon_tools.git_tools import (
     git_get_status,
     git_get_toplevel,
     git_pre_commit,
-    git_stage_diff,
     git_unstage_files,
     log_git_stats,
 )
@@ -73,7 +72,9 @@ def check_software_requirements(repo_path: str) -> None:
     if not os.path.exists(log_file):
         with open(log_file, "w") as f:
             f.write("")
-        logger.info(message="Created .cache/pre-commit/pre-commit.log", status="✅")
+        logger.info(
+            message="Created .cache/pre-commit/pre-commit.log", status="✅"
+        )
 
     try:
         # Check if pre-commit is installed
@@ -85,9 +86,19 @@ def check_software_requirements(repo_path: str) -> None:
         )
     except subprocess.CalledProcessError:
         # If pre-commit is not installed, log a warning and install it
-        logger.warning(message="pre-commit is not installed.", status="Installing")
+        logger.warning(
+            message="pre-commit is not installed.", status="Installing"
+        )
         subprocess.run(
-            [sys.executable, "-m", "pip", "install", "-U", "pre-commit", "cfgv"],
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "-U",
+                "pre-commit",
+                "cfgv",
+            ],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -109,35 +120,36 @@ def workflow_process_file(file_name: str, repo: Repo) -> None:
     Raises:
         SystemExit: If pre-commit hooks fail.
     """
-    # Generate a diff for the file
-    diff = git_stage_diff(file_name, repo)
+    # Stage the file and generate a diff of the file being processed
+    # diff = git_stage_diff(file_name, repo)
 
-    # Generate a commit message using the diff
-    diff = repo.git.diff("HEAD")
-    openai_tools = OpenAITools()
-    commit_message = openai_tools.generate_commit_message(diff)
+    # DISABLED - we don't need a diff of the whole repo
+    # diff = repo.git.diff("HEAD")
 
     # Run pre-commit hooks on the file
-    success = git_pre_commit(file_name, repo)
+    success, diff = git_pre_commit(file_name, repo)
 
     if success:
         if args.dryrun:
             # Log dry run mode and skip commit and push
             logger.info(
-                message="Dry run mode enabled. Skipping commit and push.", status="🚫"
+                message="Dry run mode enabled. Skipping commit and push.",
+                status="🚫",
             )
         else:
+            # Load OpenAI tools
+            openai_tools = OpenAITools()
+
+            # Generate a commit message using the diff
+            commit_message = openai_tools.generate_commit_message(diff)
+
             # Commit the file
             git_commit_file(file_name, repo, commit_message)
-            # Push the commit
-            if args.dryrun:
-                # Log dry run mode and skip push
-                logger.info(message="Dry run mode enabled. Skipping push.", status="🚫")
-            else:
-                git_push(repo)
     else:
         # Log pre-commit hook failure
-        logger.error(message="Pre-commit hooks failed. Exiting script.", status="❌")
+        logger.error(
+            message="Pre-commit hooks failed. Exiting script.", status="❌"
+        )
         # Log git status
         (
             deleted_files,
@@ -181,8 +193,12 @@ def startup_tasks() -> None:
     parser.add_argument(
         "--repo-path", type=str, default=".", help="Path to the git repository"
     )
-    parser.add_argument("--debug", action="store_true", help="Enable debug mode")
-    parser.add_argument("--file-name", type=str, help="File name to stage and commit")
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable debug mode"
+    )
+    parser.add_argument(
+        "--file-name", type=str, help="File name to stage and commit"
+    )
     parser.add_argument(
         "--oneshot",
         action="store_true",
@@ -287,18 +303,13 @@ def main() -> None:
             logger.info(message="Processing file", status=f"{file}")
             workflow_process_file(file, repo)
 
-    if committed_not_pushed and not (
-        deleted_files or untracked_files or modified_files or staged_files
-    ):
-        # Push committed but not pushed files if no other files are present
+    # Push all changes at the end
+    if args.dryrun:
         logger.info(
-            message="Only committed not pushed files found. Running git push.",
-            status="🚀",
+            message="Dry run mode enabled. Skipping push.", status="🚫"
         )
-        if args.dryrun:
-            logger.info(message="Dry run mode enabled. Skipping push.", status="🚫")
-        else:
-            git_push(repo)
+    else:
+        git_push(repo)
 
     # Log script completion
     logger.info(
