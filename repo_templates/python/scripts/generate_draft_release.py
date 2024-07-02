@@ -1,5 +1,6 @@
-import openai
 import os
+
+import openai
 
 # Authenticate with OpenAI API
 openai.api_key = os.getenv("OPENAI_API_KEY")
