@@ -4,6 +4,7 @@ target-version = ['py36', 'py37', 'py38', 'py39', 'py310', 'py311', 'py312']
 
 [tool.flake8]
 ignore = ["E501"]
+max-line-length = 79
 
 [tool.yapf]
 based_on_style = 'google'
