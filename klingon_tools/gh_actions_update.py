@@ -17,8 +17,8 @@ import os
 import re
 
 import requests
-from ruamel.yaml import YAML
 from git import Repo
+from ruamel.yaml import YAML
 from tabulate import tabulate
 
 logger = logging.getLogger(__name__)
@@ -105,12 +105,16 @@ def get_latest_version(repo_name: str) -> str:
 
     # Check if the request was successful
     if response.status_code == 200:
-        logger.debug(f"Latest version for {repo_name}: {response.json()['tag_name']}")
+        logger.debug(
+            f"Latest version for {repo_name}: {
+                response.json()['tag_name']}"
+        )
         return response.json()["tag_name"]
 
     # Log an error if the request failed
     logger.error(
-        f"Failed to fetch latest version for {repo_name}, status code: {response.status_code}"
+        f"Failed to fetch latest version for {repo_name}, status code: {
+            response.status_code}"
     )
     return None
 
@@ -225,7 +229,8 @@ def find_github_actions(args: argparse.Namespace) -> dict:
     actions = {}
     yaml_files = []
 
-    # If a specific file is provided, use it; otherwise, search for all YAML files
+    # If a specific file is provided, use it; otherwise, search for all YAML
+    # files
     if args.file:
         yaml_files = [args.file]
     else:
@@ -255,7 +260,8 @@ def find_github_actions(args: argparse.Namespace) -> dict:
                         for step in job["steps"]:
                             if "uses" in step:
                                 logger.debug(
-                                    f"Found action: {step['uses']} in job: {job_name}"
+                                    f"Found action: {
+                                        step['uses']} in job: {job_name}"
                                 )
                                 action_name, current_version = step["uses"].split("@")
                                 logger.debug(f"Step data: {step}")
@@ -268,7 +274,8 @@ def find_github_actions(args: argparse.Namespace) -> dict:
                                 )
                                 job_display = job_name
 
-                                # Define a regular expression pattern to match emojis
+                                # Define a regular expression pattern to match
+                                # emojis
                                 emoji_pattern = re.compile(
                                     "["
                                     "\U0001F600-\U0001F64F"  # Emoticons
@@ -281,7 +288,8 @@ def find_github_actions(args: argparse.Namespace) -> dict:
                                     flags=re.UNICODE,
                                 )
 
-                                # Search for an emoji in the action display name
+                                # Search for an emoji in the action display
+                                # name
                                 emoji = emoji_pattern.search(action_display)
                                 emoji = emoji.group(0) if emoji else ""
                                 name_clean = action_display.replace(emoji, "").strip()
@@ -312,7 +320,9 @@ def find_github_actions(args: argparse.Namespace) -> dict:
                                         or args.action == name_clean
                                     )
                                 ):
-                                    key = f"{file_path}:{action_dict['action_owner']}:{action_dict['action_repo']}:{action_display}:{job_name}:{current_version}"
+                                    key = f"{file_path}:{
+                                        action_dict['action_owner']}:{
+                                        action_dict['action_repo']}:{action_display}:{job_name}:{current_version}"
                                     actions[key] = action_dict
 
     logger.debug(f"YAML files found: {yaml_files}")
