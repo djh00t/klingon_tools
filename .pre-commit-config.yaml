@@ -39,12 +39,12 @@ repos:
           '--pep8-passes', '5'
         ]
 
-    # Auto fix line length issues
-  - repo: https://github.com/google/yapf
-    rev: v0.40.2
-    hooks:
-    - id: yapf
-      args: ['--in-place', '--verbose', '--style', 'google']
+  # Auto fix line length issues
+  #- repo: https://github.com/google/yapf
+  #  rev: v0.40.2
+  #  hooks:
+  #  - id: yapf
+  #    args: ['--in-place', '--verbose', '--style', 'google']
 
   - repo: https://github.com/psf/black
     rev: 24.4.2
