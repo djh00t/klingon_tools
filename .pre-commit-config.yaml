@@ -59,7 +59,7 @@ repos:
         #  dlint,                      # Tool for encouraging best coding practices and helping ensure Python code is secure.
         #  flake8-alphabetize,         # Checking the order of import statements and the __all__ list.
         #]
-        #args: ['--config=pyproject.toml']
+        args: ['--config=pyproject.toml']
 
 
 ###
