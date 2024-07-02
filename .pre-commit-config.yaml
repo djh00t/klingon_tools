@@ -1,5 +1,4 @@
 fail_fast: true
-
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
@@ -60,6 +59,7 @@ repos:
           dlint,                      # Tool for encouraging best coding practices and helping ensure Python code is secure.
           flake8-alphabetize,         # Checking the order of import statements and the __all__ list.
         ]
+        args: ['--config=pyproject.toml']
 
 
 ###
