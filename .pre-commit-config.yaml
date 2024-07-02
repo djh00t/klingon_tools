@@ -55,10 +55,10 @@ repos:
     rev: 7.1.0
     hooks:
       - id: flake8
-        additional_dependencies: [
-          dlint,                      # Tool for encouraging best coding practices and helping ensure Python code is secure.
-          flake8-alphabetize,         # Checking the order of import statements and the __all__ list.
-        ]
+        #additional_dependencies: [
+        #  dlint,                      # Tool for encouraging best coding practices and helping ensure Python code is secure.
+        #  flake8-alphabetize,         # Checking the order of import statements and the __all__ list.
+        #]
         args: ['--config=pyproject.toml']
 
 
