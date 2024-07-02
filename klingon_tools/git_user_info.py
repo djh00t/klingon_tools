@@ -12,13 +12,15 @@ Usage Example:
     user_name, user_email = get_git_user_info()
 """
 
-import subprocess
-import git
-import sys
 import os
+import subprocess
+import sys
 from typing import Tuple
-from klingon_tools.logger import logger
+
+import git
 from git import GitCommandError
+
+from klingon_tools.logger import logger
 
 
 def get_git_user_info() -> Tuple[str, str]:
