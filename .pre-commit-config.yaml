@@ -44,7 +44,7 @@ repos:
     rev: v0.40.2
     hooks:
     - id: yapf
-      args: ['--in-place', '--verbose']
+      args: ['--in-place', '--verbose', '--style', '79']
 
   - repo: https://github.com/psf/black
     rev: 24.4.2
