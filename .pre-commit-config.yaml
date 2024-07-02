@@ -25,7 +25,6 @@ repos:
         args:
           - --markdown-linebreak-ext=md
 
-  # YAPF configuration is in pyproject.toml
   - repo: https://github.com/hhatto/autopep8
     rev: v2.3.1
     hooks:
@@ -39,12 +38,19 @@ repos:
           - --max-line-length=79
           - --pep8-passes=5
 
+  # YAPF configuration is in pyproject.toml
+  - repo: https://github.com/google/yapf
+    rev: v0.40.2
+    hooks:
+    - id: yapf
+  #    args: ['--in-place', '--verbose', '--style', 'google']
+
   # Black configuration is in pyproject.toml
   - repo: https://github.com/psf/black
     rev: 24.4.2
     hooks:
       - id: black
-        args: ['--line-length', '79', '--skip-string-normalization']
+        #args: ['--line-length', '79', '--skip-string-normalization']
         language_version: python3
 
   - repo: https://github.com/pycqa/flake8
