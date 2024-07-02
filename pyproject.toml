@@ -1,0 +1,10 @@
+[tool.yapfignore]
+ignore_patterns = [
+  "temp/**/*.py",
+  "temp2/*.py"
+]
+[tool.yapfstyle]
+based_on_style = 'google'
+column_limit = 79
+spaces_before_comment = 4
+split_before_logical_operator = true
