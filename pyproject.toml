@@ -1,10 +1,14 @@
-[tool.yapfignore]
-ignore_patterns = [
-  "temp/**/*.py",
-  "temp2/*.py"
-]
-[tool.yapfstyle]
+[tool.black]
+line-length = 79
+target-version = ['py36', 'py37', 'py38', 'py39', 'py310', 'py311', 'py312']
+
+[tool.yapf]
 based_on_style = 'google'
 column_limit = 79
+dedent_closing_brackets = true
+coalesce_brackets = true
 spaces_before_comment = 4
 split_before_logical_operator = true
+
+[tool.yapfignore]
+ignore_patterns = ["temp/**/*.py", "temp2/*.py"]
