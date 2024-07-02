@@ -51,7 +51,7 @@ staged_files = []
 committed_not_pushed = []
 
 
-def check_software_requirements() -> None:
+def check_software_requirements(repo_path: str) -> None:
     """Check and install required software.
 
     This function checks if the required software, specifically `pre-commit`,
@@ -204,18 +204,18 @@ def startup_tasks() -> None:
         log_tools.set_default_style("pre-commit")
         logger.setLevel(logging.DEBUG)
 
+    # Make repo_path global to access throughout the script
+    global repo_path
+    repo_path = args.repo_path
+    os.chdir(repo_path)
+
     # Check and install required software
-    check_software_requirements()
+    check_software_requirements(repo_path)
 
     # Retrieve git user information
     user_name, user_email = get_git_user_info()
     logger.info(message="Using git user name:", status=f"{user_name}")
     logger.info(message="Using git user email:", status=f"{user_email}")
-
-    # Make repo_path global to access throughout the script
-    global repo_path
-    repo_path = args.repo_path
-    os.chdir(repo_path)
 
     # Initialize git repository and get status
     global repo, untracked_files, modified_files
