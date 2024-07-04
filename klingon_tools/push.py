@@ -45,7 +45,7 @@ from klingon_tools.logger import logger
 from klingon_tools.openai_tools import OpenAITools
 
 # Initialize variables
-deleted_files = []
+# deleted_files = []  # Remove this line
 untracked_files = []
 modified_files = []
 staged_files = []
@@ -125,11 +125,7 @@ def workflow_process_file(
     Raises:
         SystemExit: If pre-commit hooks fail.
     """
-    # Stage the file and generate a diff of the file being processed
-    # diff = git_stage_diff(file_name, repo)
-
-    # DISABLED - we don't need a diff of the whole repo
-    # diff = repo.git.diff("HEAD")
+    global args
 
     # Run pre-commit hooks on the file
     success, diff = git_pre_commit(file_name, repo, modified_files)
@@ -174,12 +170,19 @@ def workflow_process_file(
         # Exit script
         sys.exit(1)
 
+    # Stage the file and generate a diff of the file being processed
     if args.debug:
         # Enable debug mode
         # Log debug mode and git status
         logger.debug(message="Debug mode enabled", status="🐞 ")
         git_get_status(repo)
-        log_git_stats()
+        log_git_stats(
+            deleted_files,
+            untracked_files,
+            modified_files,
+            staged_files,
+            committed_not_pushed,
+        )
 
 
 # Initialize logging
@@ -220,7 +223,6 @@ def startup_tasks() -> None:
         action="store_true",
         help="Run the script without committing or pushing changes",
     )
-    # Make args global to access throughout the script
     global args
     args = parser.parse_args()
 
@@ -231,10 +233,8 @@ def startup_tasks() -> None:
         log_tools.set_default_style("pre-commit")
         logger.setLevel(logging.DEBUG)
 
-    # Make repo_path global to access throughout the script
-    global repo_path
     repo_path = args.repo_path
-    os.chdir(repo_path)
+    os.chdir(args.repo_path)
 
     # Check and install required software
     check_software_requirements(repo_path)
@@ -276,7 +276,7 @@ def startup_tasks() -> None:
         committed_not_pushed,
     )
     # Clean up lock file
-    cleanup_lock_file(repo_path)
+    cleanup_lock_file(args.repo_path)
 
 
 def main() -> None:
@@ -294,7 +294,7 @@ def main() -> None:
     # Run startup tasks to initialize the script
     startup_tasks()
 
-    global repo
+    global repo, args
 
     # Get git status and update global variables
     global deleted_files
