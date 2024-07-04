@@ -28,7 +28,7 @@ import sys
 from git import Repo
 
 from klingon_tools import LogTools
-from klingon_tools.git_push import git_push
+from klingon_tools.git_push_helper import git_push
 from klingon_tools.git_tools import (
     cleanup_lock_file,
     get_git_user_info,
@@ -39,10 +39,12 @@ from klingon_tools.git_tools import (
     git_pre_commit,
     git_unstage_files,
     log_git_stats,
+    process_pre_commit_config,
 )
 from klingon_tools.logger import logger
 from klingon_tools.openai_tools import OpenAITools
 
+# Initialize variables
 deleted_files = []
 untracked_files = []
 modified_files = []
@@ -51,7 +53,8 @@ committed_not_pushed = []
 
 
 def check_software_requirements(repo_path: str) -> None:
-    """Check and install required software.
+    """
+    Check and install required software.
 
     This function checks if the required software, specifically `pre-commit`,
     is installed. If it is not installed, the function installs it using pip.
@@ -107,7 +110,9 @@ def check_software_requirements(repo_path: str) -> None:
         logger.info(message="Installed pre-commit", status="✅")
 
 
-def workflow_process_file(file_name: str, repo: Repo) -> None:
+def workflow_process_file(
+    file_name: str, repo: Repo, modified_files: list
+) -> None:
     """Process a single file through the workflow.
 
     This function stages the file, generates a commit message, runs pre-commit
@@ -127,7 +132,7 @@ def workflow_process_file(file_name: str, repo: Repo) -> None:
     # diff = repo.git.diff("HEAD")
 
     # Run pre-commit hooks on the file
-    success, diff = git_pre_commit(file_name, repo)
+    success, diff = git_pre_commit(file_name, repo, modified_files)
 
     if success:
         if args.dryrun:
@@ -159,7 +164,13 @@ def workflow_process_file(file_name: str, repo: Repo) -> None:
             committed_not_pushed,
         ) = git_get_status(repo)
         # Log git stats
-        log_git_stats()
+        log_git_stats(
+            deleted_files,
+            untracked_files,
+            modified_files,
+            staged_files,
+            committed_not_pushed,
+        )
         # Exit script
         sys.exit(1)
 
@@ -242,7 +253,12 @@ def startup_tasks() -> None:
         logger.error("Failed to initialize git repository.")
         sys.exit(1)
 
-    # Get git status
+    # Get git status and update global variables
+    global deleted_files
+    global untracked_files
+    global modified_files
+    global staged_files
+    global committed_not_pushed
     (
         deleted_files,
         untracked_files,
@@ -250,14 +266,22 @@ def startup_tasks() -> None:
         staged_files,
         committed_not_pushed,
     ) = git_get_status(repo)
+
     # Log git statistics
-    log_git_stats()
+    log_git_stats(
+        deleted_files,
+        untracked_files,
+        modified_files,
+        staged_files,
+        committed_not_pushed,
+    )
     # Clean up lock file
     cleanup_lock_file(repo_path)
 
 
 def main() -> None:
-    """Run the push script.
+    """
+    Run the push script.
 
     This function initializes the script, processes files based on the provided
     command-line arguments, and performs git operations such as staging,
@@ -272,50 +296,124 @@ def main() -> None:
 
     global repo
 
+    # Get git status and update global variables
+    global deleted_files
+    global untracked_files
+    global modified_files
+    global staged_files
+    global committed_not_pushed
+    (
+        deleted_files,
+        untracked_files,
+        modified_files,
+        staged_files,
+        committed_not_pushed,
+    ) = git_get_status(repo)
+    # Process a single file if --file-name is provided
     if args.file_name:
-        # Process a single file if --file-name is provided
         logger.info("File name mode enabled", status=args.file_name)
-        git_unstage_files(repo)
+
+        # Unstage all staged files if there are any
+        if staged_files:
+            git_unstage_files(repo, staged_files)
+
+        # If .pre-commit-config.yaml is modified, stage and commit it first
+        process_pre_commit_config(repo, modified_files)
+
+        # Set the file name to process
         file = args.file_name
+
+        # Log processing of single file
         logger.info(message="Processing single file", status=f"{file}")
-        workflow_process_file(file, repo)
+
+        # Process the file
+        workflow_process_file(file, repo, modified_files)
 
     elif args.oneshot:
         # Process only one file if --oneshot is provided
         logger.info("One-shot mode enabled", status="🎯")
-        git_unstage_files(repo)
+
+        # Unstage all staged files if there are any
+        if staged_files:
+            git_unstage_files(repo, staged_files)
+
+        # If .pre-commit-config.yaml is modified, stage and commit it first
+        process_pre_commit_config(repo, modified_files)
+
+        # Get untracked and modified files
+        files_to_process = untracked_files + modified_files
+
+        # Make sure there is something to do
+        if not files_to_process:
+            # Log no files to process
+            logger.info("No untracked or modified files to process.")
+        else:
+            # Get the first file to process
+            file = files_to_process[0]
+
+            # Log processing of first file
+            logger.info(message="Processing first file", status=f"{file}")
+
+            # Process the file
+            workflow_process_file(file, repo, modified_files)
+
+    else:
+        # Get git status and update global variables
+        (
+            deleted_files,
+            untracked_files,
+            modified_files,
+            staged_files,
+            committed_not_pushed,
+        ) = git_get_status(repo)
+        # Commit deleted files
+        git_commit_deletes(repo, deleted_files, modified_files)
+
+        # Process all untracked and modified files in batch mode
+        logger.info("Batch mode enabled", status="📦 ")
+
+        # Unstage all staged files if there are any
+        if staged_files:
+            git_unstage_files(repo, staged_files)
+
+        # If .pre-commit-config.yaml is modified, stage and commit it first
+        process_pre_commit_config(repo, modified_files)
+
+        # Process all untracked and modified files
         files_to_process = untracked_files + modified_files
 
         if not files_to_process:
-            logger.info("No untracked or modified files to process.")
+            logger.info(
+                message="No untracked or modified files to process.",
+                status="🚫",
+            )
         else:
-            file = files_to_process[0]
-            logger.info(message="Processing first file", status=f"{file}")
-            workflow_process_file(file, repo)
-
+            for file in files_to_process:
+                logger.info(message="Processing file", status=f"{file}")
+                workflow_process_file(file, repo, modified_files)
+    if repo.is_dirty(index=True, working_tree=False):
+        if args.dryrun:
+            logger.info(
+                message="Dry run mode enabled. Skipping push.", status="🚫"
+            )
+        else:
+            git_push(repo)
     else:
-        # Process all untracked and modified files in batch mode
-        logger.info("Batch mode enabled", status="📦 ")
-        git_unstage_files(repo)
-        git_commit_deletes(repo)
-
-        for file in untracked_files + modified_files:
-            logger.info(message="Processing file", status=f"{file}")
-            workflow_process_file(file, repo)
-
-    # Push all changes at the end
-    if args.dryrun:
         logger.info(
-            message="Dry run mode enabled. Skipping push.", status="🚫"
+            message="No new commits to push. Skipping push.", status="🚫"
         )
-    else:
-        git_push(repo)
 
     # Log script completion
-    logger.info(
-        message="All files processed. Script completed successfully.",
-        status="🚀 ",
-    )
+    if not untracked_files and not modified_files:
+        logger.info(
+            message="No files processed. Nothing to do.",
+            status="🚫",
+        )
+    else:
+        logger.info(
+            message="All files processed. Script completed successfully.",
+            status="🚀 ",
+        )
     logger.info(message=80 * "=", status="")
 
 
