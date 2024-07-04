@@ -391,7 +391,7 @@ def main() -> None:
             for file in files_to_process:
                 logger.info(message="Processing file", status=f"{file}")
                 workflow_process_file(file, repo, modified_files)
-    if repo.is_dirty(index=True, working_tree=False):
+    if repo.is_dirty(index=True, working_tree=False) or committed_not_pushed:
         if args.dryrun:
             logger.info(
                 message="Dry run mode enabled. Skipping push.", status="🚫"
@@ -404,7 +404,7 @@ def main() -> None:
         )
 
     # Log script completion
-    if not untracked_files and not modified_files:
+    if not untracked_files and not modified_files and not committed_not_pushed:
         logger.info(
             message="No files processed. Nothing to do.",
             status="🚫",
