@@ -1,5 +1,6 @@
 """
-This module provides tools for generating commit messages, pull request titles, and release bodies using OpenAI's API.
+This module provides tools for generating commit messages, pull request titles,
+and release bodies using OpenAI's API.
 
 Functions:
     generate_content(template_key: str, diff: str) -> str:
@@ -24,6 +25,7 @@ from openai import OpenAI
 
 from klingon_tools.git_user_info import get_git_user_info
 from klingon_tools.logger import logger
+from klingon_tools.git_log_helper import get_commit_log
 
 
 class OpenAITools:
@@ -34,36 +36,38 @@ class OpenAITools:
         # AI Templates
         self.templates = {
             "commit_message_system": """
-            Generate a commit message based solely on the staged diffs provided, ensuring accuracy and relevance to the actual changes. Avoid speculative or unnecessary footers, such as references to non-existent issues.
+            Generate a commit message based solely on the staged diffs
+            provided, ensuring accuracy and relevance to the actual changes.
+            Avoid speculative or unnecessary footers, such as references to
+            non-existent issues.
 
-            Follow the Conventional Commits standard using the following format:
-            ```
-            <type>(scope): <description>
+            Follow the Conventional Commits standard using the following
+            format: ``` <type>(scope): <description>
 
             ```
 
             Consider the following when selecting commit types:
-                build: Changes that affect the build system or external dependencies
-                chore: Other changes that don't modify src or test files
-                ci: Changes to CI configuration files and scripts
-                docs: Documentation changes
-                feat: New features
-                fix: Bug fixes
-                perf: Code changes that improve performance
-                refactor: Code changes that neither fix bugs nor add features
-                revert: Reverts a previous commit
-                style: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
-                test: Adding missing or correcting existing tests
-                other: Changes that don't fit into the above categories
+                build: Changes that affect the build system or external
+                dependencies chore: Other changes that don't modify src or test
+                files ci: Changes to CI configuration files and scripts docs:
+                Documentation changes feat: New features fix: Bug fixes perf:
+                Code changes that improve performance refactor: Code changes
+                that neither fix bugs nor add features revert: Reverts a
+                previous commit style: Changes that do not affect the meaning
+                of the code (white-space, formatting, missing semi-colons, etc)
+                test: Adding missing or correcting existing tests other:
+                Changes that don't fit into the above categories
 
-            Scope: Select the most specific of application name, file name, class name, method/function name, or feature name for the commit scope. If in doubt, use the name of the file being modified.
-            Breaking Changes: Include a BREAKING CHANGE: footer or append ! after type/scope for commits that introduce breaking API changes.
-            Footers: Breaking change is the only footer permitted.
-            Do not add "Co-authored-by" or other footers unless explicitly requested.
+            Scope: Select the most specific of application name, file name,
+            class name, method/function name, or feature name for the commit
+            scope. If in doubt, use the name of the file being modified.
+            Breaking Changes: Include a BREAKING CHANGE: footer or append !
+            after type/scope for commits that introduce breaking API changes.
+            Footers: Breaking change is the only footer permitted. Do not add
+            "Co-authored-by" or other footers unless explicitly requested.
             """,
             "commit_message_user": """
-            Generate a git commit message based on these diffs:
-            \"{diff}\"
+            Generate a git commit message based on these diffs: \"{diff}\"
             """,
             "pull_request_title": """
             Look at the conventional commit messages provided and generate a
@@ -74,8 +78,7 @@ class OpenAITools:
             to no more than 72 characters.
 
             Do not include a type prefix, contributor, commit type or scope in
-            the title.
-            \"{diff}\"
+            the title. \"{diff}\"
             """,
             "pull_request_summary": """
             Look at the conventional commit messages provided and generate a
@@ -88,8 +91,7 @@ class OpenAITools:
             content quickly & without fuss.
 
             Content should be returned as markdown without headings or font
-            styling, bullet points and plain paragraph text are ok.
-            \"{diff}\"
+            styling, bullet points and plain paragraph text are ok. \"{diff}\"
             """,
             "pull_request_context": """
             Look at the conventional commit messages provided and generate a
@@ -100,25 +102,23 @@ class OpenAITools:
             few as possible to keep the context concise.
 
             Content should be returned as markdown without headings or font
-            styling, bullet points and plain paragraph text are ok.
-            \"{diff}\"
+            styling, bullet points and plain paragraph text are ok. \"{diff}\"
             """,
             "pull_request_body": """
             Look at the conventional commit messages provided and generate a
             pull request body using the following markdown as a template:
-<!-- START OF TEMPLATE -->
-## Description
-<!-- A brief description of the changes introduced by this PR -->
+<!-- START OF TEMPLATE --> ## Description <!-- A brief description of the
+changes introduced by this PR -->
 
-## Motivation and Context
-<!-- Why is this change required? What problem does it solve? -->
+## Motivation and Context <!-- Why is this change required? What problem does
+it solve? -->
 
-## Issue Link <!-- (optional) -->
-<!-- Link to any related related issues (optional) -->
+## Issue Link <!-- (optional) --> <!-- Link to any related related issues
+(optional) -->
 
-## Types of Changes
-<!-- What types of changes does your code introduce? Put an `x` in all the boxes that apply and add indented bullet point descriptions for each change of that type under it -->
-- [ ] `feat`: ✨ A new feature
+## Types of Changes <!-- What types of changes does your code introduce? Put an
+`x` in all the boxes that apply and add indented bullet point descriptions for
+each change of that type under it --> - [ ] `feat`: ✨ A new feature
     - Change 1
     - Change 2
 - [ ] `fix`: 🐛 A bug fix
@@ -127,7 +127,8 @@ class OpenAITools:
 - [ ] `docs`: 📚 Documentation only changes
     - Change 1
     - Change 2
-- [ ] `style`: 💄 Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+- [ ] `style`: 💄 Changes that do not affect the meaning of the code
+  (white-space, formatting, missing semi-colons, etc)
     - Change 1
     - Change 2
 - [ ] `refactor`: ♻️ A code change that neither fixes a bug nor adds a feature
@@ -139,10 +140,12 @@ class OpenAITools:
 - [ ] `test`: 🚨 Adding missing or correcting existing tests
     - Change 1
     - Change 2
-- [ ] `build`: 🛠️ Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)
+- [ ] `build`: 🛠️ Changes that affect the build system or external
+  dependencies (example scopes: gulp, broccoli, npm)
     - Change 1
     - Change 2
-- [ ] `ci`: ⚙️ Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)
+- [ ] `ci`: ⚙️ Changes to our CI configuration files and scripts (example
+  scopes: Travis, Circle, BrowserStack, SauceLabs)
     - Change 1
     - Change 2
 - [ ] `chore`: 🔧 Other changes that don't modify src or test files
@@ -155,8 +158,8 @@ class OpenAITools:
             \"{diff}\"
             """,
             "release_body": """
-            Generate a release body based on the changes included in this release:
-            \"{diff}\"
+            Generate a release body based on the changes included in this
+            release: \"{diff}\"
             """,
             # Add more templates as needed for changelogs, documentation, etc.
         }
@@ -169,14 +172,15 @@ class OpenAITools:
         sends a request to the OpenAI API to generate the content.
 
         Args:
-            template_key (str): The key for the template to use.
-            diff (str): The diff to include in the generated content.
+            template_key (str): The key for the template to use. diff (str):
+            The diff to include in the generated content.
 
         Returns:
             str: The generated content.
 
         Raises:
-            ValueError: If the template_key is not found in the templates dictionary.
+            ValueError: If the template_key is not found in the templates
+            dictionary.
         """
         # Retrieve the template based on the provided key
         template = self.templates.get(template_key, "")
@@ -196,7 +200,10 @@ class OpenAITools:
         # Send a request to the OpenAI API to generate the content
         response = self.client.chat.completions.create(
             messages=[
-                {"role": "system", "content": self.templates["commit_message_system"]},
+                {
+                    "role": "system",
+                    "content": self.templates["commit_message_system"],
+                },
                 {"role": "user", "content": role_user_content},
             ],
             model="gpt-3.5-turbo",
@@ -215,8 +222,8 @@ class OpenAITools:
         based on the commit type.
 
         Args:
-            message (str): The message to format.
-            dryrun (bool): If True, unstages all files after formatting.
+            message (str): The message to format. dryrun (bool): If True,
+            unstages all files after formatting.
 
         Returns:
             str: The formatted message.
@@ -233,7 +240,8 @@ class OpenAITools:
                     line
                     if len(line) <= 78
                     else "\n".join(
-                        wrapped_line for wrapped_line in textwrap.wrap(line, 78)
+                        wrapped_line
+                        for wrapped_line in textwrap.wrap(line, 78)
                     )
                 )
                 for line in message.split("\n")
@@ -246,15 +254,18 @@ class OpenAITools:
             if len(parts) < 2:
                 # Raise an error if the commit message format is incorrect
                 logger.error(
-                    "Commit message format is incorrect. Expected format: type(scope): description"
+                    "Commit message format is incorrect. Expected format: "
+                    "type(scope): description"
                 )
                 raise ValueError(
-                    "Commit message format is incorrect. Expected format: type(scope): description"
+                    "Commit message format is incorrect. Expected format: "
+                    "type(scope): description"
                 )
 
+            # Extract the commit type and scope
             commit_type_scope = parts[0]
-            commit_description = parts[1].strip()
 
+            # Check if the commit message includes a scope
             if "(" in commit_type_scope and ")" in commit_type_scope:
                 # Extract the commit type and scope
                 commit_type, commit_scope = commit_type_scope.split("(")
@@ -262,7 +273,8 @@ class OpenAITools:
                 commit_scope = commit_scope.rstrip(")")
             else:
                 raise ValueError(
-                    "Commit message must include a scope in the format type(scope): description"
+                    "Commit message must include a scope in the format "
+                    "type(scope): description"
                 )
 
             # Add an appropriate emoticon prefix based on the commit type
@@ -288,16 +300,18 @@ class OpenAITools:
             raise
 
         # Construct the formatted message
-        formatted_message = f"{emoticon_prefix} {commit_type}({commit_scope}): {commit_message.split(':',
-                                                                                                     1)[1].strip()}"
+        formatted_message = (
+            f"{emoticon_prefix} {commit_type}({commit_scope}):"
+            f"{commit_message.split(':', 1)[1].strip()}"
+        )
 
         return formatted_message
 
     def format_pr_title(self, title: str) -> str:
         """Formats a pull request title.
 
-        This function formats a given pull request title by ensuring it is a single line
-        and does not exceed 72 characters.
+        This function formats a given pull request title by ensuring it is a
+        single line and does not exceed 72 characters.
 
         Args:
             title (str): The title to format.
@@ -312,7 +326,8 @@ class OpenAITools:
         return formatted_title
 
     def signoff_message(self, message: str) -> str:
-        """Appends a sign-off to the message with the user's name and email.
+        """
+        Appends a sign-off to the message with the user's name and email.
 
         This function appends a sign-off to the given message with the user's
         name and email retrieved from git configuration.
@@ -334,12 +349,13 @@ class OpenAITools:
         """Generates a commit message.
 
         This function generates a commit message based on the provided diff
-        using the OpenAI API. It formats the generated message and handles
-        any errors related to the commit message format.
+        using the OpenAI API. It formats the generated message and handles any
+        errors related to the commit message format.
 
         Args:
             diff (str): The diff to include in the generated commit message.
-            dryrun (bool): If True, unstages all files after generating the message.
+            dryrun (bool): If True, unstages all files after generating the
+            message.
 
         Returns:
             str: The formatted commit message.
@@ -384,36 +400,51 @@ class OpenAITools:
                     # Handle the case where the scope is missing by asking for
                     # a specific scope
                     if "must include a scope" in str(e):
-                        commit_type, commit_description = generated_message.split(
-                            ":", 1
+                        commit_type, commit_description = (
+                            generated_message.split(":", 1)
                         )
-                        # Here we would ideally use some logic to determine the most specific scope
-                        # For now, we will use a placeholder
+                        # Here we would ideally use some logic to determine the
+                        # most specific scope For now, we will use a
+                        # placeholder
                         commit_scope = "specific-scope"
-                        generated_message = f"{commit_type}({commit_scope}): {commit_description.strip()}"
-                        formatted_message = self.format_message(generated_message)
-                        formatted_message = self.signoff_message(formatted_message)
+                        generated_message = (
+                            f"{commit_type}({commit_scope}): "
+                            f"{commit_description.strip()}"
+                        )
+                        formatted_message = self.format_message(
+                            generated_message
+                        )
+                        formatted_message = self.signoff_message(
+                            formatted_message
+                        )
                         logger.info(
-                            message=f"Scope was missing. Please provide a more specific scope such as application name, file name, class name, method/function name, or feature name.",
+                            message="Scope was missing. Please provide a more"
+                            "specific scope such as application name, file "
+                            "name, class name, method/function name, or "
+                            "feature name.",
                             status="",
                         )
 
                 # Log the generated commit message
                 logger.info(message=80 * "-", status="")
                 logger.info(
-                    message=f"Generated commit message for {file}:\n\n{formatted_message}\n",
+                    message="Generated commit message for "
+                    f"{file}:\n\n{formatted_message}\n",
                     status="",
                 )
                 logger.info(message=80 * "-", status="")
 
                 # Commit the deletion with the formatted message
                 subprocess.run(
-                    ["git", "commit", "-m", formatted_message, file], check=True
+                    ["git", "commit", "-m", formatted_message, file],
+                    check=True,
                 )
 
         try:
             # Generate the commit message content using the OpenAI API
-            generated_message = self.generate_content("commit_message_user", diff)
+            generated_message = self.generate_content(
+                "commit_message_user", diff
+            )
 
             # Format the generated commit message
             formatted_message = self.format_message(generated_message)
@@ -422,7 +453,8 @@ class OpenAITools:
             # Log the generated commit message
             logger.info(message=80 * "-", status="")
             logger.info(
-                message=f"Generated commit message:\n\n{formatted_message}\n", status=""
+                message=f"Generated commit message:\n\n{formatted_message}\n",
+                status="",
             )
             logger.info(message=80 * "-", status="")
 
@@ -435,24 +467,28 @@ class OpenAITools:
             # Handle the case where the scope is missing by asking for a
             # specific scope
             if "must include a scope" in str(e):
-                commit_type, commit_description = generated_message.split(":", 1)
-                # Here we would ideally use some logic to determine the most specific scope
-                # For now, we will use a placeholder
-                commit_scope = "specific-scope"
-                generated_message = (
-                    f"{commit_type}({commit_scope}): {commit_description.strip()}"
+                commit_type, commit_description = generated_message.split(
+                    ":", 1
                 )
+                # Here we would ideally use some logic to determine the most
+                # specific scope For now, we will use a placeholder
+                commit_scope = "specific-scope"
+                generated_message = f"{commit_type}({commit_scope}): "
+                f"{commit_description.strip()}"
                 formatted_message = self.format_message(generated_message)
                 formatted_message = self.signoff_message(formatted_message)
                 logger.info(
-                    message=f"Scope was missing. Please provide a more specific scope such as application name, file name, class name, method/function name, or feature name.",
+                    message="Scope was missing. Please provide a more "
+                    "specific scope such as application name, file name, "
+                    "class name, method/function name, or feature name.",
                     status="",
                 )
 
                 # Log the generated commit message
                 logger.info(message=80 * "-", status="")
                 logger.info(
-                    message=f"Generated commit message:\n\n{formatted_message}\n",
+                    message="Generated commit message:\n\n"
+                    f"{formatted_message}\n",
                     status="",
                 )
                 logger.info(message=80 * "-", status="")
@@ -463,8 +499,11 @@ class OpenAITools:
             logger.error(f"Unexpected error: {e}")
             raise
 
-    def generate_pull_request_title(self, diff: str, dryrun: bool = False) -> str:
-        """Generates a pull request title from the git log differences between
+    def generate_pull_request_title(
+        self, diff: str, dryrun: bool = False
+    ) -> str:
+        """
+        Generates a pull request title from the git log differences between
         current branch and origin/main..HEAD.
 
         This function generates a pull request title based on the provided
@@ -474,8 +513,9 @@ class OpenAITools:
         Entrypoint: pr-title-generate
 
         Args:
-            diff (str): The diff to include in the generated pull request title.
-            dryrun (bool): If True, unstages all files after generating the title.
+            diff (str): The diff to include in the generated pull request
+            title. dryrun (bool): If True, unstages all files after generating
+            the title.
 
         Returns:
             str: The formatted pull request title.
@@ -483,32 +523,6 @@ class OpenAITools:
         Raises:
             ValueError: If the pull request title format is incorrect.
         """
-        # Check if the origin/main branch exists
-        branch_exists = (
-            subprocess.run(
-                ["git", "rev-parse", "--verify", "origin/main"],
-                capture_output=True,
-                text=True,
-            ).returncode
-            == 0
-        )
-
-        if branch_exists:
-            # Get a log of all changes that this PR is ahead of main by.
-            commit_result = subprocess.run(
-                ["git", "--no-pager", "log", "origin/main..HEAD", "--pretty=format:%s"],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-        else:
-            logger.warning("The branch 'origin/main' does not exist.")
-            commit_result = subprocess.CompletedProcess(
-                args=[], returncode=0, stdout=""
-            )
-
-        # Split the result by lines to get individual commit messages
-        commits_ahead = commit_result.stdout.splitlines()
 
         # Get the commit details including author
         commit_details = subprocess.run(
@@ -539,19 +553,23 @@ class OpenAITools:
 
         return formatted_title
 
-    def generate_pull_request_summary(self, diff: str, dryrun: bool = False) -> str:
-        """Generates a pull request summary from the git log differences between
+    def generate_pull_request_summary(
+        self, diff: str, dryrun: bool = False
+    ) -> str:
+        """
+        Generates a pull request summary from the git log differences between
         current branch and origin/main..HEAD.
 
-        This function generates a pull request summary based on the provided git
-        commit messages using the OpenAI API. It formats the generated summary and
-        handles any errors related to the summary format.
+        This function generates a pull request summary based on the provided
+        git commit messages using the OpenAI API. It formats the generated
+        summary and handles any errors related to the summary format.
 
         Entrypoint: pr-summary-generate
 
         Args:
-            diff (str): The diff to include in the generated pull request summary.
-            dryrun (bool): If True, unstages all files after generating the summary.
+            diff (str): The diff to include in the generated pull request
+            summary. dryrun (bool): If True, unstages all files after
+            generating the summary.
 
         Returns:
             str: The formatted pull request summary.
@@ -559,56 +577,32 @@ class OpenAITools:
         Raises:
             ValueError: If the pull request summary format is incorrect.
         """
-        # Check if the origin/main branch exists
-        branch_exists = (
-            subprocess.run(
-                ["git", "rev-parse", "--verify", "origin/main"],
-                capture_output=True,
-                text=True,
-            ).returncode
-            == 0
-        )
-
-        if branch_exists:
-            # Get a log of all changes that this PR is ahead of main by.
-            commit_result = subprocess.run(
-                ["git", "--no-pager", "log", "origin/main..HEAD", "--pretty=format:%s"],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-        else:
-            logger.warning("The branch 'origin/main' does not exist.")
-            commit_result = subprocess.CompletedProcess(
-                args=[], returncode=0, stdout=""
-            )
-
-        # Split the result by lines to get individual commit messages
-        commits_ahead = commit_result.stdout.splitlines()
-
-        # Save the commits to a single variable
-        commits = ""
-        for commit in commits_ahead:
-            commits += commit + "\n"
+        commits = get_commit_log("origin/main").stdout
 
         # Generate the pull request summary content using the OpenAI API
-        generated_summary = self.generate_content("pull_request_summary", commits)
+        generated_summary = self.generate_content(
+            "pull_request_summary", commits
+        )
 
         return generated_summary
 
-    def generate_pull_request_context(self, diff: str, dryrun: bool = False) -> str:
-        """Generates a pull request context from the git log differences between
+    def generate_pull_request_context(
+        self, diff: str, dryrun: bool = False
+    ) -> str:
+        """
+        Generates a pull request context from the git log differences between
         current branch and origin/main..HEAD.
 
-        This function generates a pull request context based on the provided git
-        commit messages using the OpenAI API. It formats the generated context and
-        handles any errors related to the context format.
+        This function generates a pull request context based on the provided
+        git commit messages using the OpenAI API. It formats the generated
+        context and handles any errors related to the context format.
 
         Entrypoint: pr-context-generate
 
         Args:
-            diff (str): The diff to include in the generated pull request context.
-            dryrun (bool): If True, unstages all files after generating the context.
+            diff (str): The diff to include in the generated pull request
+            context. dryrun (bool): If True, unstages all files after
+            generating the context.
 
         Returns:
             str: The formatted pull request context.
@@ -616,45 +610,20 @@ class OpenAITools:
         Raises:
             ValueError: If the pull request context format is incorrect.
         """
-        # Check if the origin/main branch exists
-        branch_exists = (
-            subprocess.run(
-                ["git", "rev-parse", "--verify", "origin/main"],
-                capture_output=True,
-                text=True,
-            ).returncode
-            == 0
-        )
-
-        if branch_exists:
-            # Get a log of all changes that this PR is ahead of main by.
-            commit_result = subprocess.run(
-                ["git", "--no-pager", "log", "origin/main..HEAD", "--pretty=format:%s"],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-        else:
-            logger.warning("The branch 'origin/main' does not exist.")
-            commit_result = subprocess.CompletedProcess(
-                args=[], returncode=0, stdout=""
-            )
-
-        # Split the result by lines to get individual commit messages
-        commits_ahead = commit_result.stdout.splitlines()
-
-        # Save the commits to a single variable
-        commits = ""
-        for commit in commits_ahead:
-            commits += commit + "\n"
+        commits = get_commit_log("origin/main").stdout
 
         # Generate the pull request context content using the OpenAI API
-        generated_context = self.generate_content("pull_request_context", commits)
+        generated_context = self.generate_content(
+            "pull_request_context", commits
+        )
 
         return generated_context
 
-    def generate_pull_request_body(self, diff: str, dryrun: bool = False) -> str:
-        """Generates a pull request body from the git log differences between
+    def generate_pull_request_body(
+        self, diff: str, dryrun: bool = False
+    ) -> str:
+        """
+        Generates a pull request body from the git log differences between
         current branch and origin/main..HEAD.
 
         This function generates a pull request body based on the provided git
@@ -665,7 +634,8 @@ class OpenAITools:
 
         Args:
             diff (str): The diff to include in the generated pull request body.
-            dryrun (bool): If True, unstages all files after generating the body.
+            dryrun (bool): If True, unstages all files after generating the
+            body.
 
         Returns:
             str: The formatted pull request body.
@@ -673,37 +643,10 @@ class OpenAITools:
         Raises:
             ValueError: If the pull request body format is incorrect.
         """
-        # Check if the origin/main branch exists
-        branch_exists = (
-            subprocess.run(
-                ["git", "rev-parse", "--verify", "origin/main"],
-                capture_output=True,
-                text=True,
-            ).returncode
-            == 0
-        )
-
-        if branch_exists:
-            # Get a log of all changes that this PR is ahead of main by.
-            commit_result = subprocess.run(
-                ["git", "--no-pager", "log", "origin/main..HEAD", "--pretty=format:%s"],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-        else:
-            logger.warning("The branch 'origin/main' does not exist.")
-            commit_result = subprocess.CompletedProcess(
-                args=[], returncode=0, stdout=""
-            )
-
-        # Split the result by lines to get individual commit messages
-        commits_ahead = commit_result.stdout.splitlines()
+        commit_result = get_commit_log("origin/main")
 
         # Save the commits to a single variable
-        commits = ""
-        for commit in commits_ahead:
-            commits += commit + "\n"
+        commits = commit_result.stdout
 
         # Generate the pull request body content using the OpenAI API
         generated_body = self.generate_content("pull_request_body", commits)
@@ -731,15 +674,17 @@ class OpenAITools:
             raise
 
     def generate_release_body(self, diff: str, dryrun: bool = False) -> str:
-        """Generates a release body.
+        """
+        Generates a release body.
 
-        This function generates a release body based on the provided diff
-        using the OpenAI API. It formats the generated body and handles any
-        errors related to the body format.
+        This function generates a release body based on the provided diff using
+        the OpenAI API. It formats the generated body and handles any errors
+        related to the body format.
 
         Args:
             diff (str): The diff to include in the generated release body.
-            dryrun (bool): If True, unstages all files after generating the body.
+            dryrun (bool): If True, unstages all files after generating the
+            body.
 
         Returns:
             str: The formatted release body.
@@ -759,7 +704,9 @@ class OpenAITools:
 
         # Log the generated release body
         logger.info(message=80 * "-", status="")
-        logger.info(message=f"Generated release body:\n\n{formatted_body}\n", status="")
+        logger.info(
+            message=f"Generated release body:\n\n{formatted_body}\n", status=""
+        )
         logger.info(message=80 * "-", status="")
 
         return formatted_body
