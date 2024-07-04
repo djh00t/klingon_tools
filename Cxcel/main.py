@@ -1,7 +1,5 @@
 import argparse
 import curses
-import os
-import threading
 import time
 
 import pandas as pd
@@ -16,30 +14,35 @@ filename = None
 
 class TerminalCSVFileHandler(FileSystemEventHandler):
     """
-    A file system event handler for terminal mode that updates the terminal display when the CSV file is modified.
+    A file system event handler for terminal mode that updates the terminal
+    display when the CSV file is modified.
 
     Attributes:
-        stdscr (curses window object): The curses window used for rendering the CSV content.
-        filename (str): The path to the CSV file being monitored.
+        stdscr (curses window object): The curses window used for rendering the
+        CSV content. filename (str): The path to the CSV file being monitored.
     """
 
     def __init__(self, stdscr, filename):
         """
-        Initialize the TerminalCSVFileHandler with the curses window and filename.
+        Initialize the TerminalCSVFileHandler with the curses window and
+        filename.
 
         Args:
-            stdscr (curses window object): The curses window used for rendering the CSV content.
-            filename (str): The path to the CSV file being monitored.
+            stdscr (curses window object): The curses window used for rendering
+            the CSV content. filename (str): The path to the CSV file being
+            monitored.
         """
         self.stdscr = stdscr
         self.filename = filename
 
     def on_modified(self, event):
         """
-        Event handler for the modified event. Clears the screen and re-renders the CSV content when the file is modified.
+        Event handler for the modified event. Clears the screen and re-renders
+        the CSV content when the file is modified.
 
         Args:
-            event (FileSystemEvent): The event object representing the file system event.
+            event (FileSystemEvent): The event object representing the file
+            system event.
         """
         if event.src_path == self.filename:
             self.stdscr.clear()
@@ -49,10 +52,14 @@ class TerminalCSVFileHandler(FileSystemEventHandler):
 
 def get_column_widths(df, max_col_width=20):
     widths = [
-        min(max(len(str(value)) for value in df[col].fillna("")), max_col_width)
+        min(
+            max(len(str(value)) for value in df[col].fillna("")), max_col_width
+        )
         for col in df.columns
     ]
-    header_widths = [min(len(str(header)), max_col_width) for header in df.columns]
+    header_widths = [
+        min(len(str(header)), max_col_width) for header in df.columns
+    ]
     return [max(w, h) for w, h in zip(widths, header_widths)]
 
 
@@ -85,7 +92,9 @@ def render_csv(stdscr, file):
     for i, row in enumerate(df.itertuples(index=False), start=2):
         if i > max_y:
             break
-        line = " | ".join(str(row[j]).ljust(col_widths[j]) for j in range(len(row)))
+        line = " | ".join(
+            str(row[j]).ljust(col_widths[j]) for j in range(len(row))
+        )
         stdscr.attron(curses.color_pair(2))
         stdscr.addstr(i, 0, line)
         stdscr.attroff(curses.color_pair(2))
@@ -126,7 +135,10 @@ class CSVFileHandler(FileSystemEventHandler):
 def read_csv_to_html(file):
     df = pd.read_csv(file).fillna("")
     return df.to_html(
-        index=False, border=0, classes="table table-striped", table_id="csv-data"
+        index=False,
+        border=0,
+        classes="table table-striped",
+        table_id="csv-data",
     )
 
 
@@ -149,7 +161,9 @@ def main():
 
     parser = argparse.ArgumentParser(description="CSV Viewer")
     parser.add_argument("--file", help="Path to the CSV file", required=True)
-    parser.add_argument("--web", action="store_true", help="Launch web interface")
+    parser.add_argument(
+        "--web", action="store_true", help="Launch web interface"
+    )
     args = parser.parse_args()
 
     filename = args.file
@@ -157,7 +171,8 @@ def main():
     if args.web:
         # Web mode
         observer = Observer()
-        event_handler = CSVFileHandler(lambda: None)  # Placeholder update function
+        # Placeholder update function
+        event_handler = CSVFileHandler(lambda: None)
         observer.schedule(event_handler, path=filename, recursive=False)
         observer.start()
 
