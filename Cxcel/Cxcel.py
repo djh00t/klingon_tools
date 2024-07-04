@@ -3,7 +3,6 @@ import curses
 import signal
 import time
 
-import numpy as np
 import pandas as pd
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
@@ -11,22 +10,26 @@ from watchdog.observers import Observer
 
 class CSVFileHandler(FileSystemEventHandler):
     """
-    A file system event handler that triggers a redraw callback when the specified CSV file is modified.
+    A file system event handler that triggers a redraw callback when the
+    specified CSV file is modified.
 
     Attributes:
         filename (str): The path to the CSV file being monitored.
-        redraw_callback (function): The callback function to be called when the file is modified.
-        max_col_width (int): The maximum width for any column when rendering the CSV.
+        redraw_callback (function): The callback function to be called when the
+        file is modified. max_col_width (int): The maximum width for any column
+        when rendering the CSV.
     """
 
     def __init__(self, filename, redraw_callback, max_col_width=20):
         """
-        Initialize the CSVFileHandler with the filename, redraw callback, and maximum column width.
+        Initialize the CSVFileHandler with the filename, redraw callback, and
+        maximum column width.
 
         Args:
             filename (str): The path to the CSV file being monitored.
-            redraw_callback (function): The callback function to be called when the file is modified.
-            max_col_width (int): The maximum width for any column when rendering the CSV.
+            redraw_callback (function): The callback function to be called when
+            the file is modified. max_col_width (int): The maximum width for
+            any column when rendering the CSV.
         """
         self.filename = filename
         self.redraw_callback = redraw_callback
@@ -34,21 +37,37 @@ class CSVFileHandler(FileSystemEventHandler):
 
     def on_modified(self, event):
         """
-        Event handler for the modified event. Calls the redraw callback if the monitored file is modified.
+        Event handler for the modified event. Calls the redraw callback if the
+        monitored file is modified.
 
         Args:
-            event (FileSystemEvent): The event object representing the file system event.
+            event (FileSystemEvent): The event object representing the file
+            system event.
         """
         if event.src_path == self.filename:
             self.redraw_callback()
 
 
 def get_column_widths(df, max_col_width):
+    """
+    Calculate the column widths for rendering the CSV.
+
+    Args:
+        df (pandas.DataFrame): The DataFrame containing the CSV data.
+        max_col_width (int): The maximum width for any column.
+
+    Returns:
+        list: The calculated column widths.
+    """
     widths = [
-        min(max(len(str(value)) for value in df[col].fillna("")), max_col_width)
+        min(
+            max(len(str(value)) for value in df[col].fillna("")), max_col_width
+        )
         for col in df.columns
     ]
-    header_widths = [min(len(str(header)), max_col_width) for header in df.columns]
+    header_widths = [
+        min(len(str(header)), max_col_width) for header in df.columns
+    ]
     return [max(w, h) for w, h in zip(widths, header_widths)]
 
 
