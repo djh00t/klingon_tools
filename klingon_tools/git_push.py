@@ -1,16 +1,15 @@
 """Module for pushing changes to a remote Git repository.
 
 This module provides functionality to push changes to a remote Git repository
-after performing several checks and operations such as validating commit messages,
-stashing unstaged changes, rebasing, and applying stashed changes back.
+after performing several checks and operations such as validating commit
+messages, stashing unstaged changes, rebasing, and applying stashed changes
+back.
 
 Typical usage example:
 
-    import git
-    from klingon_tools.git_push import git_push
+    import git from klingon_tools.git_push import git_push
 
-    repo = git.Repo('/path/to/repo')
-    git_push(repo)
+    repo = git.Repo('/path/to/repo') git_push(repo)
 """
 
 import subprocess
@@ -26,18 +25,18 @@ from klingon_tools.openai_tools import OpenAITools
 def git_push(repo: git.Repo) -> None:
     """Pushes changes to the remote repository.
 
-    This function performs several steps to ensure that the local repository
-    is in sync with the remote repository before pushing changes. It validates
+    This function performs several steps to ensure that the local repository is
+    in sync with the remote repository before pushing changes. It validates
     commit messages, stashes any unstaged changes, rebases the current branch
-    on top of the remote branch, and then pushes the changes. If there were
-    any stashed changes, it attempts to apply them back.
+    on top of the remote branch, and then pushes the changes. If there were any
+    stashed changes, it attempts to apply them back.
 
     Args:
         repo (git.Repo): The Git repository object.
 
     Raises:
-        GitCommandError: If any git command fails.
-        Exception: For any unexpected errors.
+        GitCommandError: If any git command fails. Exception: For any
+        unexpected errors.
     """
     try:
         # Handle file deletions
@@ -61,7 +60,7 @@ def git_push(repo: git.Repo) -> None:
                     continue
         openai_tools = OpenAITools()
         # Validate commit messages
-        if not validate_commit_messages(repo, openai_tools):
+        if not validate_commit_messages(repo):
             logger.error(
                 "Commit message validation failed. Aborting push.", status="❌"
             )
@@ -77,12 +76,17 @@ def git_push(repo: git.Repo) -> None:
                     text=True,
                     check=True,
                 ).stdout
-                commit_message = openai_tools.generate_commit_message(file_diff)
+                commit_message = openai_tools.generate_commit_message(
+                    file_diff
+                )
                 # Commit the file with the generated message
                 repo.git.add(file)
                 repo.index.commit(commit_message)
             except subprocess.CalledProcessError as e:
-                logger.error(f"Failed to generate commit message for {file}: {e}")
+                logger.error(
+                    f"Failed to generate commit message for {file}: {e}"
+                )
+
                 continue
 
         # Perform the push operation at the end
@@ -90,18 +94,22 @@ def git_push(repo: git.Repo) -> None:
 
     except GitCommandError as e:
         logger.error(
-            "Failed to push changes to remote repository", status="❌", reason=str(e)
+            message="Failed to push changes to remote repository",
+            status="❌",
+            reason=str(e),
         )
     except Exception as e:
-        logger.error("An unexpected error occurred", status="❌", reason=str(e))
+        logger.error(
+            "An unexpected error occurred", status="❌", reason=str(e)
+        )
 
 
 def push_changes(repo: git.Repo) -> None:
     """Pushes changes to the remote repository after all commits are made.
 
-    This function performs several steps to ensure that the local repository
-    is in sync with the remote repository before pushing changes. It stashes
-    any unstaged changes, rebases the current branch on top of the remote branch,
+    This function performs several steps to ensure that the local repository is
+    in sync with the remote repository before pushing changes. It stashes any
+    unstaged changes, rebases the current branch on top of the remote branch,
     and then pushes the changes. If there were any stashed changes, it attempts
     to apply them back.
 
@@ -121,7 +129,9 @@ def push_changes(repo: git.Repo) -> None:
         # Check for unstaged changes and stash them if any
         stash_needed = repo.is_dirty(untracked_files=True)
         if stash_needed:
-            repo.git.stash("save", "--include-untracked", "Auto stash before rebase")
+            repo.git.stash(
+                "save", "--include-untracked", "Auto stash before rebase"
+            )
 
         # Rebase the current branch on top of the remote branch
         repo.git.rebase(f"origin/{current_branch}")
@@ -132,7 +142,9 @@ def push_changes(repo: git.Repo) -> None:
                 repo.git.stash("pop")
             except GitCommandError as e:
                 logger.error(
-                    "Failed to apply stashed changes", status="❌", reason=str(e)
+                    "Failed to apply stashed changes",
+                    status="❌",
+                    reason=str(e),
                 )
                 # If there are conflicts, you can handle them here or manually
                 # resolve them
@@ -143,7 +155,11 @@ def push_changes(repo: git.Repo) -> None:
         logger.info("Pushed changes to remote repository", status="✅")
     except GitCommandError as e:
         logger.error(
-            "Failed to push changes to remote repository", status="❌", reason=str(e)
+            "Failed to push changes to remote repository",
+            status="❌",
+            reason=str(e),
         )
     except Exception as e:
-        logger.error("An unexpected error occurred", status="❌", reason=str(e))
+        logger.error(
+            "An unexpected error occurred", status="❌", reason=str(e)
+        )
