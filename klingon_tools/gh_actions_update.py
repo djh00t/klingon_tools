@@ -2,8 +2,8 @@
 
 This module provides functionality to check and update GitHub Actions versions
 in YAML workflow files within a repository. It supports filtering by action,
-job, repository, and owner, and can output results in JSON format or update
-the workflow files directly.
+job, repository, and owner, and can output results in JSON format or update the
+workflow files directly.
 
 Usage:
     python gh_actions_update.py --help
@@ -11,7 +11,6 @@ Usage:
 """
 
 import argparse
-import fnmatch
 import logging
 import os
 import re
@@ -31,8 +30,8 @@ def can_display_emojis(no_emojis_flag: bool, args: argparse.Namespace) -> bool:
     to determine if the terminal can display emojis.
 
     Args:
-        no_emojis_flag (bool): A boolean flag indicating if emojis are disabled.
-        args (argparse.Namespace): The parsed command-line arguments.
+        no_emojis_flag (bool): A boolean flag indicating if emojis are
+        disabled. args (argparse.Namespace): The parsed command-line arguments.
 
     Returns:
         bool: A boolean indicating if emojis can be displayed.
@@ -46,12 +45,14 @@ def can_display_emojis(no_emojis_flag: bool, args: argparse.Namespace) -> bool:
     # Check the LANG environment variable for UTF-8 support
     lang = os.getenv("LANG", "")
     if "UTF-8" in lang:
-        logger.debug(f"Terminal supports emojis based on LANG: {lang} 😎")
+        logger.debug("Terminal supports emojis based on LANG: %s 😎", lang)
         return True
 
     # Log a warning if emojis may not be supported
     if not args.quiet:
-        logger.warning(f"Terminal may not support emojis based on LANG: {lang}")
+        logger.warning(
+            "Terminal may not support emojis based on LANG: %s", lang
+        )
 
     return False
 
@@ -60,11 +61,12 @@ def get_github_token() -> str:
     """Retrieves the GitHub token from the environment variable.
 
     This function fetches the GitHub token from the environment variable
-    'GITHUB_TOKEN'. This token is used for authenticating API requests to GitHub.
+    'GITHUB_TOKEN'. This token is used for authenticating API requests to
+    GitHub.
 
     Returns:
-        str: The GitHub token as a string. If the environment variable is not set,
-        it returns None.
+        str: The GitHub token as a string. If the environment variable is not
+        set, it returns None.
     """
     return os.getenv("GITHUB_TOKEN")
 
@@ -79,15 +81,17 @@ def get_latest_version(repo_name: str) -> str:
         repo_name (str): The name of the repository in the format 'owner/repo'.
 
     Returns:
-        str: The latest version tag of the repository. If the request fails,
-        it returns None.
+        str: The latest version tag of the repository. If the request fails, it
+        returns None.
     """
     # Split the repository name into owner and repo
     owner, repo = repo_name.split("/")
 
     # Construct the URL for the GitHub API request
     url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
-    logger.debug(f"Fetching latest version for repo: {repo_name} using URL: {url}")
+    logger.debug(
+        "Fetching latest version for repo: %s using URL: %s", repo_name, url
+    )
 
     # Set up headers for the API request
     headers = {
@@ -106,15 +110,15 @@ def get_latest_version(repo_name: str) -> str:
     # Check if the request was successful
     if response.status_code == 200:
         logger.debug(
-            f"Latest version for {repo_name}: {
-                response.json()['tag_name']}"
+            f"Latest version for {repo_name}: "
+            f"{response.json()['tag_name']}"
         )
         return response.json()["tag_name"]
 
     # Log an error if the request failed
     logger.error(
-        f"Failed to fetch latest version for {repo_name}, status code: {
-            response.status_code}"
+        f"Failed to fetch latest version for {repo_name}, "
+        f"status code: {response.status_code}"
     )
     return None
 
@@ -122,8 +126,8 @@ def get_latest_version(repo_name: str) -> str:
 def remove_emojis(text: str) -> str:
     """Removes emojis from the given text.
 
-    This function uses a regular expression to identify and remove emojis
-    from the input text. It covers a wide range of emoji characters including
+    This function uses a regular expression to identify and remove emojis from
+    the input text. It covers a wide range of emoji characters including
     emoticons, symbols, pictographs, transport symbols, flags, dingbats, and
     enclosed characters.
 
@@ -159,17 +163,16 @@ def build_action_dict(
 ) -> dict:
     """Builds a dictionary with the required data for each action.
 
-    This function constructs a dictionary containing relevant information
-    about a GitHub Action, including its file path, owner, repository,
-    current version, display name, and job name. It also processes the
-    action display name to remove any emojis.
+    This function constructs a dictionary containing relevant information about
+    a GitHub Action, including its file path, owner, repository, current
+    version, display name, and job name. It also processes the action display
+    name to remove any emojis.
 
     Args:
-        file_path (str): The path to the YAML file.
-        action_name (str): The name of the GitHub Action in the format 'owner/repo'.
-        current_version (str): The current version of the action.
-        action_display (str): The display name of the action.
-        job_display (str): The display name of the job.
+        file_path (str): The path to the YAML file. action_name (str): The name
+        of the GitHub Action in the format 'owner/repo'. current_version (str):
+        The current version of the action. action_display (str): The display
+        name of the action. job_display (str): The display name of the job.
 
     Returns:
         dict: A dictionary containing the action data.
@@ -260,13 +263,16 @@ def find_github_actions(args: argparse.Namespace) -> dict:
                         for step in job["steps"]:
                             if "uses" in step:
                                 logger.debug(
-                                    f"Found action: {
-                                        step['uses']} in job: {job_name}"
+                                    f"Found action: {step['uses']} in job: "
+                                    f"{job_name}"
                                 )
-                                action_name, current_version = step["uses"].split("@")
+                                action_name, current_version = step[
+                                    "uses"
+                                ].split("@")
                                 logger.debug(f"Step data: {step}")
                                 logger.debug(
-                                    f"Action name: {action_name}, Current version: {current_version}"
+                                    f"Action name: {action_name}, "
+                                    f"Current version: {current_version}"
                                 )
 
                                 action_display = workflow_data.get(
@@ -278,13 +284,18 @@ def find_github_actions(args: argparse.Namespace) -> dict:
                                 # emojis
                                 emoji_pattern = re.compile(
                                     "["
-                                    "\U0001F600-\U0001F64F"  # Emoticons
-                                    "\U0001F300-\U0001F5FF"  # Symbols & pictographs
-                                    "\U0001F680-\U0001F6FF"  # Transport & map symbols
-                                    "\U0001F1E0-\U0001F1FF"  # Flags (iOS)
-                                    "\U00002702-\U000027B0"  # Dingbats
-                                    "\U000024C2-\U0001F251"  # Enclosed characters
-                                    "]+",
+                                    # Emoticons
+                                    "\U0001F600-\U0001F64F"
+                                    # Symbols & pictographs
+                                    "\U0001F300-\U0001F5FF"
+                                    # Transport & map symbols
+                                    "\U0001F680-\U0001F6FF"
+                                    # Flags (iOS)
+                                    "\U0001F1E0-\U0001F1FF"
+                                    # Dingbats
+                                    "\U00002702-\U000027B0"
+                                    # Enclosed characters
+                                    "\U000024C2-\U0001F251" "]+",
                                     flags=re.UNICODE,
                                 )
 
@@ -292,7 +303,9 @@ def find_github_actions(args: argparse.Namespace) -> dict:
                                 # name
                                 emoji = emoji_pattern.search(action_display)
                                 emoji = emoji.group(0) if emoji else ""
-                                name_clean = action_display.replace(emoji, "").strip()
+                                name_clean = action_display.replace(
+                                    emoji, ""
+                                ).strip()
 
                                 # Build the action dictionary
                                 action_dict = build_action_dict(
@@ -307,11 +320,13 @@ def find_github_actions(args: argparse.Namespace) -> dict:
                                 if (
                                     (
                                         not args.owner
-                                        or args.owner == action_name.split("/")[0]
+                                        or args.owner
+                                        == action_name.split("/")[0]
                                     )
                                     and (
                                         not args.repo
-                                        or args.repo == action_name.split("/")[1]
+                                        or args.repo
+                                        == action_name.split("/")[1]
                                     )
                                     and (not args.job or args.job == job_name)
                                     and (
@@ -320,9 +335,13 @@ def find_github_actions(args: argparse.Namespace) -> dict:
                                         or args.action == name_clean
                                     )
                                 ):
-                                    key = f"{file_path}:{
-                                        action_dict['action_owner']}:{
-                                        action_dict['action_repo']}:{action_display}:{job_name}:{current_version}"
+                                    key = (
+                                        f"{file_path}:"
+                                        f"{action_dict['action_owner']}:"
+                                        f"{action_dict['action_repo']}:"
+                                        f"{action_display}:"
+                                        f"{job_name}:{current_version}"
+                                    )
                                     actions[key] = action_dict
 
     logger.debug(f"YAML files found: {yaml_files}")
@@ -334,14 +353,14 @@ def update_action_version(
 ) -> None:
     """Updates the version of a specific GitHub Action in a YAML file.
 
-    This function reads a YAML file, searches for a specific GitHub Action,
-    and updates its version to the latest version provided. If the action is
-    found and updated, the changes are written back to the file.
+    This function reads a YAML file, searches for a specific GitHub Action, and
+    updates its version to the latest version provided. If the action is found
+    and updated, the changes are written back to the file.
 
     Args:
-        file_path (str): The path to the YAML file.
-        action_name (str): The name of the GitHub Action in the format 'owner/repo'.
-        latest_version (str): The latest version of the action.
+        file_path (str): The path to the YAML file. action_name (str): The name
+        of the GitHub Action in the format 'owner/repo'. latest_version (str):
+        The latest version of the action.
 
     Returns:
         None
@@ -365,7 +384,9 @@ def update_action_version(
     for job_name, job in content.get("jobs", {}).items():
         for step in job.get("steps", []):
             if "uses" in step and step["uses"].startswith(action_name):
-                logger.debug("Found action %s in job %s", action_name, job_name)
+                logger.debug(
+                    "Found action %s in job %s", action_name, job_name
+                )
                 step["uses"] = f"{action_name}@{latest_version}"
                 updated = True
 
@@ -381,36 +402,35 @@ def update_action_version(
             yaml.dump(content, file)
     else:
         logger.warning(
-            "No updates made for action %s in file %s",
-            action_name,
-            file_path,
+            "No updates made for action %s in file %s", action_name, file_path
         )
 
-    logger.debug("Updated %s to %s in %s", action_name, latest_version, file_path)
+    logger.debug(
+        "Updated %s to %s in %s", action_name, latest_version, file_path
+    )
 
 
 def collect_api_data(actions: dict) -> dict:
     """Collects the latest version data for GitHub Actions from the GitHub API.
 
-    This function iterates over a dictionary of GitHub Actions, fetches the latest
-    version for each unique repository from the GitHub API, and updates the action
-    data with the latest version information.
+    This function iterates over a dictionary of GitHub Actions, fetches the
+    latest version for each unique repository from the GitHub API, and updates
+    the action data with the latest version information.
 
     Args:
-        actions (dict): A dictionary containing the action data. Each key is a unique
-                        identifier for an action, and each value is a dictionary with
-                        details about the action.
+        actions (dict): A dictionary containing the action data. Each key is a
+        unique
+                        identifier for an action, and each value is a
+                        dictionary with details about the action.
 
     Returns:
         dict: A dictionary with the latest version data for each action.
     """
     # Extract unique repositories from the actions dictionary
     unique_repos = set(
-        (action["action_owner"], action["action_repo"]) for action in actions.values()
+        (action["action_owner"], action["action_repo"])
+        for action in actions.values()
     )
-
-    # Initialize a dictionary to store API data
-    api_data = {}
 
     # Iterate over each unique repository
     for owner, repo in unique_repos:
@@ -421,7 +441,10 @@ def collect_api_data(actions: dict) -> dict:
 
         # Update the action data with the latest version
         for key, action in actions.items():
-            if action["action_owner"] == owner and action["action_repo"] == repo:
+            if (
+                action["action_owner"] == owner
+                and action["action_repo"] == repo
+            ):
                 action["action_latest_version"] = (
                     latest_version if latest_version else "Unknown"
                 )
@@ -466,8 +489,8 @@ def present_state_data(actions: dict, args: argparse.Namespace) -> None:
     format or as a JSON object based on the provided command-line arguments.
 
     Args:
-        actions (dict): A dictionary containing the action data.
-        args (argparse.Namespace): The parsed command-line arguments.
+        actions (dict): A dictionary containing the action data. args
+        (argparse.Namespace): The parsed command-line arguments.
     """
     # Initialize the table and headers for tabular display
     table = []
@@ -523,7 +546,8 @@ def present_state_data(actions: dict, args: argparse.Namespace) -> None:
         print(tabulate(table, headers=headers))
         if not args.update and not args.quiet:
             print(
-                "\nNote: Use '--update' to update all outdated actions to the latest version."
+                "\nNote: Use '--update' to update all outdated actions to "
+                "the latest version."
             )
 
 
@@ -543,15 +567,21 @@ def main() -> None:
     parser.add_argument(
         "--action", type=str, help="Update all instances of a specific action."
     )
-    parser.add_argument("--debug", action="store_true", help="Enable debug logging.")
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable debug logging."
+    )
     parser.add_argument(
         "--file",
         type=str,
         help="Update actions in a specific file (bash wildcards accepted).",
     )
     parser.add_argument("--job", type=str, help="Filter actions by job name.")
-    parser.add_argument("--repo", type=str, help="Filter actions by repository name.")
-    parser.add_argument("--owner", type=str, help="Filter actions by owner name.")
+    parser.add_argument(
+        "--repo", type=str, help="Filter actions by repository name."
+    )
+    parser.add_argument(
+        "--owner", type=str, help="Filter actions by owner name."
+    )
     parser.add_argument(
         "--no-emojis", action="store_true", help="Disable emojis in output."
     )
@@ -564,7 +594,9 @@ def main() -> None:
         help="Update outdated actions to the latest version.",
     )
     parser.add_argument(
-        "--json", action="store_true", help="Output the results as a JSON object."
+        "--json",
+        action="store_true",
+        help="Output the results as a JSON object.",
     )
     parser.add_argument(
         "-h",
