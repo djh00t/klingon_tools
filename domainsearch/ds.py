@@ -38,7 +38,7 @@ def check_domain_availability(domain):
         return False  # Or handle as appropriate
 
 
-def process_csv(in_file_path, out_file_path=None):
+def process_csv(file_path, out_file_path=None):
     """Process the CSV file to check domain availability."""
     updated_rows = []
     available_count = 0
@@ -51,8 +51,8 @@ def process_csv(in_file_path, out_file_path=None):
             if "available" not in row:
                 is_available = check_domain_availability(domain)
                 print(
-                    f"Checking {domain}: {
-                        'Available' if is_available else 'Not Available'}"
+                    f"Checking {domain}: "
+                    f"{'Available' if is_available else 'Not Available'}"
                 )
                 updated_rows.append({**row, "available": int(is_available)})
                 if is_available:
@@ -63,7 +63,7 @@ def process_csv(in_file_path, out_file_path=None):
                 print(f"Skipping {domain}: Results already available")
                 updated_rows.append(row)
 
-    out_file_path = out_file_path or in_file_path
+    out_file_path = out_file_path or file_path
     with open(out_file_path, mode="w", newline="", encoding="utf-8") as file:
         fieldnames = reader.fieldnames + ["available"]
         writer = csv.DictWriter(file, fieldnames=fieldnames)
@@ -71,7 +71,8 @@ def process_csv(in_file_path, out_file_path=None):
         writer.writerows(updated_rows)
 
     print(
-        f"\nSummary: {available_count} domains available, {unavailable_count} domains not available."
+        f"\nSummary: {available_count} domains available, "
+        f"{unavailable_count} domains not available."
     )
 
 
@@ -81,13 +82,15 @@ def check_domains(domains, out_file_path=None):
     for domain in domains:
         is_available = check_domain_availability(domain)
         print(
-            f"Checking {domain}: {
-                'Available' if is_available else 'Not Available'}"
+            f"Checking {domain}: "
+            f"{'Available' if is_available else 'Not Available'}"
         )
         results.append({"name": domain, "available": int(is_available)})
 
     if out_file_path:
-        with open(out_file_path, mode="w", newline="", encoding="utf-8") as file:
+        with open(
+            out_file_path, mode="w", newline="", encoding="utf-8"
+        ) as file:
             fieldnames = ["name", "available"]
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
@@ -95,20 +98,27 @@ def check_domains(domains, out_file_path=None):
     else:
         for result in results:
             print(
-                f"{result['name']}: {'Available' if result['available'] else 'Not Available'}"
+                f"{result['name']}: "
+                f"{'Available' if result['available'] else 'Not Available'}"
             )
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Check domain availability from a CSV file or command line."
+        description=(
+            "Check domain availability from a CSV file or command line."
+        ),
     )
     parser.add_argument(
         "--in-file", help="Path to the CSV file containing domain names"
     )
-    parser.add_argument("--out-file", help="Path to the CSV file to write results to")
     parser.add_argument(
-        "-d", "--domain", help="Comma separated list of domain names to check"
+        "--out-file", help="Path to the CSV file to write results to"
+    )
+    parser.add_argument(
+        "-d",
+        "--domain",
+        help="Comma separated list of domain names to check",
     )
     args = parser.parse_args()
     if args.domain:
