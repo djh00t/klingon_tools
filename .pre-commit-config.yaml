@@ -107,6 +107,7 @@ repos:
         entry: python ../sops-pre-commit/hooks/forbid_secrets.py --hook-id aws-access-key-id
         language: system
         files: ((^|/)*.(ya?ml)$)
+        exclude: tests/.*\.ya?ml$
 
       - id: aws-secret-access-key
         name: Check for AWS Secret Access Keys
@@ -167,6 +168,7 @@ repos:
         entry: python ../sops-pre-commit/hooks/forbid_secrets.py --hook-id kubernetes-secret
         language: system
         files: ((^|/)*.(ya?ml)$)
+        exclude: tests/.*\.ya?ml$
 
   - repo: https://github.com/gruntwork-io/pre-commit
     rev: v0.1.23
