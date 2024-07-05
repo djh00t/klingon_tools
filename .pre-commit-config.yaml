@@ -19,7 +19,6 @@ repos:
             tmpl\/.*.sops\.ya?ml
             )$
       - id: mixed-line-ending
-      - id: pretty-format-json
       - id: trailing-whitespace
         args:
           - --markdown-linebreak-ext=md
