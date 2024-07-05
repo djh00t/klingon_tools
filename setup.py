@@ -62,6 +62,7 @@ setup(
         "pytest",
         "ruamel.yaml",
         "pre-commit",
+        "psutil",
     ],
     include_package_data=True,
     description=(
