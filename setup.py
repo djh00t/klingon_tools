@@ -49,13 +49,32 @@ def set_version(version):
         f.truncate()
 
 
+def convert_version(version):
+    """
+    Convert the semantic-release version to PEP 440 compatible version.
+
+    Args:
+        version (str): The version string to convert.
+
+    Returns:
+        str: The converted version string.
+    """
+    match = re.match(r"(\d+\.\d+\.\d+)-(.+)", version)
+    if match:
+        base_version, pre_release = match.groups()
+        pre_release = pre_release.replace(".", "")
+        return f"{base_version}{pre_release}"
+    return version
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "set_version":
         if len(sys.argv) != 3:
             print("Usage: python setup.py set_version <new_version>")
             sys.exit(1)
-        set_version(sys.argv[2])
-        print(f"Version set to {sys.argv[2]}")
+        converted_version = convert_version(sys.argv[2])
+        set_version(converted_version)
+        print(f"Version set to {converted_version}")
         sys.exit(0)
 
 with open("README.md", encoding="utf-8") as f:
