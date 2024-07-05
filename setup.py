@@ -8,6 +8,7 @@ import os
 import re
 import sys
 from setuptools import find_packages, setup
+from setuptools._vendor.packaging.version import InvalidVersion
 
 
 def get_version():
@@ -59,12 +60,15 @@ def convert_version(version):
     Returns:
         str: The converted version string.
     """
-    match = re.match(r"(\d+\.\d+\.\d+)-(.+)", version)
+    match = re.match(r"(\d+\.\d+\.\d+)(?:-(\w+)\.(\d+))?", version)
     if match:
-        base_version, pre_release = match.groups()
-        pre_release = pre_release.replace(".", "")
-        return f"{base_version}{pre_release}"
-    return version
+        base_version, prerelease, number = match.groups()
+        if prerelease:
+            if prerelease == "release":
+                prerelease = "rc"
+            return f"{base_version}{prerelease}{number}"
+        return base_version
+    raise InvalidVersion(f"Invalid version: '{version}'")
 
 
 if __name__ == "__main__":
