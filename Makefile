@@ -29,10 +29,16 @@ clean:
 push-prep:
 	@echo "Removing temporary files.....................................................🧹"
 	@find . -type f -name '*.pyc' -delete
-	@rm -rf requirements.txt
-	@touch requirements.txt
-	@rm -rf requirements-dev.txt
-	@touch requirements-dev.txt
+	@if [ -f requirements.txt ]; then \
+		echo "Resetting requirements.txt to empty state.................................✅"; \
+		rm -rf requirements.txt; \
+		touch requirements.txt; \
+	fi
+	@if [ -f requirements-dev.txt ]; then \
+		echo "Resetting requirements-dev.txt to empty state.............................✅"; \
+		rm -rf requirements-dev.txt; \
+		touch requirements-dev.txt; \
+	fi
 	@echo "Removed temporary files......................................................✅"
 
 ## check-packages: Check for required pip packages and requirements.txt, install if missing
