@@ -40,19 +40,24 @@ from klingon_tools.git_tools import (
     git_unstage_files,
     log_git_stats,
     process_pre_commit_config,
+    git_stage_diff,
 )
 from klingon_tools.logger import logger
 from klingon_tools.openai_tools import OpenAITools
 
 # Initialize variables
-# deleted_files = []  # Remove this line
+deleted_files = []
 untracked_files = []
 modified_files = []
 staged_files = []
 committed_not_pushed = []
+# repo = None
+# args = None
+# success = None
+# diff = None
 
 
-def check_software_requirements(repo_path: str) -> None:
+def check_software_requirements(repo_path: str, logger) -> None:
     """
     Check and install required software.
 
@@ -110,10 +115,40 @@ def check_software_requirements(repo_path: str) -> None:
         logger.info(message="Installed pre-commit", status="✅")
 
 
+def run_push_prep(logger) -> None:
+    """
+    Check for a "push-prep" target in the Makefile and run it if it exists.
+
+    This function checks if the "push-prep" target exists in the Makefile in
+    the root of the repository. If it exists, the function runs the target to
+    clean up the local codebase before handling any files.
+
+    Raises:
+        subprocess.CalledProcessError: If the make command fails.
+    """
+    makefile_path = os.path.join(os.getcwd(), "Makefile")
+    if os.path.exists(makefile_path):
+        with open(makefile_path, "r") as makefile:
+            if "push-prep:" in makefile.read():
+                logger.info(message="Running 'push-prep'", status="✅")
+                subprocess.run(["make", "push-prep"], check=True)
+            else:
+                logger.info(
+                    message="'push-prep' target not found in Makefile",
+                    status="ℹ️",
+                )
+    else:
+        logger.info(
+            message="Makefile not found in the root of the repository",
+            status="ℹ️",
+        )
+
+
 def workflow_process_file(
-    file_name: str, repo: Repo, modified_files: list
+    file_name: str, modified_files: list, repo: Repo, args, logger, log_tools
 ) -> None:
-    """Process a single file through the workflow.
+    """
+    Process a single file through the workflow.
 
     This function stages the file, generates a commit message, runs pre-commit
     hooks, commits the file, and pushes the commit if all checks pass.
@@ -125,7 +160,52 @@ def workflow_process_file(
     Raises:
         SystemExit: If pre-commit hooks fail.
     """
-    global args
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(
+        description="Git repository status checker and committer."
+    )
+    parser.add_argument(
+        "--repo-path", type=str, default=".", help="Path to the git repository"
+    )
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable debug mode"
+    )
+    parser.add_argument(
+        "--file-name", type=str, help="File name to stage and commit"
+    )
+    parser.add_argument(
+        "--oneshot",
+        action="store_true",
+        help="Process and commit only one file then exit",
+    )
+    parser.add_argument(
+        "--dryrun",
+        action="store_true",
+        help="Run the script without committing or pushing changes",
+    )
+    # Get git status and update local variables
+    (
+        deleted_files,
+        untracked_files,
+        modified_files,
+        staged_files,
+        committed_not_pushed,
+    ) = git_get_status(repo)
+    # Get git status and update local variables
+    (
+        deleted_files,
+        untracked_files,
+        modified_files,
+        staged_files,
+        committed_not_pushed,
+    ) = git_get_status(repo)
+
+    # Process deleted files
+    if deleted_files:
+        git_commit_deletes(repo, deleted_files)
+
+    # Stage the file and generate a diff of the file being processed
+    diff = git_stage_diff(file_name, repo, modified_files)
 
     # Run pre-commit hooks on the file
     success, diff = git_pre_commit(file_name, repo, modified_files)
@@ -189,7 +269,7 @@ def workflow_process_file(
 log_tools = LogTools()
 
 
-def startup_tasks() -> None:
+def startup_tasks(args, logger, log_tools) -> Repo:
     """Run startup maintenance tasks.
 
     This function initializes the script by parsing command-line arguments,
@@ -223,9 +303,6 @@ def startup_tasks() -> None:
         action="store_true",
         help="Run the script without committing or pushing changes",
     )
-    global args
-    args = parser.parse_args()
-
     # Set logging level for httpx to WARNING
     logging.getLogger("httpx").setLevel(logging.WARNING)
 
@@ -236,8 +313,14 @@ def startup_tasks() -> None:
     repo_path = args.repo_path
     os.chdir(args.repo_path)
 
+    # Clean up any existing lock files
+    cleanup_lock_file(repo_path)
+
+    # Check and run the "push-prep" target if it exists
+    run_push_prep(logger)
+
     # Check and install required software
-    check_software_requirements(repo_path)
+    check_software_requirements(args.repo_path, logger)
 
     # Retrieve git user information
     user_name, user_email = get_git_user_info()
@@ -245,20 +328,9 @@ def startup_tasks() -> None:
     logger.info(message="Using git user email:", status=f"{user_email}")
 
     # Initialize git repository and get status
-    global repo, untracked_files, modified_files
     repo = git_get_toplevel()
 
-    if repo is None:
-        # Log error and exit if repository initialization fails
-        logger.error("Failed to initialize git repository.")
-        sys.exit(1)
-
     # Get git status and update global variables
-    global deleted_files
-    global untracked_files
-    global modified_files
-    global staged_files
-    global committed_not_pushed
     (
         deleted_files,
         untracked_files,
@@ -275,11 +347,11 @@ def startup_tasks() -> None:
         staged_files,
         committed_not_pushed,
     )
-    # Clean up lock file
-    cleanup_lock_file(args.repo_path)
+    # Return the initialized repo
+    return repo
 
 
-def main() -> None:
+def main():
     """
     Run the push script.
 
@@ -290,18 +362,49 @@ def main() -> None:
     Raises:
         SystemExit: If any critical operation fails.
     """
-
-    # Run startup tasks to initialize the script
-    startup_tasks()
-
-    global repo, args
-
-    # Get git status and update global variables
+    global args, repo
     global deleted_files
     global untracked_files
     global modified_files
     global staged_files
     global committed_not_pushed
+
+    # Initialize logging
+    log_tools = LogTools()
+
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(
+        description="Git repository status checker and committer."
+    )
+    parser.add_argument(
+        "--repo-path", type=str, default=".", help="Path to the git repository"
+    )
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable debug mode"
+    )
+    parser.add_argument(
+        "--file-name", type=str, help="File name to stage and commit"
+    )
+    parser.add_argument(
+        "--oneshot",
+        action="store_true",
+        help="Process and commit only one file then exit",
+    )
+    parser.add_argument(
+        "--dryrun",
+        action="store_true",
+        help="Run the script without committing or pushing changes",
+    )
+    args = parser.parse_args()
+
+    # Run startup tasks to initialize the script and get repo
+    repo = startup_tasks(args, logger, log_tools)
+
+    if repo is None:
+        logger.error("Failed to initialize git repository. Exiting.")
+        sys.exit(1)
+
+    # Get git status and update global variables
     (
         deleted_files,
         untracked_files,
@@ -309,9 +412,13 @@ def main() -> None:
         staged_files,
         committed_not_pushed,
     ) = git_get_status(repo)
+
     # Process a single file if --file-name is provided
     if args.file_name:
-        logger.info("File name mode enabled", status=args.file_name)
+        padding = 80 - len(f"File name mode enabled {args.file_name}")
+        logger.info(
+            f"File name mode enabled{' ' * padding}", status=args.file_name
+        )
 
         # Unstage all staged files if there are any
         if staged_files:
@@ -327,7 +434,9 @@ def main() -> None:
         logger.info(message="Processing single file", status=f"{file}")
 
         # Process the file
-        workflow_process_file(file, repo, modified_files)
+        workflow_process_file(
+            file, modified_files, repo, args, logger, log_tools
+        )
 
     elif args.oneshot:
         # Process only one file if --oneshot is provided
@@ -355,22 +464,31 @@ def main() -> None:
             logger.info(message="Processing first file", status=f"{file}")
 
             # Process the file
-            workflow_process_file(file, repo, modified_files)
+            workflow_process_file(
+                file, modified_files, repo, args, logger, log_tools
+            )
+
+        # Check if there are new commits to push
+        if (
+            repo.is_dirty(index=True, working_tree=False)
+            or committed_not_pushed
+        ):
+            if args.dryrun:
+                logger.info(
+                    message="Dry run mode enabled. Skipping push.", status="🚫"
+                )
+            else:
+                git_push(repo)
+                # Perform cleanup after push operation
+                cleanup_lock_file(args.repo_path)
+        else:
+            logger.info(
+                message="No new commits to push. Skipping push.", status="🚫"
+            )
 
     else:
-        # Get git status and update global variables
-        (
-            deleted_files,
-            untracked_files,
-            modified_files,
-            staged_files,
-            committed_not_pushed,
-        ) = git_get_status(repo)
-        # Commit deleted files
-        git_commit_deletes(repo, deleted_files, modified_files)
-
-        # Process all untracked and modified files in batch mode
-        logger.info("Batch mode enabled", status="📦 ")
+        # Batch mode: Process all untracked and modified files
+        logger.info("Batch mode enabled", status="📦")
 
         # Unstage all staged files if there are any
         if staged_files:
@@ -390,31 +508,36 @@ def main() -> None:
         else:
             for file in files_to_process:
                 logger.info(message="Processing file", status=f"{file}")
-                workflow_process_file(file, repo, modified_files)
-    if repo.is_dirty(index=True, working_tree=False) or committed_not_pushed:
-        if args.dryrun:
-            logger.info(
-                message="Dry run mode enabled. Skipping push.", status="🚫"
-            )
+                workflow_process_file(
+                    file, modified_files, repo, args, logger, log_tools
+                )
+
+        # Check if there are new commits to push
+        if (
+            repo.is_dirty(index=True, working_tree=False)
+            or committed_not_pushed
+        ):
+            if args.dryrun:
+                logger.info(
+                    message="Dry run mode enabled, skipping", status="🚫"
+                )
+            else:
+                git_push(repo)
         else:
-            git_push(repo)
-    else:
-        logger.info(
-            message="No new commits to push. Skipping push.", status="🚫"
-        )
+            logger.info(message="No commits to push, skipping", status="🚫")
 
     # Log script completion
     if not untracked_files and not modified_files and not committed_not_pushed:
         logger.info(
-            message="No files processed. Nothing to do.",
+            message="No files processed, nothing to do",
             status="🚫",
         )
     else:
         logger.info(
-            message="All files processed. Script completed successfully.",
-            status="🚀 ",
+            message="All files processed successfully",
+            status="🚀",
         )
-    logger.info(message=80 * "=", status="")
+    logger.info("=" * 80, status="")
 
 
 if __name__ == "__main__":
