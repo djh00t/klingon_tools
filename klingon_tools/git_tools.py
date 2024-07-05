@@ -17,6 +17,7 @@ import os
 import subprocess
 import sys
 from typing import Optional, Tuple
+import psutil
 
 from git import (
     GitCommandError,
@@ -52,7 +53,9 @@ def branch_exists(branch_name: str) -> bool:
 def cleanup_lock_file(repo_path: str) -> None:
     """Cleans up the .lock file in the git repository.
 
-    This function removes the .lock file if it exists in the git repository.
+    This function checks for running `push` or `git` processes and removes the
+    .lock file if it exists in the git repository and no conflicting processes
+    are found.
 
     Args:
         repo_path: The path to the git repository.
@@ -63,8 +66,18 @@ def cleanup_lock_file(repo_path: str) -> None:
     # Construct the path to the .lock file
     lock_file_path = os.path.join(repo_path, ".git", "index.lock")
 
-    # Check if the .lock file exists and remove it
+    # Check if the .lock file exists
     if os.path.exists(lock_file_path):
+        # Check for running `push` or `git` processes
+        for proc in psutil.process_iter(["pid", "name"]):
+            if proc.info["name"] in ["push", "git"]:
+                logger.error(
+                    message=f"Conflicting process '{proc.info['name']}' with"
+                    f"PID {proc.info['pid']} is running. Exiting.",
+                    status="❌",
+                )
+                sys.exit(1)
+        # Remove the .lock file if no conflicting processes are found
         os.remove(lock_file_path)
         logger.info("Cleaned up .lock file.")
 
