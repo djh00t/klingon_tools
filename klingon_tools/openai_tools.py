@@ -530,7 +530,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                 "git",
                 "--no-pager",
                 "log",
-                "origin/main..HEAD",
+                "origin/release..HEAD",
                 "--pretty=format:%s by @%an",
             ],
             capture_output=True,
