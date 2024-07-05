@@ -556,6 +556,49 @@ def log_git_stats(
     logger.info(message=80 * "-", status="")
 
 
+def push_changes_if_needed(repo: Repo, args) -> None:
+    """Push changes to the remote repository if there are new commits.
+
+    This function checks if there are new commits to push to the remote
+    repository. If there are, it pushes the changes. It also handles dry run
+    mode and performs cleanup after the push operation.
+
+    Args:
+        repo: An instance of the git.Repo object representing the repository.
+        args: Command-line arguments.
+
+    Returns:
+        None
+    """
+    # Update git status variables so we have a count of files to push from
+    # committed_not_pushed
+    committed_not_pushed = git_get_status(repo)[-1]
+
+    try:
+        # Check if there are new commits to push
+        if (
+            repo.is_dirty(index=True, working_tree=False)
+            or committed_not_pushed
+        ):
+            if args.dryrun:
+                logger.info(
+                    message="Dry run mode enabled. Skipping push.", status="🚫"
+                )
+            else:
+                # Push the commit
+                git_push(repo)
+
+                # Perform cleanup after push operation
+                cleanup_lock_file(args.repo_path)
+        else:
+            logger.info(
+                message="No new commits to push. Skipping push.", status="🚫"
+            )
+    except Exception as e:
+        logger.error(message="Failed to push changes", status="❌")
+        logger.exception(message=f"{e}")
+
+
 def process_pre_commit_config(repo: Repo, modified_files: list) -> None:
     """Process the .pre-commit-config.yaml file.
 
