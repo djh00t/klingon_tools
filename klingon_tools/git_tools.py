@@ -104,6 +104,9 @@ def git_get_toplevel() -> Optional[Repo]:
         # Log an error message if the repository initialization fails
         logger.error(message="Error initializing git repository", status="❌")
         logger.exception(message=f"{e}")
+        # Log an error message if the repository initialization fails
+        logger.error(message="Error initializing git repository", status="❌")
+        logger.exception(message=f"{e}")
         # Return None if the repository initialization fails
         return None
 
@@ -176,9 +179,7 @@ def git_get_status(repo: Repo) -> Tuple[list, list, list, list, list]:
     )
 
 
-def git_commit_deletes(
-    repo: Repo, deleted_files: list, modified_files: list
-) -> None:
+def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
     """Commits deleted files in the given repository.
 
     This function identifies deleted files in the repository, stages them for
@@ -212,9 +213,6 @@ def git_commit_deletes(
         logger.debug(
             message=f"Deleted files: {all_deleted_files}", status="🐞"
         )
-
-        # Process .pre-commit-config.yaml if modified
-        process_pre_commit_config(repo, modified_files)
 
         # Stage the deleted files for commit
         for file in all_deleted_files:
@@ -423,11 +421,12 @@ def git_pre_commit(file_name: str, repo: Repo, modified_files: list) -> bool:
                     status="❌",
                 )
                 sys.exit(1)  # Exit the script if maximum attempts reached
-        elif result.returncode == 0:  # Check if pre-commit hooks passed
+        if result.returncode == 0:  # Check if pre-commit hooks passed
             logger.info(message=80 * "-", status="")
             logger.info(message="Pre-commit completed", status="✅")
             return True, diff  # Return True if hooks passed
-        elif (
+
+        if (
             result.returncode == 1
             and "files were modified by this hook" not in result.stdout
             and "Fixing" not in result.stdout
