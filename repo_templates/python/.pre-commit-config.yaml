@@ -17,16 +17,16 @@ repos:
           - --markdown-linebreak-ext=md
       - id: end-of-file-fixer
       - id: check-yaml
-#   - repo: https://github.com/pycqa/flake8
-#     rev: v6
-#     hooks:
-#       - id: flake8
-#         additional_dependencies: [flake8-docstrings]
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.1.0
+    hooks:
+      - id: flake8
+        args: ['--config=pyproject.toml']
   - repo: https://github.com/psf/black
     rev: 23.7.0
     hooks:
       - id: black
-        args: [--line-length=88]
+        args: ['--config=pyproject.toml']
         language_version: python3.12
 ###%   - repo: https://github.com/sirosen/texthooks
 ###%     rev: 0.6.6

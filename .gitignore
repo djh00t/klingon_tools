@@ -208,6 +208,9 @@ $RECYCLE.BIN/
 *.obj
 *.pyd
 
+# Ignore *.pyc files
+
+
 # Ignore node_modules
 node_modules/**
 

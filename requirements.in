@@ -7,3 +7,4 @@ pytest
 pytest-mock
 iniconfig
 ruamel.yaml
+psutil

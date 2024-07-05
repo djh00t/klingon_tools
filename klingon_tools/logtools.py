@@ -1,41 +1,45 @@
 """
 klingon_tools.logtools
 
-This module provides utilities for running and logging shell commands in a user-friendly manner.
-It includes the LogTools class, which offers decorators for methods and CLI commands to log output
-in a clean and consistent manner with simple error handling.
+This module provides utilities for running and logging shell commands in a
+user-friendly manner. It includes the LogTools class, which offers decorators
+for methods and CLI commands to log output in a clean and consistent manner
+with simple error handling.
 
 Classes:
-    LogTools: A utility class for running and logging Python methods and shell commands.
-    LogTools.LogMessage: Handles logging messages with a given severity, style, status, and reason.
+    LogTools: A utility class for running and logging Python methods and shell
+    commands. LogTools.LogMessage: Handles logging messages with a given
+    severity, style, status, and reason.
 
 Functions:
-    method_state: Decorator to log the state of a method with a given style, status, and reason.
-    command_state: Runs a list of shell commands and logs their output with a given style, status, and reason.
-    _format_pre_commit: Formats the message in pre-commit style.
+    method_state: Decorator to log the state of a method with a given style,
+    status, and reason. command_state: Runs a list of shell commands and logs
+    their output with a given style, status, and reason. _format_pre_commit:
+    Formats the message in pre-commit style.
 """
 
+import io
 import logging
 import subprocess
-from functools import wraps
 import sys
-import io
+from functools import wraps
 
 
 class LogTools:
-    """A utility class for running and logging Python methods and shell commands in a user-friendly manner.
+    """
+    A utility class for running and logging Python methods and shell commands
+    in a user-friendly manner.
 
     This class provides decorators for methods and CLI commands that log output
     in a clean and consistent manner with simple error handling.
 
     Attributes:
-        DEBUG (bool): Flag to enable debug mode.
-        BOLD_GREEN (str): ANSI escape code for bold green text.
-        BOLD_YELLOW (str): ANSI escape code for bold yellow text.
-        BOLD_RED (str): ANSI escape code for bold red text.
-        RESET (str): ANSI escape code to reset text formatting.
-        logger (logging.Logger): Logger instance for logging messages.
-        template (str): Template for log messages.
+        DEBUG (bool): Flag to enable debug mode. BOLD_GREEN (str): ANSI escape
+        code for bold green text. BOLD_YELLOW (str): ANSI escape code for bold
+        yellow text. BOLD_RED (str): ANSI escape code for bold red text. RESET
+        (str): ANSI escape code to reset text formatting. logger
+        (logging.Logger): Logger instance for logging messages. template (str):
+        Template for log messages.
     """
 
     BOLD_GREEN = "\033[1;32m"
@@ -48,17 +52,6 @@ class LogTools:
     )  # Default logging level without prefix
 
     template = None
-
-    def __init__(self, debug=False):
-        """Initializes LogTools with an optional debug flag.
-
-        Args:
-            debug (bool): Flag to enable debug mode. Defaults to False.
-        """
-        # Initialize the logger and set the debug flag
-        self.DEBUG = debug
-        self.log_message = LogTools.LogMessage(__name__)
-        self.logger = logging.getLogger(__name__)
 
     @classmethod
     def set_template(cls, template):
@@ -83,31 +76,8 @@ class LogTools:
         """
         if style not in self.VALID_STYLES:
             raise ValueError(
-                f"Invalid style '{style}'. Valid styles are: {', '.join(self.VALID_STYLES)}"
-            )
-        self.default_style = style
-
-    def configure_logging(self):
-        """Configures logging to use the custom ContextualLogHandler."""
-        handler = self.ContextualLogHandler()
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        handler.setFormatter(formatter)
-        logging.basicConfig(level=logging.INFO, handlers=[handler])
-
-    def set_default_style(self, style):
-        """Sets the default style for log messages.
-
-        Args:
-            style (str): The style to use for log messages.
-
-        Raises:
-            ValueError: If the provided style is not valid.
-        """
-        if style not in self.VALID_STYLES:
-            raise ValueError(
-                f"Invalid style '{style}'. Valid styles are: {', '.join(self.VALID_STYLES)}"
+                f"Invalid style '{style}'. Valid styles are: "
+                f"{', '.join(self.VALID_STYLES)}"
             )
         self.default_style = style
 
@@ -131,10 +101,12 @@ class LogTools:
         self.log_message.setLevel(logging.DEBUG)
 
     class LogMessage:
-        """Handles logging messages with a given severity, style, status, and reason.
+        """Handles logging messages with a given severity, style, status, and
+        reason.
 
-        This class provides methods to log messages with different severity levels
-        (info, warning, error, etc.) and supports custom templates for log messages.
+        This class provides methods to log messages with different severity
+        levels (info, warning, error, etc.) and supports custom templates for
+        log messages.
 
         Args:
             name (str): The name of the logger.
@@ -163,7 +135,8 @@ class LogTools:
                 )
             if style not in self.parent.VALID_STYLES:
                 raise ValueError(
-                    f"Invalid style '{style}'. Valid styles are: {', '.join(self.parent.VALID_STYLES)}"
+                    f"Invalid style '{style}'. Valid styles are: "
+                    f"{', '.join(self.parent.VALID_STYLES)}"
                 )
             if "message" in kwargs:
                 msg = kwargs.pop("message")
@@ -178,7 +151,13 @@ class LogTools:
                 1
                 if any(
                     char in status
-                    for char in "✅🛑🚫‼️❗️❌🚨⚠️↩️↪️🔁🔄😀😁😂🤣😃😄😅😆😉😊😋😎😍😘😗😙😚🙂🤗🤔🤐😐😑😶😏😣😥😮🤐😯😪😫😴😌😛😜😝🤤😒😓😔😕🙃🤑😲☹🙁😖😞😟😤😢😭😦😧😨😩🤯😬😰😱😳🤪😵😡😠🤬😷🤒🤕🤢🤮🤧😇🤠🤡🤥🤫🤭🧐🤓😈👿👹👺💀👻👽👾🤖💩😺😸😹😻😼😽🙀😿😾"
+                    for char in "🚀✅🛑🚫‼️❗️❌🚨⚠️⚠️↩️↪️🎯🔁🔄⏭️😀😁😂🤣"
+                    "😃😄😅😆😉😊😋😎😍😘😗😙😚🙂🤗🤔🤐"
+                    "😐😑😶😏😣😥😮🤐😯😪😫😴😌😛😜😝🤤"
+                    "😒😓😔😕🙃🤑😲☹🙁😖😞😟😤😢😭😦😧"
+                    "😨😩🤯😬😰😱😳🤪😵😡😠🤬😷🤒🤕🤢"
+                    "🤮🤧😇🤠🤡🤥🤫🤭🧐🤓😈👿👹👺💀👻"
+                    "👽👾🤖💩😺😸😹😻😼😽🙀😿😾📦🔍"
                 )
                 else 0
             )
@@ -257,17 +236,23 @@ class LogTools:
         def __repr__(self):
             return repr(self.logger)
 
-    def method_state(self, message=None, style="default", status="OK", reason=None):
-        """Decorator to log the state of a method with a given style, status, and reason.
+    def method_state(
+        self, message=None, style="default", status="OK", reason=None
+    ):
+        """
+        Decorator to log the state of a method with a given style, status, and
+        reason.
 
-        This is useful for providing user-friendly logging where system-style logging
-        is too much or likely to cause confusion for the reader.
+        This is useful for providing user-friendly logging where system-style
+        logging is too much or likely to cause confusion for the reader.
 
         Args:
-            message (str): The message to log. Can be provided as a positional or keyword argument.
-            style (str, optional): The style of the log output. Defaults to "default".
-            status (str, optional): The status message to log on the far right. Defaults to "OK".
-            reason (str, optional): The reason for the status message, displayed in round brackets just to the left of `status`. Defaults to None.
+            message (str): The message to log. Can be provided as a positional
+            or keyword argument. style (str, optional): The style of the log
+            output. Defaults to "default". status (str, optional): The status
+            message to log on the far right. Defaults to "OK". reason (str,
+            optional): The reason for the status message, displayed in round
+            brackets just to the left of `status`. Defaults to None.
 
         Returns:
             function: The decorated function with logging.
@@ -278,28 +263,31 @@ class LogTools:
 
                 log_tools = LogTools(debug=True)
 
-                @log_tools.method_state(message="Install numpy", style="default")
-                def install_numpy():
+                @log_tools.method_state(message="Install numpy",
+                style="default") def install_numpy():
                     return "PIP_ROOT_USER_ACTION=ignore pip install -q numpy"
 
                 install_numpy()
 
             **Expected output**
-                Running Install numpy...                                                     OK
+                Running Install numpy...
+                OK
 
             **Pre-commit Style**
                 from klingon_tools.logtools import LogTools
 
                 log_tools = LogTools(debug=True)
 
-                @log_tools.method_state(message="Install numpy", style="pre-commit", status="Passed", reason="All tests passed")
+                @log_tools.method_state(message="Install numpy",
+                style="pre-commit", status="Passed", reason="All tests passed")
                 def install_numpy():
                     return "PIP_ROOT_USER_ACTION=ignore pip install -q numpy"
 
                 install_numpy()
 
             **Expected Output**
-                Running Install numpy.................................................Passed
+                Running Install
+                numpy.................................................Passed
         """
         # Define the decorator function
 
@@ -316,7 +304,10 @@ class LogTools:
                     )
                     print(display_message, end="")
                 else:
-                    print(f"Running {display_message}... " + " " * padding, end="")
+                    print(
+                        f"Running {display_message}... " + " " * padding,
+                        end="",
+                    )
 
                 # Capture stdout and stderr to handle method output
                 old_stdout = sys.stdout
@@ -344,29 +335,42 @@ class LogTools:
                         if style == "pre-commit":
                             print(f"{color}{status}{LogTools.RESET}")
                         elif style == "basic":
-                            padding = 77 - len(f"Running {display_message} {status}")
+                            padding = 77 - len(
+                                f"Running {display_message} {status}"
+                            )
                             print(
-                                f"\rRunning {display_message}{' ' * padding}{color}{status}{LogTools.RESET}"
+                                f"\rRunning {display_message}"
+                                f"{' ' * padding}{color}{status}"
+                                f"{LogTools.RESET}"
                             )
                         if self.DEBUG and stdout:
                             print(
-                                f"{LogTools.BOLD_GREEN}INFO DEBUG:\n{LogTools.RESET}{stdout}"
+                                f"{LogTools.BOLD_GREEN}INFO "
+                                f"DEBUG:\n{LogTools.RESET}{stdout}"
                             )
                     elif result == 1:  # Assuming '1' is a warning
                         # Log a warning message
                         if style == "pre-commit":
-                            print(f"{LogTools.BOLD_YELLOW}{status}{LogTools.RESET}")
+                            print(
+                                f"{LogTools.BOLD_YELLOW}{status}"
+                                f"{LogTools.RESET}"
+                            )
                         else:
                             print(
                                 f"\rRunning {display_message}... "
-                                + " " * padding
-                                + f"{LogTools.BOLD_YELLOW}WARNING{LogTools.RESET}"
+                                f"{' ' * padding}"
+                                f"{LogTools.BOLD_YELLOW}WARNING"
+                                f"{LogTools.RESET}"
                             )
                         if self.DEBUG and stdout:
-                            self.log_message.warning(f"WARNING DEBUG:\n{stdout}")
+                            self.log_message.warning(
+                                f"WARNING DEBUG:\n{stdout}"
+                            )
                     else:
                         if style == "pre-commit":
-                            print(f"{LogTools.BOLD_RED}{status}{LogTools.RESET}")
+                            print(
+                                f"{LogTools.BOLD_RED}{status}{LogTools.RESET}"
+                            )
                         else:
                             print(
                                 f"\rRunning {display_message}... "
@@ -380,9 +384,13 @@ class LogTools:
                     if style == "pre-commit":
                         print(f"{LogTools.BOLD_RED}{status}{LogTools.RESET}")
                     elif style == "basic":
-                        padding = 77 - len(f"Running {display_message} {status}")
+                        padding = 77 - len(
+                            f"Running {display_message} {status}"
+                        )
                         print(
-                            f"\rRunning {display_message}{' ' * padding}{LogTools.BOLD_RED}ERROR{LogTools.RESET}"
+                            f"\rRunning {display_message}"
+                            f"{' ' * padding}{LogTools.BOLD_RED}ERROR"
+                            f"{LogTools.RESET}"
                         )
                     stderr = sys.stderr.getvalue()
                     if self.DEBUG and stderr:
@@ -397,16 +405,22 @@ class LogTools:
 
         return decorator
 
-    def command_state(self, commands, style="default", status="Passed", reason=None):
-        """Runs a list of shell commands and logs their output with a given style, status, and reason.
+    def command_state(
+        self, commands, style="default", status="Passed", reason=None
+    ):
+        """
+        Runs a list of shell commands and logs their output with a given style,
+        status, and reason.
 
         This is useful for providing user-friendly logging for shell commands.
 
         Args:
             commands (list of tuples): Each tuple contains (command, name).
-            style (str, optional): The style of the log output. Defaults to "default".
-            status (str, optional): The status message to log on the far right. Defaults to "Passed".
-            reason (str, optional): The reason for the status message, displayed in round brackets just to the left of `status`. Defaults to None.
+            style (str, optional): The style of the log output. Defaults to
+            "default". status (str, optional): The status message to log on the
+            far right. Defaults to "Passed". reason (str, optional): The reason
+            for the status message, displayed in round brackets just to the
+            left of `status`. Defaults to None.
 
         Example with Styles:
             **Default Style**
@@ -415,15 +429,17 @@ class LogTools:
                 log_tools = LogTools(debug=True)
 
                 commands = [
-                    ("PIP_ROOT_USER_ACTION=ignore pip install -q numpy", "Install numpy"),
-                    ("echo 'Hello, World!'", "Print Hello World")
+                    ("PIP_ROOT_USER_ACTION=ignore pip install -q numpy",
+                    "Install numpy"), ("echo 'Hello, World!'", "Print Hello
+                    World")
                 ]
 
                 log_tools.command_state(commands)
 
             **Expected output**
-                Running Install numpy...                                                     Passed
-                Running Print Hello World...                                                 Passed
+                Running Install numpy...
+                Passed Running Print Hello World...
+                Passed
 
             **Pre-commit Style**
                 from klingon_tools.logtools import LogTools
@@ -431,22 +447,28 @@ class LogTools:
                 log_tools = LogTools(debug=True)
 
                 commands = [
-                    ("PIP_ROOT_USER_ACTION=ignore pip install -q numpy", "Install numpy"),
-                    ("echo 'Hello, World!'", "Print Hello World")
+                    ("PIP_ROOT_USER_ACTION=ignore pip install -q numpy",
+                    "Install numpy"), ("echo 'Hello, World!'", "Print Hello
+                    World")
                 ]
 
-                log_tools.command_state(commands, style="pre-commit", status="Passed", reason="All tests passed")
+                log_tools.command_state(commands, style="pre-commit",
+                status="Passed", reason="All tests passed")
 
             **Expected Output**
-                Running Install numpy.................................................Passed
-                Running Print Hello World.............................................Passed
+                Running Install
+                numpy.................................................Passed
+                Running Print Hello
+                World.............................................Passed
         """
         # Iterate over the list of commands and log their output
         for command, name in commands:
             display_name = name if name else f"'{command}'"
             padding = 72 - len(f"Running {display_name}... ")
             if style == "pre-commit":
-                display_name = self._format_pre_commit(display_name, status, reason)
+                display_name = self._format_pre_commit(
+                    display_name, status, reason
+                )
                 print(display_name, end="")
             elif style == "basic":
                 padding = 77 - len(f"Running {display_name} {status}")
@@ -460,7 +482,11 @@ class LogTools:
 
             try:
                 result = subprocess.run(
-                    command, check=True, shell=True, capture_output=True, text=True
+                    command,
+                    check=True,
+                    shell=True,
+                    capture_output=True,
+                    text=True,
                 )
                 stdout = result.stdout
                 stderr = result.stderr
@@ -490,7 +516,9 @@ class LogTools:
                 elif result.returncode == 1:  # Assuming '1' is a warning
                     # Log a warning message
                     if style == "pre-commit":
-                        print(f"{LogTools.BOLD_YELLOW}{status}{LogTools.RESET}")
+                        print(
+                            f"{LogTools.BOLD_YELLOW}{status}{LogTools.RESET}"
+                        )
                     else:
                         print(
                             f"\rRunning {display_name}... "
@@ -505,7 +533,9 @@ class LogTools:
                     elif style == "basic":
                         padding = 77 - len(f"Running {display_name} {status}")
                         print(
-                            f"\rRunning {display_name}{' ' * padding}{LogTools.BOLD_RED}ERROR{LogTools.RESET}"
+                            f"\rRunning {display_name}"
+                            f"{' ' * padding}{LogTools.BOLD_RED}ERROR"
+                            f"{LogTools.RESET}"
                         )
                     if self.DEBUG and stderr:
                         self.log_message.info(f"ERROR DEBUG:\n{stdout}")
@@ -532,9 +562,9 @@ class LogTools:
         """Formats the message in pre-commit style.
 
         Args:
-            message (str): The message to format.
-            status (str): The status to append to the message.
-            reason (str, optional): The reason for the status. Defaults to None.
+            message (str): The message to format. status (str): The status to
+            append to the message. reason (str, optional): The reason for the
+            status. Defaults to None.
 
         Returns:
             str: The formatted message.

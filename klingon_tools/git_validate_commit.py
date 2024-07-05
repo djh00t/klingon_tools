@@ -5,16 +5,13 @@ are signed off and follow the Conventional Commits standard.
 
 Typical usage example:
 
-    from klingon_tools.git_validate_commit import validate_commit_messages
-    repo = Repo('/path/to/repo')
-    is_valid = validate_commit_messages(repo)
+    from klingon_tools.git_validate_commit import validate_commit_messages repo
+    = Repo('/path/to/repo') is_valid = validate_commit_messages(repo)
 """
 
 import re
-from git import Repo, GitCommandError
-from klingon_tools.logger import logger
-from klingon_tools.git_user_info import get_git_user_info
-from klingon_tools.openai_tools import OpenAITools
+
+from git import Repo
 from klingon_tools.openai_tools import OpenAITools
 
 
@@ -38,15 +35,20 @@ def is_conventional_commit(commit_message: str) -> bool:
         commit_message (str): The commit message to check.
 
     Returns:
-        bool: True if the commit message follows the Conventional Commits standard, False otherwise.
+        bool: True if the commit message follows the Conventional Commits
+        standard, False otherwise.
     """
     # Define the regex pattern for Conventional Commits
-    conventional_commit_pattern = r"^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert|wip)(\(\w+\))?: .+"
+    conventional_commit_pattern = (
+        r"^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert|wip)"
+        r"(\(\w+\))?: .+"
+    )
     return re.match(conventional_commit_pattern, commit_message) is not None
 
 
 def validate_commit_messages(repo: Repo, openai_tools: OpenAITools) -> bool:
-    """Validate all commit messages to ensure they are signed off and follow the Conventional Commits standard.
+    """Validate all commit messages to ensure they are signed off and follow
+    the Conventional Commits standard.
 
     Args:
         repo (Repo): The Git repository to validate commit messages for.
@@ -57,4 +59,8 @@ def validate_commit_messages(repo: Repo, openai_tools: OpenAITools) -> bool:
     # Iterate over all commits in the repository
     for commit in repo.iter_commits("HEAD"):
         commit_message = commit.message
+        if not is_commit_message_signed_off(commit_message):
+            return False
+        if not is_conventional_commit(commit_message):
+            return False
     return True
