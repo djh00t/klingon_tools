@@ -1,13 +1,11 @@
 name: 🚀 Auto PR
 
 on:
-  # Push to all but main and master
+  # Push to all but main, master
   push:
     branches-ignore:
       - main
       - master
-      - "release"
-      - "release-*"
   workflow_dispatch:
 
 jobs:
