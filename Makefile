@@ -8,7 +8,7 @@ PYPI_TWINE_PASSWORD ?= $(PYPI_USER_AGENT)
 
 # Clean target
 clean:
-	@echo "Cleaning up repo...                                                          🧹"
+	@echo "Cleaning up repo.............................................................🧹"
 	@make push-prep
 	@pre-commit clean
 	@find . -type f -name '*.pyc' -delete
@@ -23,17 +23,17 @@ clean:
 	@rm -rf dist
 	@rm -rf htmlcov
 	@rm -rf node_modules
-	@echo "Repo cleaned up                                                              ✅"
+	@echo "Repo cleaned up..............................................................✅"
 
 # Pre-push cleanup target
 push-prep:
-	@echo "Removing temporary files...                                                  🧹"
+	@echo "Removing temporary files.....................................................🧹"
 	@find . -type f -name '*.pyc' -delete
 	@rm -rf requirements.txt
 	@touch requirements.txt
 	@rm -rf requirements-dev.txt
 	@touch requirements-dev.txt
-	@echo "Removed temporary files                                                      ✅"
+	@echo "Removed temporary files......................................................✅"
 
 ## check-packages: Check for required pip packages and requirements.txt, install if missing
 check-packages:
