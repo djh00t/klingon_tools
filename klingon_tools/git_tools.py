@@ -378,12 +378,24 @@ def git_pre_commit(file_name: str, repo: Repo, modified_files: list) -> bool:
         )  # Initialize lists to capture stdout and stderr
 
         for line in process.stdout:  # Capture stdout line by line
-            sys.stdout.write(line)
-            stdout.append(line)
+            # Replace specific strings with emoticons
+            modified_line = (
+                line.replace("Passed", "✅")
+                .replace("Skipped", "⏭️")
+                .replace("Failed", "❌")
+            )
+            sys.stdout.write(modified_line)
+            stdout.append(modified_line)
 
         for line in process.stderr:  # Capture stderr line by line
-            sys.stderr.write(line)
-            stderr.append(line)
+            # Replace specific strings with emoticons
+            modified_line = (
+                line.replace("Passed", "✅")
+                .replace("Skipped", "⏭️")
+                .replace("Failed", "❌")
+            )
+            sys.stderr.write(modified_line)
+            stderr.append(modified_line)
 
         process.wait()  # Wait for the process to complete
         result = (
