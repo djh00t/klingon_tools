@@ -191,14 +191,6 @@ def workflow_process_file(
         staged_files,
         committed_not_pushed,
     ) = git_get_status(repo)
-    # Get git status and update local variables
-    (
-        deleted_files,
-        untracked_files,
-        modified_files,
-        staged_files,
-        committed_not_pushed,
-    ) = git_get_status(repo)
 
     # Process deleted files
     if deleted_files:
@@ -263,10 +255,6 @@ def workflow_process_file(
             staged_files,
             committed_not_pushed,
         )
-
-
-# Initialize logging
-log_tools = LogTools()
 
 
 def startup_tasks(args, logger, log_tools) -> Repo:
