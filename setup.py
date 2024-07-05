@@ -1,3 +1,9 @@
+"""
+Setup module for klingon_tools.
+
+This module uses setuptools to package the klingon_tools library.
+"""
+
 import os
 import re
 
@@ -5,16 +11,28 @@ from setuptools import find_packages, setup
 
 
 def get_version():
-    version_file = os.path.join(os.path.dirname(__file__), "version.py")
-    with open(version_file) as f:
-        code = f.read()
-        version_match = re.search(
-            r"^__version__ = ['\"]([^'\"]*)['\"]", code, re.M
-        )
-        if version_match:
-            return version_match.group(1)
-        raise RuntimeError("Unable to find version string.")
+    """
+    Retrieve the version of the package from the version.py file.
 
+    Returns:
+        str: The version string.
+
+    Raises:
+        RuntimeError: If the version string cannot be found.
+    """
+    version_file = os.path.join(os.path.dirname(__file__), "version.py")
+    with open(version_file, encoding="utf-8") as f:
+        code = f.read()
+    version_match = re.search(
+        r"^__version__ = ['\"]([^'\"]*)['\"]", code, re.M
+    )
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
+
+
+with open("README.md", encoding="utf-8") as f:
+    long_description = f.read()
 
 setup(
     name="klingon_tools",
@@ -50,7 +68,7 @@ setup(
         "A set of utilities for running and logging shell commands in a "
         "user-friendly manner."
     ),
-    long_description=open("README.md").read(),
+    long_description=long_description,
     long_description_content_type="text/markdown",
     author="David Hooton",
     author_email="klingon_tools+david@hooton.org",
