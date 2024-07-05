@@ -30,12 +30,12 @@ push-prep:
 	@echo "Removing temporary files.....................................................🧹"
 	@find . -type f -name '*.pyc' -delete
 	@if [ -f requirements.txt ]; then \
-		echo "Resetting requirements.txt to empty state.................................✅"; \
+		echo "Resetting requirements.txt to empty state....................................✅"; \
 		rm -rf requirements.txt; \
 		touch requirements.txt; \
 	fi
 	@if [ -f requirements-dev.txt ]; then \
-		echo "Resetting requirements-dev.txt to empty state.............................✅"; \
+		echo "Resetting requirements-dev.txt to empty state................................✅"; \
 		rm -rf requirements-dev.txt; \
 		touch requirements-dev.txt; \
 	fi
