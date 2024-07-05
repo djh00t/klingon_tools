@@ -1,5 +1,8 @@
 module.exports = {
-  branches: ["main"],
+  branches: [
+    { name: "main" },
+    { name: "release", prerelease: true },
+  ],
   repositoryUrl: "https://github.com/djh00t/klingon_tools.git",
   plugins: [
     "@semantic-release/commit-analyzer",
@@ -15,8 +18,7 @@ module.exports = {
       "@semantic-release/git",
       {
         assets: ["CHANGELOG.md", "setup.py", "version.py"],
-        message:
-          "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}",
+        message: "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}",
       },
     ],
     [
@@ -40,27 +42,4 @@ module.exports = {
       },
     ],
   ],
-  preset: "angular",
-  release: {
-    branches: ["main"],
-    tagFormat: "${version}",
-    verifyConditions: ["@semantic-release/github"],
-    analyzeCommits: {
-      preset: "angular",
-      releaseRules: [
-        { type: "fix", release: "patch" },
-        { type: "feat", release: "minor" },
-        { type: "BREAKING CHANGE", release: "major" },
-        { type: "chore", release: false },
-        { type: "docs", release: false },
-        { type: "style", release: false },
-        { type: "refactor", release: false },
-        { type: "perf", release: false },
-        { type: "test", release: false },
-      ],
-    },
-    generateNotes: {
-      preset: "angular",
-    },
-  },
 };
