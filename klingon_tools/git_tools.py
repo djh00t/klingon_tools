@@ -380,9 +380,9 @@ def git_pre_commit(file_name: str, repo: Repo, modified_files: list) -> bool:
         for line in process.stdout:  # Capture stdout line by line
             # Replace specific strings with emoticons
             modified_line = (
-                line.replace("Passed", "✅")
-                .replace("Skipped", "⏭️")
-                .replace("Failed", "❌")
+                line.replace("Passed", "....✅")
+                .replace("Skipped", ".....⏭️")
+                .replace("Failed", "....❌")
             )
             sys.stdout.write(modified_line)
             stdout.append(modified_line)
@@ -390,9 +390,9 @@ def git_pre_commit(file_name: str, repo: Repo, modified_files: list) -> bool:
         for line in process.stderr:  # Capture stderr line by line
             # Replace specific strings with emoticons
             modified_line = (
-                line.replace("Passed", "✅")
-                .replace("Skipped", "⏭️")
-                .replace("Failed", "❌")
+                line.replace("Passed", "....✅")
+                .replace("Skipped", ".....⏭️")
+                .replace("Failed", "....❌")
             )
             sys.stderr.write(modified_line)
             stderr.append(modified_line)
