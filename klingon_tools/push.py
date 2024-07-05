@@ -24,11 +24,8 @@ import logging
 import os
 import subprocess
 import sys
-
 from git import Repo
-
 from klingon_tools import LogTools
-from klingon_tools.git_push_helper import git_push
 from klingon_tools.git_tools import (
     cleanup_lock_file,
     get_git_user_info,
@@ -40,6 +37,7 @@ from klingon_tools.git_tools import (
     git_unstage_files,
     log_git_stats,
     process_pre_commit_config,
+    push_changes_if_needed,
     git_stage_diff,
 )
 from klingon_tools.logger import logger
@@ -318,23 +316,6 @@ def startup_tasks(args, logger, log_tools) -> Repo:
     # Initialize git repository and get status
     repo = git_get_toplevel()
 
-    # Get git status and update global variables
-    (
-        deleted_files,
-        untracked_files,
-        modified_files,
-        staged_files,
-        committed_not_pushed,
-    ) = git_get_status(repo)
-
-    # Log git statistics
-    log_git_stats(
-        deleted_files,
-        untracked_files,
-        modified_files,
-        staged_files,
-        committed_not_pushed,
-    )
     # Return the initialized repo
     return repo
 
@@ -401,6 +382,15 @@ def main():
         committed_not_pushed,
     ) = git_get_status(repo)
 
+    # Log git statistics
+    log_git_stats(
+        deleted_files,
+        untracked_files,
+        modified_files,
+        staged_files,
+        committed_not_pushed,
+    )
+
     # Process a single file if --file-name is provided
     if args.file_name:
         padding = 80 - len(f"File name mode enabled {args.file_name}")
@@ -426,6 +416,9 @@ def main():
             file, modified_files, repo, args, logger, log_tools
         )
 
+        # Push changes if needed
+        push_changes_if_needed(repo, args)
+
     elif args.oneshot:
         # Process only one file if --oneshot is provided
         logger.info("One-shot mode enabled", status="🎯")
@@ -443,7 +436,10 @@ def main():
         # Make sure there is something to do
         if not files_to_process:
             # Log no files to process
-            logger.info("No untracked or modified files to process.")
+            logger.info(
+                message="No untracked or modified files to process.",
+                status="🚫",
+            )
         else:
             # Get the first file to process
             file = files_to_process[0]
@@ -456,24 +452,8 @@ def main():
                 file, modified_files, repo, args, logger, log_tools
             )
 
-        # Check if there are new commits to push
-        if (
-            repo.is_dirty(index=True, working_tree=False)
-            or committed_not_pushed
-        ):
-            if args.dryrun:
-                logger.info(
-                    message="Dry run mode enabled. Skipping push.", status="🚫"
-                )
-            else:
-                git_push(repo)
-                # Perform cleanup after push operation
-                cleanup_lock_file(args.repo_path)
-        else:
-            logger.info(
-                message="No new commits to push. Skipping push.", status="🚫"
-            )
-
+            # Push changes if needed
+            push_changes_if_needed(repo, args)
     else:
         # Batch mode: Process all untracked and modified files
         logger.info("Batch mode enabled", status="📦")
@@ -500,19 +480,8 @@ def main():
                     file, modified_files, repo, args, logger, log_tools
                 )
 
-        # Check if there are new commits to push
-        if (
-            repo.is_dirty(index=True, working_tree=False)
-            or committed_not_pushed
-        ):
-            if args.dryrun:
-                logger.info(
-                    message="Dry run mode enabled, skipping", status="🚫"
-                )
-            else:
-                git_push(repo)
-        else:
-            logger.info(message="No commits to push, skipping", status="🚫")
+        # Push changes if needed
+        push_changes_if_needed(repo, args)
 
     # Log script completion
     if not untracked_files and not modified_files and not committed_not_pushed:
