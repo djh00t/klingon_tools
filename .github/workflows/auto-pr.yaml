@@ -1,4 +1,4 @@
-name: 🚀 Auto PR
+name: 🤖 Auto PR
 
 on:
   # Push to all but main, master
