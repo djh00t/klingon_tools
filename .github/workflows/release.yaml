@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - main
+      - release
   workflow_dispatch:
 
 jobs:
@@ -17,12 +17,12 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4.0.2
+        uses: actions/setup-node@v4
         with:
-          node-version: "21"
+          node-version: '16'
 
       - name: Cache Node.js modules
-        uses: actions/cache@v3
+        uses: actions/cache@v2
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
@@ -32,30 +32,26 @@ jobs:
       - name: Install Node.js dependencies
         run: npm install
 
-      - name: Configure Git
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
 
-      - name: Create release branch
+      - name: Install Python dependencies
         run: |
-          EPOCH_TIME=$(date +%s)
-          echo "EPOCH_TIME=$EPOCH_TIME" >> $GITHUB_ENV
-          RELEASE_BRANCH="release-${EPOCH_TIME}"
-          echo "RELEASE_BRANCH=$RELEASE_BRANCH" >> $GITHUB_ENV
-          git checkout -b $RELEASE_BRANCH
+          python -m pip install --upgrade pip
+          pip install setuptools wheel twine
 
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-          RELEASE_BRANCH: ${{ env.RELEASE_BRANCH }}
-          branches: main
         run: npx semantic-release
 
-  merge-pr:
+  create-pr:
     needs: release
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -72,9 +68,9 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" > .github_token
           gh auth login --with-token < .github_token
 
-      - name: Merge Pull Request
+      - name: Create Pull Request
         run: |
           PR=$(gh pr list --state open --json number --jq '.[0].number')
-          if [ -n "$PR" ]; then
-            gh pr merge $PR --merge
+          if [ -z "$PR" ]; then
+            gh pr create --title "chore(release): ${nextRelease.version}" --body "This PR includes the release ${nextRelease.version}.\n\n${nextRelease.notes}" --base main --head release
           fi
