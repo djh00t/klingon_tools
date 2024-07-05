@@ -50,6 +50,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
           RELEASE_BRANCH: ${{ env.RELEASE_BRANCH }}
+          branches: main
         run: npx semantic-release
 
   merge-pr:
