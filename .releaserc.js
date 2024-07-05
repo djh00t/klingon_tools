@@ -3,6 +3,7 @@ module.exports = {
     'main',
     { name: 'release', prerelease: true }
   ],
+  repositoryUrl: "https://github.com/djh00t/klingon_tools.git",
   plugins: [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
