@@ -422,7 +422,6 @@ def git_pre_commit(file_name: str, repo: Repo, modified_files: list) -> bool:
                 )
                 sys.exit(1)  # Exit the script if maximum attempts reached
         if result.returncode == 0:  # Check if pre-commit hooks passed
-            logger.info(message=80 * "-", status="")
             logger.info(message="Pre-commit completed", status="✅")
             return True, diff  # Return True if hooks passed
 
