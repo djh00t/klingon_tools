@@ -15,7 +15,7 @@ def branch_exists(branch_name: str) -> bool:
 def get_commit_log(branch_name: str) -> subprocess.CompletedProcess:
     """Get the commit log for the specified branch."""
     if branch_exists(branch_name):
-        # Get a log of all changes that this branch is ahead of main by.
+        # Get a log of all changes that this branch is ahead of release by.
         commit_result = subprocess.run(
             [
                 "git",

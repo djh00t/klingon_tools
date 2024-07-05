@@ -12,7 +12,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 def gh_pr_gen_title():
     logger.info("Generating PR title using OpenAITools...")
-    commit_result = get_commit_log("origin/main")
+    commit_result = get_commit_log("origin/release")
     diff = commit_result.stdout
     openai_tools = OpenAITools()
     pr_title = openai_tools.generate_pull_request_title(diff)
@@ -21,7 +21,7 @@ def gh_pr_gen_title():
 
 def gh_pr_gen_summary():
     logger.info("Generating PR summary using OpenAITools...")
-    commit_result = get_commit_log("origin/main")
+    commit_result = get_commit_log("origin/release")
     diff = commit_result.stdout
     openai_tools = OpenAITools()
     pr_summary = openai_tools.generate_pull_request_summary(diff)
@@ -30,7 +30,7 @@ def gh_pr_gen_summary():
 
 def gh_pr_gen_context():
     logger.info("Generating PR context using OpenAITools...")
-    commit_result = get_commit_log("origin/main")
+    commit_result = get_commit_log("origin/release")
     diff = commit_result.stdout
     openai_tools = OpenAITools()
     pr_context = openai_tools.generate_pull_request_context(diff)
@@ -39,7 +39,7 @@ def gh_pr_gen_context():
 
 def gh_pr_gen_body():
     logger.info("Generating PR body using OpenAITools...")
-    commit_result = get_commit_log("origin/main")
+    commit_result = get_commit_log("origin/release")
     diff = commit_result.stdout
     openai_tools = OpenAITools()
     pr_body = openai_tools.generate_pull_request_body(diff)

@@ -504,7 +504,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
     ) -> str:
         """
         Generates a pull request title from the git log differences between
-        current branch and origin/main..HEAD.
+        current branch and origin/release..HEAD.
 
         This function generates a pull request title based on the provided
         commit messages using the OpenAI API. It formats the generated title
@@ -530,7 +530,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                 "git",
                 "--no-pager",
                 "log",
-                "origin/main..HEAD",
+                "origin/release..HEAD",
                 "--pretty=format:%s by @%an",
             ],
             capture_output=True,
@@ -558,7 +558,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
     ) -> str:
         """
         Generates a pull request summary from the git log differences between
-        current branch and origin/main..HEAD.
+        current branch and origin/release..HEAD.
 
         This function generates a pull request summary based on the provided
         git commit messages using the OpenAI API. It formats the generated
@@ -577,7 +577,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
         Raises:
             ValueError: If the pull request summary format is incorrect.
         """
-        commits = get_commit_log("origin/main").stdout
+        commits = get_commit_log("origin/release").stdout
 
         # Generate the pull request summary content using the OpenAI API
         generated_summary = self.generate_content(
@@ -591,7 +591,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
     ) -> str:
         """
         Generates a pull request context from the git log differences between
-        current branch and origin/main..HEAD.
+        current branch and origin/release..HEAD.
 
         This function generates a pull request context based on the provided
         git commit messages using the OpenAI API. It formats the generated
@@ -610,7 +610,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
         Raises:
             ValueError: If the pull request context format is incorrect.
         """
-        commits = get_commit_log("origin/main").stdout
+        commits = get_commit_log("origin/release").stdout
 
         # Generate the pull request context content using the OpenAI API
         generated_context = self.generate_content(
@@ -624,7 +624,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
     ) -> str:
         """
         Generates a pull request body from the git log differences between
-        current branch and origin/main..HEAD.
+        current branch and origin/release..HEAD.
 
         This function generates a pull request body based on the provided git
         messages using the OpenAI API. It formats the generated body and
@@ -643,7 +643,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
         Raises:
             ValueError: If the pull request body format is incorrect.
         """
-        commit_result = get_commit_log("origin/main")
+        commit_result = get_commit_log("origin/release")
 
         # Save the commits to a single variable
         commits = commit_result.stdout

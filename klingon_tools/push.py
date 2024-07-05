@@ -479,9 +479,8 @@ def main():
                 workflow_process_file(
                     file, modified_files, repo, args, logger, log_tools
                 )
-
-        # Push changes if needed
-        push_changes_if_needed(repo, args)
+            # Push changes if needed
+            push_changes_if_needed(repo, args)
 
     # Log script completion
     if not untracked_files and not modified_files and not committed_not_pushed:
