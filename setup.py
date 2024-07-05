@@ -6,7 +6,7 @@ This module uses setuptools to package the klingon_tools library.
 
 import os
 import re
-
+import sys
 from setuptools import find_packages, setup
 
 
@@ -30,6 +30,33 @@ def get_version():
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
 
+
+def set_version(version):
+    """
+    Update the version in the version.py file.
+
+    Args:
+        version (str): The new version string.
+    """
+    version_file = os.path.join(os.path.dirname(__file__), "version.py")
+    with open(version_file, "r+") as f:
+        content = f.read()
+        content_new = re.sub(
+            r'__version__ = "[^"]+"', f'__version__ = "{version}"', content
+        )
+        f.seek(0)
+        f.write(content_new)
+        f.truncate()
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "set_version":
+        if len(sys.argv) != 3:
+            print("Usage: python setup.py set_version <new_version>")
+            sys.exit(1)
+        set_version(sys.argv[2])
+        print(f"Version set to {sys.argv[2]}")
+        sys.exit(0)
 
 with open("README.md", encoding="utf-8") as f:
     long_description = f.read()
