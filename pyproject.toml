@@ -5,7 +5,7 @@ include = "\\.pyi?$"
 exclude = "\\.eggs|\\.git|\\.hg|\\.mypy_cache|\\.tox|\\.venv|_build|buck-out|build|dist"
 
 [tool.flake8]
-ignore = ["E501"]
+# ignore = ["E501"]
 max-line-length = 79
 verbose = 3
 
