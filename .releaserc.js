@@ -8,7 +8,7 @@ module.exports = {
     [
       "@semantic-release/exec",
       {
-        prepareCmd: "python setup.py sdist bdist_wheel",
+        prepareCmd: "python setup.py set_version ${nextRelease.version} && python setup.py sdist bdist_wheel",
       },
     ],
     [
