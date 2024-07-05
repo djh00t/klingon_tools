@@ -75,11 +75,5 @@ jobs:
         run: |
           PR=$(gh pr list --state open --json number --jq '.[0].number')
           if [ -z "$PR" ]; then
-            SOURCE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-            if [ "$SOURCE_BRANCH" = "release" ]; then
-              BASE_BRANCH="main"
-            else
-              BASE_BRANCH="release"
-            fi
-            gh pr create --title "chore(release): ${nextRelease.version}" --body "This PR includes the release ${nextRelease.version}.\n\n${nextRelease.notes}" --base $BASE_BRANCH --head release
+            gh pr create --title "chore(release): ${nextRelease.version}" --body "This PR includes the release ${nextRelease.version}.\n\n${nextRelease.notes}" --base main --head release
           fi
