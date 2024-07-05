@@ -1,9 +1,8 @@
-import git
-from git import GitCommandError
+from git import GitCommandError, Repo
 from klingon_tools.logger import logger
 
 
-def git_push(repo: git.Repo) -> None:
+def git_push(repo: Repo) -> None:
     """Pushes changes to the remote repository.
 
     This function performs several steps to ensure that the local repository is
@@ -13,7 +12,7 @@ def git_push(repo: git.Repo) -> None:
     to apply them back.
 
     Args:
-        repo (git.Repo): The Git repository object.
+        repo (Repo): The Git repository object.
 
     Raises:
         GitCommandError: If any git command fails.
