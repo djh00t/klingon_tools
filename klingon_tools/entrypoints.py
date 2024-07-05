@@ -1,6 +1,6 @@
 import logging
 from klingon_tools.logger import log_tools, logger
-from klingon_tools.git_tools import get_commit_log
+from klingon_tools.git_log_helper import get_commit_log
 from klingon_tools.openai_tools import OpenAITools
 
 # Configure logging to include process name
