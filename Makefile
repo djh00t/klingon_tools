@@ -6,10 +6,34 @@ TWINE_USERNAME ?= __token__
 TEST_TWINE_PASSWORD ?= $(TEST_PYPI_USER_AGENT)
 PYPI_TWINE_PASSWORD ?= $(PYPI_USER_AGENT)
 
-# Clean up build files
+# Clean target
 clean:
-	rm -rf build dist *.egg-info .mypy_cache .pytest_cache */__pycache__ node_modules
-	pre-commit clean
+	@echo "Cleaning up repo...                                                          🧹"
+	@make push-prep
+	@pre-commit clean
+	@find . -type f -name '*.pyc' -delete
+	@find . -type d -name '__pycache__' -exec rm -rf {} +
+	@rm -rf .aider*
+	@rm -rf .coverage
+	@rm -rf .mypy_cache
+	@rm -rf .pytest_cache
+	@rm -rf .tox
+	@rm -rf *.egg-info
+	@rm -rf build
+	@rm -rf dist
+	@rm -rf htmlcov
+	@rm -rf node_modules
+	@echo "Repo cleaned up                                                              ✅"
+
+# Pre-push cleanup target
+push-prep:
+	@echo "Removing temporary files...                                                  🧹"
+	@find . -type f -name '*.pyc' -delete
+	@rm -rf requirements.txt
+	@touch requirements.txt
+	@rm -rf requirements-dev.txt
+	@touch requirements-dev.txt
+	@echo "Removed temporary files                                                      ✅"
 
 ## check-packages: Check for required pip packages and requirements.txt, install if missing
 check-packages:
