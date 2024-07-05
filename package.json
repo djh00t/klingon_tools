@@ -8,5 +8,8 @@
   },
   "dependencies": {
     "@semantic-release/exec": "^6.0.3"
+  },
+  "release": {
+    "branches": ["master", "next"]
   }
 }
