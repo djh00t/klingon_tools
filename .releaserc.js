@@ -14,7 +14,7 @@ module.exports = {
       {
         assets: ["CHANGELOG.md", "setup.py", "version.py"],
         message: "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}",
-      },
-    ]
+      }
+    ],
   ],
 };
