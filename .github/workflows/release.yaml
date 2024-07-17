@@ -44,7 +44,7 @@ jobs:
           pip install setuptools wheel twine packaging
 
       - name: Authenticate GitHub CLI
-        run: gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
       - name: Run semantic-release
         env:
@@ -68,9 +68,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
 
       - name: Setup gh CLI
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" > .github_token
-          gh auth login --with-token < .github_token
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
       - name: Create Pull Request
         run: |
