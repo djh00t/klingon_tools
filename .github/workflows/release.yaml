@@ -3,9 +3,7 @@ name: 🥳 Release
 on:
   push:
     branches:
-      - release
       - main
-  workflow_dispatch:
 
 jobs:
   release:
@@ -86,6 +84,11 @@ jobs:
 
       - name: Setup gh CLI
         run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
+      - name: Push release branch
+        run: |
+          git checkout release
+          git push origin release
 
       - name: Create Pull Request
         run: |
