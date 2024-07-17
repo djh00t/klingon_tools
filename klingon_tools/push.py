@@ -18,7 +18,6 @@ Attributes:
     staged_files (list): List of staged files.
     committed_not_pushed (list): List of committed but not pushed files.
 """
-
 import argparse
 import logging
 import os

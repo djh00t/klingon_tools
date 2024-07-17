@@ -3,8 +3,8 @@ name: 🥳 Release
 on:
   push:
     branches:
-      - release
       - main
+      - release
   workflow_dispatch:
 
 jobs:
