@@ -26,17 +26,17 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-node-cache
           restore-keys: |
-            ${{ runner.os }}-node-
+            ${{ runner.os }}-node-cache
 
       - name: Load Python cache
         uses: actions/cache@v2
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-pip-cache
           restore-keys: |
-            ${{ runner.os }}-pip-
+            ${{ runner.os }}-pip-cache
 
       - name: Install Node.js dependencies
         run: npm install
@@ -64,29 +64,22 @@ jobs:
         run: npx semantic-release
 
       - name: Update caches in parallel
-        if: steps.install_node_dependencies.outputs.cache-hit != 'true' || steps.install_python_dependencies.outputs.cache-hit != 'true'
         run: |
-          {
-            if [ "${{ steps.install_node_dependencies.outputs.cache-hit }}" != 'true' ]; then
-              actions/cache@v2 --path ~/.npm --key ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }} --restore-keys ${{ runner.os }}-node- &
-            fi
-            if [ "${{ steps.install_python_dependencies.outputs.cache-hit }}" != 'true' ]; then
-              actions/cache@v2 --path ~/.cache/pip --key ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }} --restore-keys ${{ runner.os }}-pip- &
-            fi
-            wait
-          }
+          actions/cache@v2 --path ~/.npm --key ${{ runner.os }}-node-cache --restore-keys ${{ runner.os }}-node-cache &
+          actions/cache@v2 --path ~/.cache/pip --key ${{ runner.os }}-pip-cache --restore-keys ${{ runner.os }}-pip-cache &
+          wait
 
       - name: Upload current Python cache
         uses: actions/cache@v2
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-pip-cache
 
       - name: Upload current Node.js cache
         uses: actions/cache@v2
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-node-cache
 
       - name: Cleanup Python environment
         run: |
