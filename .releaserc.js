@@ -1,7 +1,7 @@
 module.exports = {
   branches: [
+    { name: "release", channel: "release" },
     { name: "main" },
-    { name: "release", prerelease: true },
   ],
   repositoryUrl: "https://github.com/djh00t/klingon_tools.git",
   plugins: [
@@ -31,14 +31,6 @@ module.exports = {
       "@semantic-release/exec",
       {
         publishCmd: "twine upload dist/* -u __token__ -p $PYPI_TOKEN",
-      },
-    ],
-    [
-      "@semantic-release/exec",
-      {
-        prepareCmd: "gh pr create --title 'chore(release): \\${nextRelease.version}' \
-          --body 'This PR includes the release \\${nextRelease.version}.\n\n\\${nextRelease.notes}' \
-          --base main --head release",
       },
     ],
   ],
