@@ -27,6 +27,7 @@ import sys
 from git import Repo
 from klingon_tools import LogTools
 from klingon_tools.git_tools import (
+    LOOP_MAX_PRE_COMMIT,
     cleanup_lock_file,
     get_git_user_info,
     git_commit_deletes,
@@ -194,51 +195,58 @@ def workflow_process_file(
     if deleted_files:
         git_commit_deletes(repo, deleted_files)
 
-    # Stage the file and generate a diff of the file being processed
     diff = git_stage_diff(file_name, repo, modified_files)
 
-    # Run pre-commit hooks on the file
-    success, diff = git_pre_commit(file_name, repo, modified_files)
+    attempt = 0
+    success = False
+    while attempt < LOOP_MAX_PRE_COMMIT:
+        # Run pre-commit hooks on the file
+        success, diff = git_pre_commit(file_name, repo, modified_files)
 
-    if success:
-        if args.dryrun:
-            # Log dry run mode and skip commit and push
-            logger.info(
-                message="Dry run mode enabled. Skipping commit and push.",
-                status="🚫",
-            )
+        if success:
+            if args.dryrun:
+                # Log dry run mode and skip commit and push
+                logger.info(
+                    message="Dry run mode enabled. Skipping commit and push.",
+                    status="🚫",
+                )
+                break
+            else:
+                # Load OpenAI tools
+                openai_tools = OpenAITools()
+
+                # Generate a commit message using the diff
+                commit_message = openai_tools.generate_commit_message(diff)
+
+                # Commit the file
+                git_commit_file(file_name, repo, commit_message)
+                break
         else:
-            # Load OpenAI tools
-            openai_tools = OpenAITools()
-
-            # Generate a commit message using the diff
-            commit_message = openai_tools.generate_commit_message(diff)
-
-            # Commit the file
-            git_commit_file(file_name, repo, commit_message)
-    else:
-        # Log pre-commit hook failure
-        logger.error(
-            message="Pre-commit hooks failed. Exiting script.", status="❌"
-        )
-        # Log git status
-        (
-            deleted_files,
-            untracked_files,
-            modified_files,
-            staged_files,
-            committed_not_pushed,
-        ) = git_get_status(repo)
-        # Log git stats
-        log_git_stats(
-            deleted_files,
-            untracked_files,
-            modified_files,
-            staged_files,
-            committed_not_pushed,
-        )
-        # Exit script
-        sys.exit(1)
+            attempt += 1
+            if attempt == LOOP_MAX_PRE_COMMIT:
+                # Log pre-commit hook failure
+                logger.error(
+                    message="Pre-commit hooks failed. Exiting script.",
+                    status="❌",
+                )
+                # Log git status
+                (
+                    deleted_files,
+                    untracked_files,
+                    modified_files,
+                    staged_files,
+                    committed_not_pushed,
+                ) = git_get_status(repo)
+                # Log git stats
+                log_git_stats(
+                    deleted_files,
+                    untracked_files,
+                    modified_files,
+                    staged_files,
+                    committed_not_pushed,
+                )
+                # Exit script
+                sys.exit(1)
 
     # Stage the file and generate a diff of the file being processed
     if args.debug:
