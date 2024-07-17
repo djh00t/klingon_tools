@@ -51,11 +51,11 @@ def git_push(repo: git.Repo) -> None:
             for file in deleted_files:
                 try:
                     # Stage the deleted file
-                    repo.git.add(file)
+                    repo.index.remove([file], working_tree=True)
                     # Commit the deletion with a specific message
                     commit_message = f"🔧 chore({file}): Handle deletions"
                     repo.index.commit(commit_message)
-                except subprocess.CalledProcessError as e:
+                except GitCommandError as e:
                     logger.error(f"Failed to handle deletion for {file}: {e}")
                     continue
         openai_tools = OpenAITools()
