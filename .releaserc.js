@@ -7,10 +7,12 @@ module.exports = {
     "@semantic-release/changelog",
     "@semantic-release/github",
     "@semantic-release/git",
-    {
-      assets: ["CHANGELOG.md", "setup.py", "version.py"],
-      message:
-        "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}",
-    },
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "python setup.py sdist bdist_wheel",
+        "publishCmd": "twine upload dist/* -u __token__ -p $PYPI_USER_AGENT"
+      }
+    ],
   ],
 };
