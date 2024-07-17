@@ -95,6 +95,7 @@ uninstall:
 
 # Run tests
 test:
+	@pip install pytest
 	@echo "Running unit tests..."
 	pytest -v --disable-warnings tests/
 
