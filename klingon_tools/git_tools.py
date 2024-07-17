@@ -232,15 +232,13 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
             if os.path.exists(file):
                 repo.index.remove([file], working_tree=True)
             else:
-                logger.warning(
+                logger.info(
                     message=(
-                        f"File {file} does not exist and cannot be removed."
+                        f"File {file} is already deleted and will be staged "
+                        "for removal."
                     ),
                     status="⚠️",
                 )
-
-        # Stage the deleted files for commit
-        for file in all_deleted_files:
             repo.index.remove([file], working_tree=True)
 
             # Generate the commit message with scope
