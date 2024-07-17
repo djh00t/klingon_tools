@@ -117,3 +117,25 @@ jobs:
           DEST_BRANCH=release
           PR_BODY=$(python3 .github/workflows/pr_body_gen.py $SOURCE_BRANCH $DEST_BRANCH)
           gh pr edit $PR_URL --title "$PR_TITLE" --body "$PR_BODY"
+
+      - name: Upload current Python cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+
+      - name: Upload current Node.js cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Cleanup Python environment
+        run: |
+          pip cache purge
+          rm -rf ~/.cache/pip
+
+      - name: Cleanup Node.js environment
+        run: |
+          npm cache clean --force
+          rm -rf ~/.npm
