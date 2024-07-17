@@ -113,6 +113,7 @@ setup(
         "ruamel.yaml",
         "pre-commit",
         "psutil",
+        "packaging",
     ],
     include_package_data=True,
     description=(
