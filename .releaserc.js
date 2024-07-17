@@ -36,9 +36,9 @@ module.exports = {
     [
       "@semantic-release/exec",
       {
-        prepareCmd: `gh pr create --title 'chore(release): \${nextRelease.version}' \
-          --body 'This PR includes the release \${nextRelease.version}.\n\n\${nextRelease.notes}' \
-          --base main --head release`,
+        prepareCmd: "gh pr create --title 'chore(release): \\${nextRelease.version}' \
+          --body 'This PR includes the release \\${nextRelease.version}.\n\n\\${nextRelease.notes}' \
+          --base main --head release",
       },
     ],
   ],
