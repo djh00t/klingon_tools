@@ -12,7 +12,7 @@
   "author": "David Hooton <klingon_tools+david@hooton.org>",
   "license": "MIT",
   "devDependencies": {
-    "semantic-release": "^18.0.0",
+    "semantic-release": "^19.0.3",
     "@semantic-release/changelog": "^6.0.0",
     "@semantic-release/git": "^10.0.0",
     "@semantic-release/github": "^8.0.0",
