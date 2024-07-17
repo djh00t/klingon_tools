@@ -25,19 +25,11 @@ Create a `.releaserc` file in the root of your repository with the following con
 
 ```json
 {
-  "branches": ["main"],
+  "branches": ["main", "release"],
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
     "@semantic-release/changelog",
-    ["@semantic-release/git", {
-      "assets": ["CHANGELOG.md", "setup.py", "version.py"],
-      "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
-    }],
-    ["@semantic-release/exec", {
-      "prepareCmd": "python setup.py sdist bdist_wheel",
-      "publishCmd": "twine upload -u __token__ -p $PYPI_USER_AGENT dist/*"
-    }],
     "@semantic-release/github"
   ]
 }
@@ -110,16 +102,6 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install twine
-
-      - name: Semantic Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PYPI_USER_AGENT: ${{ secrets.PYPI_USER_AGENT }}
-        run: npx semantic-release
 ```
 
 ### GitHub Secrets
