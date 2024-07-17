@@ -22,13 +22,21 @@ jobs:
         with:
           node-version: "16"
 
-      - name: Load caches in parallel
-        run: |
-          {
-            actions/cache@v2 --path ~/.npm --key ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }} --restore-keys ${{ runner.os }}-node- &
-            actions/cache@v2 --path ~/.cache/pip --key ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }} --restore-keys ${{ runner.os }}-pip- &
-            wait
-          }
+      - name: Load Node.js cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Load Python cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install Node.js dependencies
         run: npm install
