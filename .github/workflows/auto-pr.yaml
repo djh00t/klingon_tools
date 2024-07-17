@@ -43,7 +43,6 @@ jobs:
           # Get Current PR Title
           PR_TITLE=$(gh pr list --json title --jq '.[0].title' || echo "")
           echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
-          echo "PR TITLE: $PR_TITLE"
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
