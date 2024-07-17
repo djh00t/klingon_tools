@@ -8,3 +8,8 @@ pytest-mock
 iniconfig
 ruamel.yaml
 psutil
+openai
+gitpython
+requests
+httpx
+tabulate
