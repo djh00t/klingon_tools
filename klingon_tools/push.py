@@ -24,6 +24,7 @@ import logging
 import os
 import subprocess
 import sys
+import requests
 from git import Repo
 from klingon_tools import LogTools
 from klingon_tools.git_tools import (
@@ -309,6 +310,32 @@ def startup_tasks(args, logger, log_tools) -> Repo:
 
     # Clean up any existing lock files
     cleanup_lock_file(repo_path)
+
+    # Check if .pre-commit-config.yaml exists, if not, create it
+    pre_commit_config_path = os.path.join(repo_path, ".pre-commit-config.yaml")
+    if not os.path.exists(pre_commit_config_path):
+        logger.info(
+            message=".pre-commit-config.yaml not found. "
+            "Creating from template.",
+            status="📝",
+        )
+        template_url = (
+            "https://raw.githubusercontent.com/djh00t/klingon_tools/main/"
+            "repo_templates/python/.pre-commit-config.yaml"
+        )
+        response = requests.get(template_url)
+        if response.status_code == 200:
+            with open(pre_commit_config_path, "w") as file:
+                file.write(response.text)
+            logger.info(
+                message=".pre-commit-config.yaml created successfully.",
+                status="✅",
+            )
+        else:
+            logger.error(
+                message="Failed to download .pre-commit-config.yaml template.",
+                status="❌",
+            )
 
     # Check and run the "push-prep" target if it exists
     run_push_prep(logger)
