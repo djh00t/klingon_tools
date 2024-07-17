@@ -8,7 +8,6 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -49,15 +48,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install setuptools wheel twine packaging
 
-      - name: Update Python packages cache
-        if: steps.install_python_dependencies.outputs.cache-hit != 'true'
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
       - name: Authenticate GitHub CLI
         run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
@@ -67,23 +57,16 @@ jobs:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: npx semantic-release
 
-  create-pr:
-    needs: release
-    runs-on: ubuntu-latest
+      - name: Cleanup Node.js modules
+        run: rm -rf ~/.npm
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+      - name: Cleanup Python packages
+        run: rm -rf ~/.cache/pip
 
       - name: Configure Git
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-
-      - name: Setup gh CLI
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
       - name: Push release branch
         run: |
@@ -95,4 +78,3 @@ jobs:
           PR=$(gh pr list --state open --json number --jq '.[0].number')
           if [ -z "$PR" ]; then
             gh pr create --title "chore(release): ${nextRelease.version}" --body "This PR includes the release ${nextRelease.version}.\n\n${nextRelease.notes}" --base main --head release
-          fi
