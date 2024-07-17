@@ -48,10 +48,9 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
       - name: Install dependencies
-        run: make install
-
-      - name: Install klingon_tools
-        run: make install
+        run: |
+          pip install packaging
+          make install
 
       - name: Run Unit Tests
         run: make test
