@@ -247,7 +247,6 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
         commit_message = "\n".join(
             # Wrap each line individually
             [
-              "@semantic-release/npm",
                 (
                     line
                     if len(line) <= 78
