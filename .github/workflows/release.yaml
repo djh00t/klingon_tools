@@ -13,38 +13,38 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "16"
+          node-version: "22.4.1"
 
-      - name: Cache Node.js modules
-        uses: actions/cache@v2
+      - name: Load Node.js cache
+        uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-node-cache
           restore-keys: |
-            ${{ runner.os }}-node-
+            ${{ runner.os }}-node-cache
+
+      - name: Load Python cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-cache
+          restore-keys: |
+            ${{ runner.os }}-pip-cache
 
       - name: Install Node.js dependencies
         run: npm install
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-
-      - name: Cache Python packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
 
       - name: Install Python dependencies
         run: |
@@ -57,21 +57,9 @@ jobs:
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: npx semantic-release
 
-      - name: Update caches in parallel
-        if: steps.install_node_dependencies.outputs.cache-hit != 'true' || steps.install_python_dependencies.outputs.cache-hit != 'true'
-        run: |
-          {
-            if [ "${{ steps.install_node_dependencies.outputs.cache-hit }}" != 'true' ]; then
-              actions/cache@v2 --path ~/.npm --key ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }} --restore-keys ${{ runner.os }}-node- &
-            fi
-            if [ "${{ steps.install_python_dependencies.outputs.cache-hit }}" != 'true' ]; then
-              actions/cache@v2 --path ~/.cache/pip --key ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }} --restore-keys ${{ runner.os }}-pip- &
-            fi
-            wait
-          }
+
 
   create-pr:
     runs-on: ubuntu-latest
@@ -82,13 +70,21 @@ jobs:
         with:
           fetch-depth: 0 # Fetch all branches
 
-      - name: Cache pip packages
+      - name: Update pip cache
         uses: actions/cache@v4.0.2
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
+
+      - name: Update npm cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       - name: Setup Python
         uses: actions/setup-python@v5.1.0
@@ -105,7 +101,9 @@ jobs:
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
           # Get Current PR Title
           PR_TITLE=$(gh pr list --json title --jq '.[0].title' || echo "")
-          echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
+          # Sanitize PR_TITLE to remove problematic characters
+          SANITIZED_PR_TITLE=$(echo "$PR_TITLE" | tr -d '\n' | tr -d '\r' | tr -d '"')
+          echo "PR_TITLE=$SANITIZED_PR_TITLE" >> $GITHUB_ENV
           echo "PR TITLE: $PR_TITLE"
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -115,29 +113,29 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      - name: Install dependencies
-        run: |
-          pip install packaging
-          make install
+      - name: Compile Python requirements
+        run: make install
+
+      - name: Install Node.js dependencies
+        run: make install
 
       - name: Run Unit Tests
         run: make test
 
       # Check if PR exists, if it doesn't create one with a generated title using
       # pr-title-generate
-      - name: Create PR if it doesn't exist
+      - name: Create or Update PR
         id: pr
         run: |
           SOURCE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          if [ -z "$PR_TITLE" ]; then
-            PR_TITLE=$(pr-title-generate)
-            echo "PR_TITLE: $PR_TITLE"
+          PR_URL=$(gh pr list --head $SOURCE_BRANCH --json url --jq '.[0].url' || echo "")
+          PR_TITLE=$(pr-title-generate)
+          echo "PR_TITLE: $PR_TITLE"
           if [ "$SOURCE_BRANCH" = "release" ]; then
             BASE_BRANCH="main"
           else
             BASE_BRANCH="release"
           fi
-          PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
           if [ -z "$PR_URL" ]; then
             PR_URL=$(gh pr create --title "$PR_TITLE" --body "This PR was automatically generated by a GitHub Action" --base $BASE_BRANCH || echo "")
             echo "PR_URL: $PR_URL"
@@ -146,22 +144,12 @@ jobs:
               exit 0
             fi
           else
-            echo "A pull request for this branch already exists."
-            exit 0
+            PR_BODY=$(python3 .github/workflows/pr_body_gen.py $SOURCE_BRANCH $BASE_BRANCH)
+            gh pr edit $PR_URL --title "$PR_TITLE" --body "$PR_BODY"
           fi
-            fi
-          env:
-            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-
-      - name: Update PR if one already exists
-        shell: /usr/bin/bash -e {0}
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_TITLE: ${{ env.PR_TITLE }}
-        run: |
-          PR_URL=$(gh pr list --json url --jq '.[0].url' || echo "")
-          PR_TITLE=$(gh pr list --json title --jq '.[0].title' || echo "")
-          SOURCE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          DEST_BRANCH=main
-          PR_BODY=$(python3 .github/workflows/pr_body_gen.py $SOURCE_BRANCH $DEST_BRANCH)
-          gh pr edit $PR_URL --title "$PR_TITLE" --body "$PR_BODY"
+        shell: /usr/bin/bash -e {0}

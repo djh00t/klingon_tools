@@ -13,7 +13,8 @@ clean:
 	@pre-commit clean
 	@find . -type f -name '*.pyc' -delete
 	@find . -type d -name '__pycache__' -exec rm -rf {} +
-	@rm -rf .aider*
+	@find . -type f -name '.aider*' ! -path './.aider_logs/*' -delete
+	@find . -type d -name '.aider*' ! -path './.aider_logs' -exec rm -rf {} +
 	@rm -rf .coverage
 	@rm -rf .mypy_cache
 	@rm -rf .pytest_cache
@@ -95,6 +96,7 @@ uninstall:
 
 # Run tests
 test:
+	@pip install pytest
 	@echo "Running unit tests..."
 	pytest -v --disable-warnings tests/
 

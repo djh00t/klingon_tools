@@ -21,6 +21,7 @@ import os
 import subprocess
 import textwrap
 
+import openai
 from openai import OpenAI
 
 from klingon_tools.git_user_info import get_git_user_info
@@ -31,7 +32,13 @@ from klingon_tools.git_log_helper import get_commit_log
 class OpenAITools:
     def __init__(self):
         # Initialize OpenAI API client
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError(
+                "OpenAI API key is missing. Please set the OPENAI_API_KEY "
+                "environment variable."
+            )
+        self.client = OpenAI(api_key=api_key)
 
         # AI Templates
         self.templates = {
@@ -198,16 +205,20 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
         role_user_content = template.format(diff=truncated_diff)
 
         # Send a request to the OpenAI API to generate the content
-        response = self.client.chat.completions.create(
-            messages=[
-                {
-                    "role": "system",
-                    "content": self.templates["commit_message_system"],
-                },
-                {"role": "user", "content": role_user_content},
-            ],
-            model="gpt-3.5-turbo",
-        )
+        try:
+            response = self.client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "system",
+                        "content": self.templates["commit_message_system"],
+                    },
+                    {"role": "user", "content": role_user_content},
+                ],
+                model="gpt-3.5-turbo",
+            )
+        except openai.APIConnectionError as e:
+            logger.error(f"Failed to connect to OpenAI API: {e}")
+            raise
 
         # Extract the generated content from the API response
         generated_content = response.choices[0].message.content.strip()
