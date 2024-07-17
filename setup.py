@@ -6,8 +6,9 @@ This module uses setuptools to package the klingon_tools library.
 
 import os
 import re
-
+import sys
 from setuptools import find_packages, setup
+from packaging.version import InvalidVersion
 
 
 def get_version():
@@ -31,6 +32,55 @@ def get_version():
     raise RuntimeError("Unable to find version string.")
 
 
+def set_version(version):
+    """
+    Update the version in the version.py file.
+
+    Args:
+        version (str): The new version string.
+    """
+    version_file = os.path.join(os.path.dirname(__file__), "version.py")
+    with open(version_file, "r+") as f:
+        content = f.read()
+        content_new = re.sub(
+            r'__version__ = "[^"]+"', f'__version__ = "{version}"', content
+        )
+        f.seek(0)
+        f.write(content_new)
+        f.truncate()
+
+
+def convert_version(version):
+    """
+    Convert the semantic-release version to PEP 440 compatible version.
+
+    Args:
+        version (str): The version string to convert.
+
+    Returns:
+        str: The converted version string.
+    """
+    match = re.match(r"(\d+\.\d+\.\d+)(?:-(\w+)\.(\d+))?", version)
+    if match:
+        base_version, prerelease, number = match.groups()
+        if prerelease:
+            if prerelease == "release":
+                prerelease = "rc"
+            return f"{base_version}{prerelease}{number}"
+        return base_version
+    raise InvalidVersion(f"Invalid version: '{version}'")
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "set_version":
+        if len(sys.argv) != 3:
+            print("Usage: python setup.py set_version <new_version>")
+            sys.exit(1)
+        converted_version = convert_version(sys.argv[2])
+        set_version(converted_version)
+        print(f"Version set to {converted_version}")
+        sys.exit(0)
+
 with open("README.md", encoding="utf-8") as f:
     long_description = f.read()
 
@@ -51,18 +101,15 @@ setup(
     install_requires=[
         "openai",
         "gitpython",
-        "argparse",
         "requests",
         "httpx",
-        "pandas",
-        "flask",
         "windows-curses; platform_system == 'Windows'",
-        "watchdog",
         "pyyaml",
-        "pytest",
         "ruamel.yaml",
         "pre-commit",
         "psutil",
+        "tabulate",
+        "packaging",
     ],
     include_package_data=True,
     description=(

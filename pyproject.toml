@@ -28,5 +28,9 @@ ignore_patterns = ["temp/**/*.py", "temp2/*.py"]
 
 [tool.mypy]
 exclude = "tmp/"
+
+[build-system]
+requires = ["setuptools", "wheel", "packaging"]
+build-backend = "setuptools.build_meta"
 sqlite_cache = true
 install_types = true

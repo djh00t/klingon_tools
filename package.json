@@ -1,15 +1,23 @@
 {
+  "name": "klingon-tools",
+  "version": "0.0.33",
+  "description": "Klingon tools for various utilities",
+  "scripts": {
+    "semantic-release": "semantic-release"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:djh00t/klingon_tools.git"
+  },
+  "author": "David Hooton <klingon_tools+david@hooton.org>",
+  "license": "MIT",
   "devDependencies": {
-    "@semantic-release/changelog": "^6.0.3",
-    "@semantic-release/git": "^10.0.1",
-    "@semantic-release/github": "^10.0.6",
-    "@semantic-release/release-notes-generator": "^14.0.1",
-    "semantic-release": "^24.0.0"
-  },
-  "dependencies": {
-    "@semantic-release/exec": "^6.0.3"
-  },
-  "release": {
-    "branches": ["master", "next"]
+    "semantic-release": "^18.0.0",
+    "@semantic-release/changelog": "^6.0.0",
+    "@semantic-release/git": "^10.0.0",
+    "@semantic-release/github": "^8.0.0",
+    "@semantic-release/exec": "^6.0.0",
+    "rimraf": "^4.0.0",
+    "glob": "^9.0.0"
   }
 }

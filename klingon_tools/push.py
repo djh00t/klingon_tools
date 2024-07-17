@@ -24,9 +24,11 @@ import logging
 import os
 import subprocess
 import sys
+import requests
 from git import Repo
 from klingon_tools import LogTools
 from klingon_tools.git_tools import (
+    LOOP_MAX_PRE_COMMIT,
     cleanup_lock_file,
     get_git_user_info,
     git_commit_deletes,
@@ -194,51 +196,58 @@ def workflow_process_file(
     if deleted_files:
         git_commit_deletes(repo, deleted_files)
 
-    # Stage the file and generate a diff of the file being processed
     diff = git_stage_diff(file_name, repo, modified_files)
 
-    # Run pre-commit hooks on the file
-    success, diff = git_pre_commit(file_name, repo, modified_files)
+    attempt = 0
+    success = False
+    while attempt < LOOP_MAX_PRE_COMMIT:
+        # Run pre-commit hooks on the file
+        success, diff = git_pre_commit(file_name, repo, modified_files)
 
-    if success:
-        if args.dryrun:
-            # Log dry run mode and skip commit and push
-            logger.info(
-                message="Dry run mode enabled. Skipping commit and push.",
-                status="🚫",
-            )
+        if success:
+            if args.dryrun:
+                # Log dry run mode and skip commit and push
+                logger.info(
+                    message="Dry run mode enabled. Skipping commit and push.",
+                    status="🚫",
+                )
+                break
+            else:
+                # Load OpenAI tools
+                openai_tools = OpenAITools()
+
+                # Generate a commit message using the diff
+                commit_message = openai_tools.generate_commit_message(diff)
+
+                # Commit the file
+                git_commit_file(file_name, repo, commit_message)
+                break
         else:
-            # Load OpenAI tools
-            openai_tools = OpenAITools()
-
-            # Generate a commit message using the diff
-            commit_message = openai_tools.generate_commit_message(diff)
-
-            # Commit the file
-            git_commit_file(file_name, repo, commit_message)
-    else:
-        # Log pre-commit hook failure
-        logger.error(
-            message="Pre-commit hooks failed. Exiting script.", status="❌"
-        )
-        # Log git status
-        (
-            deleted_files,
-            untracked_files,
-            modified_files,
-            staged_files,
-            committed_not_pushed,
-        ) = git_get_status(repo)
-        # Log git stats
-        log_git_stats(
-            deleted_files,
-            untracked_files,
-            modified_files,
-            staged_files,
-            committed_not_pushed,
-        )
-        # Exit script
-        sys.exit(1)
+            attempt += 1
+            if attempt == LOOP_MAX_PRE_COMMIT:
+                # Log pre-commit hook failure
+                logger.error(
+                    message="Pre-commit hooks failed. Exiting script.",
+                    status="❌",
+                )
+                # Log git status
+                (
+                    deleted_files,
+                    untracked_files,
+                    modified_files,
+                    staged_files,
+                    committed_not_pushed,
+                ) = git_get_status(repo)
+                # Log git stats
+                log_git_stats(
+                    deleted_files,
+                    untracked_files,
+                    modified_files,
+                    staged_files,
+                    committed_not_pushed,
+                )
+                # Exit script
+                sys.exit(1)
 
     # Stage the file and generate a diff of the file being processed
     if args.debug:
@@ -301,6 +310,32 @@ def startup_tasks(args, logger, log_tools) -> Repo:
 
     # Clean up any existing lock files
     cleanup_lock_file(repo_path)
+
+    # Check if .pre-commit-config.yaml exists, if not, create it
+    pre_commit_config_path = os.path.join(repo_path, ".pre-commit-config.yaml")
+    if not os.path.exists(pre_commit_config_path):
+        logger.info(
+            message=".pre-commit-config.yaml not found. "
+            "Creating from template.",
+            status="📝",
+        )
+        template_url = (
+            "https://raw.githubusercontent.com/djh00t/klingon_tools/main/"
+            "repo_templates/python/.pre-commit-config.yaml"
+        )
+        response = requests.get(template_url)
+        if response.status_code == 200:
+            with open(pre_commit_config_path, "w") as file:
+                file.write(response.text)
+            logger.info(
+                message=".pre-commit-config.yaml created successfully.",
+                status="✅",
+            )
+        else:
+            logger.error(
+                message="Failed to download .pre-commit-config.yaml template.",
+                status="❌",
+            )
 
     # Check and run the "push-prep" target if it exists
     run_push_prep(logger)

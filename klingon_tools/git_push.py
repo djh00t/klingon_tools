@@ -89,8 +89,29 @@ def git_push(repo: git.Repo) -> None:
 
                 continue
 
-        # Perform the push operation at the end
-        push_changes(repo)
+        # Check if the current repo is a submodule
+        if ".git" in repo.git.rev_parse("--show-toplevel"):
+            # Stage and commit changes in the submodule
+            repo.git.add(".")
+            repo.index.commit("Update config file in submodule")
+
+            # Navigate to the main repository
+            main_repo_path = repo.git.rev_parse(
+                "--show-superproject-working-tree"
+            )
+            main_repo = git.Repo(main_repo_path)
+
+            # Stage and commit the updated submodule in the main repository
+            main_repo.git.add(repo.working_dir)
+            main_repo.index.commit(
+                f"Update config file in {repo.working_dir} submodule"
+            )
+
+            # Push changes to the main repository
+            main_repo.remotes.origin.push()
+        else:
+            # Perform the push operation at the end
+            push_changes(repo)
 
     except GitCommandError as e:
         logger.error(
