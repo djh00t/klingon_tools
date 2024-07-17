@@ -30,7 +30,7 @@ module.exports = {
     [
       "@semantic-release/exec",
       {
-        publishCmd: "twine upload dist/* -u __token__ -p $PYPI_TOKEN",
+        publishCmd: "twine upload dist/* -u __token__ -p ${PYPI_TOKEN}",
       },
     ],
   ],
