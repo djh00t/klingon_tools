@@ -67,10 +67,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_TITLE: ${{ env.PR_TITLE }}
 
-      - name: Install dependencies in parallel
-        run: |
-            pip install packaging
-            npm install
+      - name: Install Python dependencies
+        run: pip install packaging
+
+      - name: Install Node.js dependencies
+        run: npm install
 
       - name: Run Unit Tests
         run: make test
