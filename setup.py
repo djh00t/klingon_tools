@@ -8,7 +8,7 @@ import os
 import re
 import sys
 from setuptools import find_packages, setup
-from setuptools._vendor.packaging.version import InvalidVersion
+from setuptools.extern.packaging.version import InvalidVersion
 
 
 def get_version():
