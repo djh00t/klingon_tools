@@ -29,13 +29,21 @@ jobs:
         with:
           node-version: "16"
 
-      - name: Load caches in parallel
-        run: |
-          {
-            actions/cache@v4.0.2 --path ~/.cache/pip --key ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }} --restore-keys ${{ runner.os }}-pip- &
-            actions/cache@v2 --path ~/.npm --key ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }} --restore-keys ${{ runner.os }}-node- &
-            wait
-          }
+      - name: Load Python cache
+        uses: actions/cache@v4.0.2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Load Node.js cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       - name: Setup Python
         uses: actions/setup-python@v5.1.0
@@ -61,11 +69,8 @@ jobs:
 
       - name: Install dependencies in parallel
         run: |
-          {
-            pip install packaging &
-            npm install &
-            wait
-          }
+            pip install packaging
+            npm install
 
       - name: Run Unit Tests
         run: make test
