@@ -119,10 +119,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
 
       - name: Compile Python requirements
-        run: pip-compile requirements.in
-
-      - name: Install Python dependencies
-        run: pip install -r requirements.txt
+        run: make install
 
       - name: Install Node.js dependencies
         run: make install
