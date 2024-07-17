@@ -19,13 +19,23 @@ jobs:
         with:
           fetch-depth: 0 # Fetch all branches
 
-      - name: Cache pip packages
-        uses: actions/cache@v4.0.2
+      - name: Setup Python
+        uses: actions/setup-python@v5.1.0
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          python-version: "3.x"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "16"
+
+      - name: Load caches in parallel
+        run: |
+          {
+            actions/cache@v4.0.2 --path ~/.cache/pip --key ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }} --restore-keys ${{ runner.os }}-pip- &
+            actions/cache@v2 --path ~/.npm --key ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }} --restore-keys ${{ runner.os }}-node- &
+            wait
+          }
 
       - name: Setup Python
         uses: actions/setup-python@v5.1.0
@@ -45,11 +55,17 @@ jobs:
           echo "PR_TITLE=$PR_TITLE" >> $GITHUB_ENV
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_TITLE: ${{ env.PR_TITLE }}
 
-      - name: Install dependencies
+      - name: Install dependencies in parallel
         run: |
-          pip install packaging
-          make install
+          {
+            pip install packaging &
+            npm install &
+            wait
+          }
 
       - name: Run Unit Tests
         run: make test
