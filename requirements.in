@@ -1,15 +1,16 @@
 # External dependencies
+gitpython
+httpx
+iniconfig
+jinja2
+openai
 pip-tools
 pre-commit
-twine
-wheel
+psutil
 pytest
 pytest-mock
-iniconfig
-ruamel.yaml
-psutil
-openai
-gitpython
 requests
-httpx
+ruamel.yaml
 tabulate
+twine
+wheel
