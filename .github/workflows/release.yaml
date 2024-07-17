@@ -22,13 +22,13 @@ jobs:
         with:
           node-version: "16"
 
-      - name: Cache Node.js modules
-        uses: actions/cache@v2
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+      - name: Load caches in parallel
+        run: |
+          {
+            actions/cache@v2 --path ~/.npm --key ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }} --restore-keys ${{ runner.os }}-node- &
+            actions/cache@v2 --path ~/.cache/pip --key ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }} --restore-keys ${{ runner.os }}-pip- &
+            wait
+          }
 
       - name: Install Node.js dependencies
         run: npm install
@@ -37,14 +37,6 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: "3.x"
-
-      - name: Cache Python packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
 
       - name: Install Python dependencies
         run: |
@@ -82,13 +74,13 @@ jobs:
         with:
           fetch-depth: 0 # Fetch all branches
 
-      - name: Cache pip packages
-        uses: actions/cache@v4.0.2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+      - name: Update caches in parallel
+        run: |
+          {
+            actions/cache@v4.0.2 --path ~/.cache/pip --key ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }} --restore-keys ${{ runner.os }}-pip- &
+            actions/cache@v2 --path ~/.npm --key ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }} --restore-keys ${{ runner.os }}-node- &
+            wait
+          }
 
       - name: Setup Python
         uses: actions/setup-python@v5.1.0
@@ -152,6 +144,9 @@ jobs:
             fi
           env:
             OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            PR_TITLE: ${{ env.PR_TITLE }}
 
       - name: Update PR if one already exists
         shell: /usr/bin/bash -e {0}
