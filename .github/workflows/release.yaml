@@ -60,23 +60,18 @@ jobs:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: npx semantic-release
 
-      - name: Update node_modules cache
-        if: steps.install_node_dependencies.outputs.cache-hit != 'true'
-        uses: actions/cache@v2
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Update Python packages cache
-        if: steps.install_python_dependencies.outputs.cache-hit != 'true'
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+      - name: Update caches in parallel
+        if: steps.install_node_dependencies.outputs.cache-hit != 'true' || steps.install_python_dependencies.outputs.cache-hit != 'true'
+        run: |
+          {
+            if [ "${{ steps.install_node_dependencies.outputs.cache-hit }}" != 'true' ]; then
+              actions/cache@v2 --path ~/.npm --key ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }} --restore-keys ${{ runner.os }}-node- &
+            fi
+            if [ "${{ steps.install_python_dependencies.outputs.cache-hit }}" != 'true' ]; then
+              actions/cache@v2 --path ~/.cache/pip --key ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }} --restore-keys ${{ runner.os }}-pip- &
+            fi
+            wait
+          }
 
   create-pr:
     runs-on: ubuntu-latest
