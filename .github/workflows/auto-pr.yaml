@@ -29,21 +29,7 @@ jobs:
         with:
           node-version: "16"
 
-      - name: Load Python cache
-        uses: actions/cache@v4.0.2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
 
-      - name: Load Node.js cache
-        uses: actions/cache@v2
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
 
       - name: Setup Python
         uses: actions/setup-python@v5.1.0
@@ -118,24 +104,25 @@ jobs:
           PR_BODY=$(python3 .github/workflows/pr_body_gen.py $SOURCE_BRANCH $DEST_BRANCH)
           gh pr edit $PR_URL --title "$PR_TITLE" --body "$PR_BODY"
 
-      - name: Upload current Python cache
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-
-      - name: Upload current Node.js cache
-        uses: actions/cache@v2
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-
-      - name: Cleanup Python environment
-        run: |
-          pip cache purge
-          rm -rf ~/.cache/pip
-
-      - name: Cleanup Node.js environment
-        run: |
-          npm cache clean --force
-          rm -rf ~/.npm
+#       - name: Upload current Python cache
+#         uses: actions/cache@v2
+#         with:
+#           path: ~/.cache/pip
+#           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+#
+#       - name: Upload current Node.js cache
+#         uses: actions/cache@v2
+#         with:
+#           path: ~/.npm
+#           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+#
+#       - name: Cleanup Python environment
+#         run: |
+#           pip cache purge
+#           rm -rf ~/.cache/pip
+#
+#       - name: Cleanup Node.js environment
+#         run: |
+#           npm cache clean --force
+#           rm -rf ~/.npm
+#
