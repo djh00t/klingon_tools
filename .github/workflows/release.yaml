@@ -115,10 +115,11 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      - name: Install dependencies
-        run: |
-          pip install packaging
-          make install
+      - name: Install Python dependencies
+        run: pip install packaging
+
+      - name: Install Node.js dependencies
+        run: make install
 
       - name: Run Unit Tests
         run: make test
