@@ -1,3 +1,15 @@
+# [2.0.0](https://github.com/djh00t/klingon_tools/compare/v1.0.0...v2.0.0) (2024-07-17)
+
+
+* ✨ feat(workflows):Update PR creation logic and add PR title and body generation ([a2715bc](https://github.com/djh00t/klingon_tools/commit/a2715bce89fb38068c8f37ab44f2c195ec30e392))
+
+
+### BREAKING CHANGES
+
+* Updated PR creation and update process, revised step names.
+
+Signed-off-by: David Hooton <david@hooton.org>
+
 # [1.0.0](https://github.com/djh00t/klingon_tools/compare/v0.0.26...v1.0.0) (2024-07-17)
 
 
