@@ -1,5 +1,5 @@
 module.exports = {
-  branches: [{ name: "release", channel: "release" }, { name: "main" }],
+  branches: ["main", "release"],
   repositoryUrl: "https://github.com/djh00t/klingon_tools.git",
   plugins: [
     "@semantic-release/commit-analyzer",
