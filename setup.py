@@ -8,7 +8,7 @@ import os
 import re
 import sys
 from setuptools import find_packages, setup
-from setuptools._vendor.packaging.version import InvalidVersion
+from packaging.version import InvalidVersion
 
 
 def get_version():
@@ -113,6 +113,7 @@ setup(
         "ruamel.yaml",
         "pre-commit",
         "psutil",
+        "packaging",
     ],
     include_package_data=True,
     description=(

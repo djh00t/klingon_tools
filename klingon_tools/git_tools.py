@@ -350,7 +350,9 @@ def git_stage_diff(file_name: str, repo: Repo, modified_files: list) -> str:
     return diff
 
 
-def git_pre_commit(file_name: str, repo: Repo, modified_files: list) -> bool:
+def git_pre_commit(
+    file_name: str, repo: Repo, modified_files: list
+) -> Tuple[bool, str]:
     """Runs pre-commit hooks on a file.
 
     This function runs pre-commit hooks on the specified file. If the hooks
