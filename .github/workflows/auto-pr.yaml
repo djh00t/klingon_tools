@@ -67,11 +67,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_TITLE: ${{ env.PR_TITLE }}
 
-      - name: Compile Python requirements
-        run: pip-compile requirements.in
-
-      - name: Install Python dependencies
-        run: pip install -r requirements.txt
+      - name: Install Python Requirements
+        run: make install
 
       - name: Install Node.js dependencies
         run: npm install
