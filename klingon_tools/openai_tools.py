@@ -396,17 +396,23 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                         formatted_message = self.signoff_message(
                             formatted_message
                         )
-                        logger.info(
+                        logger.error(
                             "Scope was missing. Please provide a more "
                             "specific scope."
                         )
 
-                logger.info("=" * 80)
+                logger.info(
+                    message='"=" * 80',
+                    status="",
+                )
                 logger.info(
                     f"Generated commit message for {file}:\n\n"
                     f"{formatted_message}\n"
                 )
-                logger.info("=" * 80)
+                logger.info(
+                    message='"=" * 80',
+                    status="",
+                )
 
                 subprocess.run(
                     ["git", "commit", "-m", formatted_message, file],
@@ -420,9 +426,18 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
             formatted_message = self.format_message(generated_message)
             formatted_message = self.signoff_message(formatted_message)
 
-            logger.info("=" * 80)
-            logger.info(f"Generated commit message:\n\n{formatted_message}\n")
-            logger.info("=" * 80)
+            logger.info(
+                message='"=" * 80',
+                status="",
+            )
+            logger.info(
+                message=f"Generated commit message:\n\n{formatted_message}\n",
+                status="",
+            )
+            logger.info(
+                message='"=" * 80',
+                status="",
+            )
 
             return formatted_message
 
@@ -437,7 +452,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                     {commit_description.strip()}"
                 formatted_message = self.format_message(generated_message)
                 formatted_message = self.signoff_message(formatted_message)
-                logger.info(
+                logger.error(
                     "Scope was missing. Please provide a more specific scope."
                 )
 
