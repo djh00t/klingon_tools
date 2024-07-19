@@ -40,8 +40,8 @@ jobs:
 
       - name: Install Node.js dependencies
         run: |
-          npm install
           npm install conventional-changelog-conventionalcommits
+          npm install
 
       - name: Set up Python
         uses: actions/setup-python@v5
