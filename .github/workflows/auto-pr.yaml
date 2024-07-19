@@ -24,19 +24,6 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20.8.1"
-
-      - name: Load Node.js cache
-        uses: actions/cache@v4.0.2
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-cache
-          restore-keys: |
-            ${{ runner.os }}-node-cache-
-
       - name: Load Python cache
         uses: actions/cache@v4.0.2
         with:
@@ -66,11 +53,6 @@ jobs:
 
       - name: Install Python Requirements
         run: make install
-
-      - name: Install Node.js dependencies
-        run: |
-          npm install conventional-changelog-conventionalcommits
-          npm install
 
       - name: Run Unit Tests
         run: make test
