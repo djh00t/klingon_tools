@@ -1,24 +1,16 @@
 import pytest
+
 from klingon_tools.openai_tools import OpenAITools
+from klingon_tools.git_tools import get_git_user_info
+
+# Get the user's name and email from git
+user_name, user_email = get_git_user_info()
 
 
 def test_init_with_valid_api_key():
     openai_tools = OpenAITools(debug=True)
     assert openai_tools.debug
     assert openai_tools.client is not None
-
-
-def test_generate_content(mocker):
-    mock_response = mocker.Mock()
-    mock_response.choices = [
-        mocker.Mock(message=mocker.Mock(content="Generated content"))
-    ]
-    mocker.patch("openai.ChatCompletion.create", return_value=mock_response)
-    openai_tools = OpenAITools()
-    template_key = "commit_message_user"
-    diff = "Some diff content"
-    content = openai_tools.generate_content(template_key, diff)
-    assert content == "Generated content"
 
 
 def test_generate_pull_request_title(mocker):
@@ -84,3 +76,23 @@ def test_format_pr_title_with_newlines():
     title = "Title\nwith\nnewlines"
     formatted_title = openai_tools.format_pr_title(title)
     assert formatted_title == "Title with newlines"
+
+
+def test_generate_commit_message(mocker):
+    mocker.patch(
+        "openai.ChatCompletion.create",
+        return_value=mocker.Mock(
+            choices=[
+                mocker.Mock(
+                    message=mocker.Mock(
+                        content="feat(klingon): add new feature"
+                    )
+                )
+            ]
+        ),
+    )
+    openai_tools = OpenAITools()
+    diff = "Some diff content"
+    commit_message = openai_tools.generate_commit_message(diff)
+    assert isinstance(commit_message, str)
+    assert "feat(klingon): add new feature" in commit_message
