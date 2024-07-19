@@ -17,18 +17,18 @@ module.exports = {
   ],
   preset: "conventionalcommits",
   releaseRules: [
-    { "type": "^(?:.{0,3})build", "release": "patch" },
-    { "type": "^(?:.{0,3})chore", "release": "patch" },
-    { "type": "^(?:.{0,3})ci", "release": "patch" },
-    { "type": "^(?:.{0,3})docs", "release": "patch" },
-    { "type": "^(?:.{0,3})feat", "release": "minor" },
-    { "type": "^(?:.{0,3})fix", "release": "patch" },
-    { "type": "^(?:.{0,3})perf", "release": "patch" },
-    { "type": "^(?:.{0,3})refactor", "release": "patch" },
-    { "type": "^(?:.{0,3})revert", "release": "patch" },
-    { "type": "^(?:.{0,3})style", "release": "patch" },
-    { "type": "^(?:.{0,3})test", "release": "patch" },
-    { "type": "^(?:.{0,3})other", "release": "patch" }
+    { "type": "^(?:.{0,4})build", "release": "patch" },
+    { "type": "^(?:.{0,4})chore", "release": "patch" },
+    { "type": "^(?:.{0,4})ci", "release": "patch" },
+    { "type": "^(?:.{0,4})docs", "release": "patch" },
+    { "type": "^(?:.{0,4})feat", "release": "minor" },
+    { "type": "^(?:.{0,4})fix", "release": "patch" },
+    { "type": "^(?:.{0,4})perf", "release": "patch" },
+    { "type": "^(?:.{0,4})refactor", "release": "patch" },
+    { "type": "^(?:.{0,4})revert", "release": "patch" },
+    { "type": "^(?:.{0,4})style", "release": "patch" },
+    { "type": "^(?:.{0,4})test", "release": "patch" },
+    { "type": "^(?:.{0,4})other", "release": "patch" }
   ],
   parserOpts: {
     noteKeywords: ["BREAKING CHANGE", "BREAKING CHANGES"]
