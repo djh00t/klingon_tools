@@ -214,7 +214,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                     },
                     {"role": "user", "content": role_user_content},
                 ],
-                model="gpt-3.5-turbo",
+                model="gpt-4o-mini",
             )
         except openai.APIConnectionError as e:
             logger.error(f"Failed to connect to OpenAI API: {e}")
