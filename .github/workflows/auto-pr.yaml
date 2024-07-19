@@ -35,7 +35,7 @@ jobs:
           path: ~/.npm
           key: ${{ runner.os }}-node-cache
           restore-keys: |
-            ${{ runner.os }}-node-cache
+            ${{ runner.os }}-node-cache-
 
       - name: Load Python cache
         uses: actions/cache@v4.0.2
@@ -43,7 +43,7 @@ jobs:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-cache
           restore-keys: |
-            ${{ runner.os }}-pip-cache
+            ${{ runner.os }}-pip-cache-
 
       - name: Set up environment variables
         run: |
