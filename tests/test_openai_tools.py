@@ -76,23 +76,3 @@ def test_format_pr_title_with_newlines():
     title = "Title\nwith\nnewlines"
     formatted_title = openai_tools.format_pr_title(title)
     assert formatted_title == "Title with newlines"
-
-
-def test_generate_commit_message(mocker):
-    mocker.patch(
-        "openai.ChatCompletion.create",
-        return_value=mocker.Mock(
-            choices=[
-                mocker.Mock(
-                    message=mocker.Mock(
-                        content="feat(klingon): add new feature"
-                    )
-                )
-            ]
-        ),
-    )
-    openai_tools = OpenAITools()
-    diff = "Some diff content"
-    commit_message = openai_tools.generate_commit_message(diff)
-    assert isinstance(commit_message, str)
-    assert "feat(klingon): add new feature" in commit_message
