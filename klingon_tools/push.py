@@ -478,7 +478,7 @@ def workflow_process_file(
                 break
             else:
                 # Generate commit message and commit the file
-                openai_tools = OpenAITools()
+                openai_tools = OpenAITools(debug=args.debug)
                 commit_message = openai_tools.generate_commit_message(diff)
                 git_commit_file(file_name, current_repo, commit_message)
                 break
