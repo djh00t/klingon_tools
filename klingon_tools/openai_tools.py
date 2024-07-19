@@ -427,7 +427,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
             formatted_message = self.signoff_message(formatted_message)
 
             logger.info(
-                message="= * 80",
+                message="=" * 80,
                 status="",
             )
             logger.info(
@@ -610,7 +610,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
             )
 
         logger.info(
-            message="= * 80",
+            message="=" * 80,
             status="",
         )
         logger.info(
