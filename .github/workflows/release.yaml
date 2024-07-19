@@ -48,6 +48,10 @@ jobs:
 
       - name: Install Python dependencies
         run: |
+          if [ "$(git rev-parse --abbrev-ref HEAD)" = "main" ]; then
+            echo "You must be on a branch named differently than 'main'"
+            exit 1
+          fi
           python -m pip install --upgrade pip
           pip install setuptools wheel twine packaging
 
@@ -137,9 +141,15 @@ jobs:
           fi
           PR_BODY=$(python3 .github/workflows/pr_body_gen.py $SOURCE_BRANCH $BASE_BRANCH)
           gh pr edit $PR_URL --title "$PR_TITLE" --body "$PR_BODY"
+        shell: /usr/bin/bash -e {0}
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_TITLE: ${{ env.PR_TITLE }}
-        shell: /usr/bin/bash -e {0}
+          pythonLocation: /opt/hostedtoolcache/Python/3.12.4/x64
+          PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.4/x64/lib/pkgconfig
+          Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.4/x64
+          Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.4/x64
+          Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.4/x64
+          LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.4/x64/lib
