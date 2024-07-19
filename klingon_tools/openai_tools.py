@@ -518,6 +518,11 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
             "pull_request_summary", commits
         )
 
+        if dryrun:
+            git_unstage_files(
+                repo, repo.git.diff("--cached", "--name-only").splitlines()
+            )
+
         return generated_summary
 
     def generate_pull_request_context(
