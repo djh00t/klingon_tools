@@ -441,13 +441,19 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                     "Scope was missing. Please provide a more specific scope."
                 )
 
-                logger.info("=" * 80)
+                logger.info(
+                    message='"=" * 80',
+                    status="",
+                )
                 logger.info(
                     message=f"Generated commit message:\n\n"
                     f"{formatted_message}\n",
                     status="",
                 )
-                logger.info("=" * 80)
+                logger.info(
+                    message='"=" * 80',
+                    status="",
+                )
 
                 return formatted_message
 
