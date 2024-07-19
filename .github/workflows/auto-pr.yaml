@@ -68,7 +68,9 @@ jobs:
         run: make install
 
       - name: Install Node.js dependencies
-        run: npm install
+        run: |
+          npm install
+          npm install conventional-changelog-conventionalcommits
 
       - name: Run Unit Tests
         run: make test
