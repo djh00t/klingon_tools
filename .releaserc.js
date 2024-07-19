@@ -10,7 +10,7 @@ module.exports = {
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "python setup.py sdist bdist_wheel",
+        "prepareCmd": "python -m build",
         "publishCmd": "twine upload dist/* -u __token__ -p $PYPI_USER_AGENT"
       }
     ],
