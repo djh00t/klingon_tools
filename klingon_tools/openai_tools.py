@@ -303,7 +303,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
             raise
 
         formatted_message = (
-            f"{emoticon_prefix} {commit_type}({commit_scope}):"
+            f"{emoticon_prefix} {commit_type}({commit_scope}): "
             f"{commit_message.split(':', 1)[1].strip()}"
         )
 
@@ -324,7 +324,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
         """
         formatted_title = " ".join(title.split())
         if len(formatted_title) > 72:
-            formatted_title = formatted_title[:69] + "..."
+            formatted_title = formatted_title[:72] + "..."
         return formatted_title
 
     def signoff_message(self, message: str) -> str:
