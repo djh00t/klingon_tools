@@ -30,7 +30,8 @@ ignore_patterns = ["temp/**/*.py", "temp2/*.py"]
 exclude = "tmp/"
 
 [build-system]
-requires = ["setuptools", "wheel", "packaging"]
+requires = ["setuptools", "wheel", "packaging", "toml"]
+version = "0.0.33"
 build-backend = "setuptools.build_meta"
 sqlite_cache = true
 install_types = true

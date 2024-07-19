@@ -552,7 +552,16 @@ def main():
         committed_not_pushed,
     ) = git_get_status(repo)
 
-    # Log git statistics
+    # Check if there are any files to process initially
+    if not (
+        deleted_files
+        or untracked_files
+        or modified_files
+        or staged_files
+        or committed_not_pushed
+    ):
+        log_message.info("No files processed, nothing to do", status="🚫")
+        return 0
     log_git_stats(
         deleted_files,
         untracked_files,
@@ -599,15 +608,7 @@ def main():
     push_changes_if_needed(repo, args)
 
     # Log script completion
-    if (
-        not args.file_name
-        and not untracked_files
-        and not modified_files
-        and not committed_not_pushed
-    ):
-        log_message.info("No files processed, nothing to do", status="🚫")
-    else:
-        log_message.info("All files processed successfully", status="🚀")
+    log_message.info("All files processed successfully", status="🚀")
     log_message.info("=" * 80, status="")
 
     return 0

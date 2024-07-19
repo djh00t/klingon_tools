@@ -24,17 +24,14 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Load Python cache
+        uses: actions/cache@v4.0.2
         with:
-          node-version: "20.8.1"
-
-
-
-      - name: Setup Python
-        uses: actions/setup-python@v5.1.0
-        with:
-          python-version: "3.x"
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-cache-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-cache-${{ hashFiles('**/requirements.txt') }}
+            ${{ runner.os }}-pip-cache-
 
       - name: Set up environment variables
         run: |
@@ -57,9 +54,6 @@ jobs:
 
       - name: Install Python Requirements
         run: make install
-
-      - name: Install Node.js dependencies
-        run: npm install
 
       - name: Run Unit Tests
         run: make test

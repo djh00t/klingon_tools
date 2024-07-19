@@ -1,3 +1,5 @@
+## [2.0.1](https://github.com/djh00t/klingon_tools/compare/v2.0.0...v2.0.1) (2024-07-19)
+
 # [2.0.0](https://github.com/djh00t/klingon_tools/compare/v1.0.0...v2.0.0) (2024-07-17)
 
 
