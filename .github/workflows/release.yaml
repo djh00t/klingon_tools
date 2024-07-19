@@ -39,7 +39,9 @@ jobs:
             ${{ runner.os }}-pip-cache-
 
       - name: Install Node.js dependencies
-        run: npm install
+        run: |
+          npm install
+          npm install conventional-changelog-conventionalcommits
 
       - name: Set up Python
         uses: actions/setup-python@v5
