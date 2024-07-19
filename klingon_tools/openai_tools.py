@@ -52,24 +52,29 @@ class OpenAITools:
             format: ``` <type>(scope): <description>
 
             ```
-
-            Consider the following when selecting commit types:
-                build: Changes that affect the build system or external
-                dependencies chore: Other changes that don't modify src or test
-                files ci: Changes to CI configuration files and scripts docs:
-                Documentation changes feat: New features fix: Bug fixes perf:
-                Code changes that improve performance refactor: Code changes
-                that neither fix bugs nor add features revert: Reverts a
-                previous commit style: Changes that do not affect the meaning
-                of the code (white-space, formatting, missing semi-colons, etc)
-                test: Adding missing or correcting existing tests other:
-                Changes that don't fit into the above categories
+            Consider the following options when selecting commit types:
+            • build: updates to build system & external dependencies
+            • chore: changes that don't modify src or test files
+            • ci: changes to CI configuration files and scripts
+            • docs: updates to documentation & comments
+            • feat: add new feature or function to the codebase
+            • fix: correct bugs and other errors in code
+            • perf: improve performance without changing existing functionality
+            • refactor: code changes that neither fix bugs nor add features
+            • revert: Reverts a previous commit
+            • style: changes that do not affect the meaning of the code
+            (white-space, formatting, missing semi-colons, etc) but improve
+            readability, consistency, or maintainability
+            • test: add, update, correct unit tests
+            • other:  Changes that don't fit into the above categories
 
             Scope: Select the most specific of application name, file name,
             class name, method/function name, or feature name for the commit
             scope. If in doubt, use the name of the file being modified.
-            Breaking Changes: Include a BREAKING CHANGE: footer or append !
-            after type/scope for commits that introduce breaking API changes.
+
+            Breaking Changes: Include a `BREAKING CHANGE:` footer or append !
+            after type/scope for commits that introduce breaking changes.
+
             Footers: Breaking change is the only footer permitted. Do not add
             "Co-authored-by" or other footers unless explicitly requested.
             """,
