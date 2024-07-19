@@ -283,17 +283,18 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                 )
 
             emoticon_prefix = {
+                "build": "🛠️",
+                "chore": "🔧",
+                "ci": "⚙️",
+                "docs": "📚",
                 "feat": "✨",
                 "fix": "🐛",
-                "docs": "📚",
-                "style": "💄",
-                "refactor": "♻️",
                 "perf": "🚀",
-                "test": "🚨",
-                "build": "🛠️",
-                "ci": "⚙️",
-                "chore": "🔧",
+                "refactor": "♻️",
                 "revert": "⏪",
+                "style": "💄",
+                "test": "🚨",
+                "other": "⚠️",
             }.get(commit_type, "")
         except ValueError as e:
             logger.error(f"Commit message format error: {e}")
