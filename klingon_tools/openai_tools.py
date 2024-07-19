@@ -481,48 +481,19 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
             logger.error(f"Unexpected error: {e}")
             raise
 
-    def generate_pull_request_title(
-        self, repo: Repo, diff: str, dryrun: bool = False
-    ) -> str:
+    def generate_pull_request_title(self, diff: str) -> str:
         """
-        Generates a pull request title from the git log differences between
-        current branch and origin/release..HEAD.
+        Generates a pull request title from the provided diff.
 
         Args:
             diff (str): The diff to include in the generated pull request
             title.
-            dryrun (bool): If True, unstages all files after generating the
-            title.
 
         Returns:
             str: The formatted pull request title.
-
-        Raises:
-            subprocess.CalledProcessError: If the git command fails.
         """
-        commit_details = subprocess.run(
-            [
-                "git",
-                "--no-pager",
-                "log",
-                "origin/release..HEAD",
-                "--pretty=format:%s by @%an",
-            ],
-            capture_output=True,
-            text=True,
-            check=True,
-        ).stdout.splitlines()
-
-        commits = "\n".join(commit_details)
-
-        generated_title = self.generate_content("pull_request_title", commits)
+        generated_title = self.generate_content("pull_request_title", diff)
         formatted_title = self.format_pr_title(generated_title)
-
-        if dryrun:
-            git_unstage_files(
-                repo, repo.git.diff("--cached", "--name-only").splitlines()
-            )
-
         return formatted_title
 
     def generate_pull_request_summary(
