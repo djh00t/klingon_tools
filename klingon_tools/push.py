@@ -60,12 +60,12 @@ from klingon_tools.git_tools import (
     git_get_status,
     git_get_toplevel,
     git_pre_commit,
-    git_unstage_files,
     log_git_stats,
     process_pre_commit_config,
     push_changes_if_needed,
     git_stage_diff,
 )
+from klingon_tools.git_unstage import git_unstage_files
 
 # Initialize logging
 from klingon_tools.logger import LogTools, log_tools
