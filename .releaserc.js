@@ -31,6 +31,7 @@ module.exports = {
     { "type": ".*other.*", "release": "patch" }
   ],
   parserOpts: {
+    headerPattern: /^(\[[^\]]*\])?\s*(?::\s*([^\s:]+))?\s*(.*)$/,
     noteKeywords: ["BREAKING CHANGE", "BREAKING CHANGES"]
   },
   writerOpts: {
