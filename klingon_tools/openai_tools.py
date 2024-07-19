@@ -609,8 +609,17 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                 repo, repo.git.diff("--cached", "--name-only").splitlines()
             )
 
-        logger.info("=" * 80)
-        logger.info(f"Generated release body:\n\n{formatted_body}\n")
-        logger.info("=" * 80)
+        logger.info(
+            message="'=' * 80",
+            status="",
+        )
+        logger.info(
+            message=f"Generated release body:\n\n{formatted_body}\n",
+            status="",
+        )
+        logger.info(
+            message="'=' * 80",
+            status="",
+        )
 
         return formatted_body
