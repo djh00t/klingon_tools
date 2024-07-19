@@ -402,7 +402,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                         )
 
                 logger.info(
-                    message="= * 80",
+                    message="=" * 80,
                     status="",
                 )
                 logger.info(
@@ -410,7 +410,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                     f"{formatted_message}\n"
                 )
                 logger.info(
-                    message="= * 80",
+                    message="=" * 80,
                     status="",
                 )
 
@@ -435,7 +435,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                 status="",
             )
             logger.info(
-                message="= * 80",
+                message="=" * 80,
                 status="",
             )
 
@@ -457,7 +457,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                 )
 
                 logger.info(
-                    message="= * 80",
+                    message="=" * 80,
                     status="",
                 )
                 logger.info(
@@ -466,7 +466,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                     status="",
                 )
                 logger.info(
-                    message="= * 80",
+                    message="=" * 80,
                     status="",
                 )
 
@@ -618,7 +618,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
             status="",
         )
         logger.info(
-            message="= * 80",
+            message="=" * 80,
             status="",
         )
 
