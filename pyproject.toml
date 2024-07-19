@@ -31,7 +31,7 @@ exclude = "tmp/"
 
 [build-system]
 requires = ["setuptools", "wheel", "packaging", "toml"]
-version = "0.0.33"
+version = "2.0.1"
 build-backend = "setuptools.build_meta"
 sqlite_cache = true
 install_types = true
