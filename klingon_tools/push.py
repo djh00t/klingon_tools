@@ -599,7 +599,12 @@ def main():
     push_changes_if_needed(repo, args)
 
     # Log script completion
-    if not untracked_files and not modified_files and not committed_not_pushed:
+    if (
+        not args.file_name
+        and not untracked_files
+        and not modified_files
+        and not committed_not_pushed
+    ):
         log_message.info("No files processed, nothing to do", status="🚫")
     else:
         log_message.info("All files processed successfully", status="🚀")
