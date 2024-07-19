@@ -189,7 +189,11 @@ def get_pr_number() -> str:
 
 
 # Generate the summary and motivation context
-summary = generate_summary()
+try:
+    summary = generate_summary()
+except subprocess.CalledProcessError as e:
+    print(f"Error generating summary: {e}")
+    summary = "Summary generation failed."
 motivation_context = generate_motivation_context()
 pr_number = get_pr_number()
 
