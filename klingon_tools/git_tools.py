@@ -590,6 +590,12 @@ def push_changes_if_needed(repo: Repo, args) -> None:
 
                 # Perform cleanup after push operation
                 cleanup_lock_file(args.repo_path)
+        elif committed_not_pushed:
+            logger.info(
+                message="Committing not pushed files found. Pushing changes.",
+                status="🚀",
+            )
+            git_push(repo)
         else:
             logger.info(
                 message="No new commits to push. Skipping push.", status="🚫"
