@@ -40,7 +40,7 @@ class OpenAITools:
     pull request titles, and release bodies.
     """
 
-    def __init__(self):
+    def __init__(self, debug=False):
         """
         Initialize the OpenAITools instance.
 
@@ -50,7 +50,12 @@ class OpenAITools:
         Raises:
             ValueError: If the OpenAI API key is not set in the environment.
         """
+        self.debug = debug
         # Initialize OpenAI API client
+        if self.debug:
+            openai.logging = "debug"
+        else:
+            openai.logging = "info"
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError(
