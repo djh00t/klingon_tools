@@ -1,13 +1,18 @@
 import os
-import toml
+import re
 from setuptools import find_packages, setup
 
 
 def get_version():
-    pyproject_file = os.path.join(os.path.dirname(__file__), "pyproject.toml")
-    with open(pyproject_file) as f:
-        pyproject_data = toml.load(f)
-        return pyproject_data["tool"]["poetry"]["version"]
+    version_file = os.path.join(os.path.dirname(__file__), "version.py")
+    with open(version_file) as f:
+        code = f.read()
+        version_match = re.search(
+            r"^__version__ = ['\"]([^'\"]*)['\"]", code, re.M
+        )
+        if version_match:
+            return version_match.group(1)
+        raise RuntimeError("Unable to find version string.")
 
 
 with open("README.md", "r", encoding="utf-8") as fh:
