@@ -443,7 +443,9 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
 
                 logger.info("=" * 80)
                 logger.info(
-                    f"Generated commit message:\n\n{formatted_message}\n"
+                    message=f"Generated commit message:\n\n"
+                    f"{formatted_message}\n",
+                    status="",
                 )
                 logger.info("=" * 80)
 
