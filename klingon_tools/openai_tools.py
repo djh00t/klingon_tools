@@ -513,17 +513,24 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
         Returns:
             str: The formatted pull request summary.
         """
-        commits = get_commit_log("origin/release").stdout
-        generated_summary = self.generate_content(
-            "pull_request_summary", commits
-        )
-
-        if dryrun:
-            git_unstage_files(
-                repo, repo.git.diff("--cached", "--name-only").splitlines()
+        try:
+            commits = get_commit_log("origin/release").stdout
+            generated_summary = self.generate_content(
+                "pull_request_summary", commits
             )
 
-        return generated_summary
+            if dryrun:
+                git_unstage_files(
+                    repo, repo.git.diff("--cached", "--name-only").splitlines()
+                )
+
+            return generated_summary
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Error getting commit log: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error generating PR summary: {e}")
+            raise
 
     def generate_pull_request_context(
         self, repo: Repo, diff: str, dryrun: bool = False
@@ -541,12 +548,19 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
         Returns:
             str: The formatted pull request context.
         """
-        commits = get_commit_log("origin/release").stdout
-        generated_context = self.generate_content(
-            "pull_request_context", commits
-        )
+        try:
+            commits = get_commit_log("origin/release").stdout
+            generated_context = self.generate_content(
+                "pull_request_context", commits
+            )
 
-        return generated_context
+            return generated_context
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Error getting commit log: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error generating PR context: {e}")
+            raise
 
     def generate_pull_request_body(
         self, repo: Repo, diff: str, dryrun: bool = False

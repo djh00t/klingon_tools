@@ -576,7 +576,7 @@ def main():
 
     # If there are deleted files, commit them
     if deleted_files:
-        git_commit_deletes(deleted_files, repo)
+        git_commit_deletes(repo, deleted_files)
 
     # If .pre-commit-config.yaml is modified, stage and commit it first
     process_pre_commit_config(repo, modified_files)

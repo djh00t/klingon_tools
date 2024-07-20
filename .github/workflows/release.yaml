@@ -32,7 +32,6 @@ jobs:
 
       - name: Install Node.js dependencies
         run: |
-          npm install conventional-changelog-conventionalcommits
           npm install
 
       - name: Set up Python
@@ -44,10 +43,10 @@ jobs:
         uses: actions/cache@v4.0.2
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-cache-${{ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-pip-cache-${{ hashFiles('**/requirements.in') }}
           restore-keys: |
-            ${{ runner.os }}-pip-cache-${{ hashFiles('**/requirements.txt') }}
-            ${{ runner.os }}-pip-cache-
+                ${{ runner.os }}-pip-cache-${{ hashFiles('**/requirements.in') }}
+                ${{ runner.os }}-pip-cache-
 
       - name: Install Python dependencies
         run: |
@@ -65,7 +64,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PYPI_USER_AGENT: ${{ secrets.PYPI_USER_AGENT }}
-        run: npx semantic-release
+        run: ./.github/workflows/semantic-release.sh
 
   create-pr:
     runs-on: ubuntu-latest
@@ -139,9 +138,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_TITLE: ${{ env.PR_TITLE }}
-          #pythonLocation: /opt/hostedtoolcache/Python/3.12.4/x64
-          #PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.4/x64/lib/pkgconfig
-          #Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.4/x64
-          #Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.4/x64
-          #Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.4/x64
-          #LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.4/x64/lib
