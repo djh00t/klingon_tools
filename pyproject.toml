@@ -1,6 +1,6 @@
 [tool.black]
 line-length = 79
-target-version = ["py36", "py37", "py38", "py39", "py310", "py311", "py312", "py313"]
+target-version = "2.0.1"
 include = "\\.pyi?$"
 exclude = "\\.eggs|\\.git|\\.hg|\\.mypy_cache|\\.tox|\\.venv|_build|buck-out|build|dist"
 
@@ -31,7 +31,7 @@ exclude = "tmp/"
 
 [build-system]
 requires = ["setuptools", "wheel", "packaging", "toml"]
-version = "0.0.33"
+version = "2.0.1"
 build-backend = "setuptools.build_meta"
 sqlite_cache = true
 install_types = true

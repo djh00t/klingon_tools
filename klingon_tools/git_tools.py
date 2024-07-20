@@ -213,7 +213,7 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
                 deleted_files
                 + [
                     item.a_path
-                    for item in repo.index.diff("HEAD")
+                    for item in repo.index.diff(None)
                     if item.change_type == "D"
                 ]
             )

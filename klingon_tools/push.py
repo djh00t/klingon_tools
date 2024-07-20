@@ -60,12 +60,12 @@ from klingon_tools.git_tools import (
     git_get_status,
     git_get_toplevel,
     git_pre_commit,
-    git_unstage_files,
     log_git_stats,
     process_pre_commit_config,
     push_changes_if_needed,
     git_stage_diff,
 )
+from klingon_tools.git_unstage import git_unstage_files
 
 # Initialize logging
 from klingon_tools.logger import LogTools, log_tools
@@ -478,7 +478,7 @@ def workflow_process_file(
                 break
             else:
                 # Generate commit message and commit the file
-                openai_tools = OpenAITools()
+                openai_tools = OpenAITools(debug=args.debug)
                 commit_message = openai_tools.generate_commit_message(diff)
                 git_commit_file(file_name, current_repo, commit_message)
                 break
@@ -576,7 +576,7 @@ def main():
 
     # If there are deleted files, commit them
     if deleted_files:
-        git_commit_deletes(deleted_files, repo)
+        git_commit_deletes(repo, deleted_files)
 
     # If .pre-commit-config.yaml is modified, stage and commit it first
     process_pre_commit_config(repo, modified_files)
