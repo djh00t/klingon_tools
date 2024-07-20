@@ -557,25 +557,17 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
             logger.error(f"Unexpected error generating PR context: {e}")
             raise
 
-    def generate_pull_request_body(
-        self, repo: Repo, diff: str, dryrun: bool = False
-    ) -> str:
+    def generate_pull_request_body(self, diff: str) -> str:
         """
-        Generates a pull request body from the git log differences between
-        current branch and origin/release..HEAD.
+        Generates a pull request body from the provided diff.
 
         Args:
             diff (str): The diff to include in the generated pull request body.
-            dryrun (bool): If True, unstages all files after generating the
-            body.
 
         Returns:
             str: The formatted pull request body.
         """
-        commit_result = get_commit_log("origin/release")
-        commits = commit_result.stdout
-        generated_body = self.generate_content("pull_request_body", commits)
-
+        generated_body = self.generate_content("pull_request_body", diff)
         return generated_body
 
     def generate_release_body(
