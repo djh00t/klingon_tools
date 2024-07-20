@@ -1,3 +1,27 @@
+## [2.1.0](https://github.com/djh00t/klingon_tools/compare/v2.0.1...v2.1.0) (2024-07-20)
+
+
+### Features
+
+* **openai_tools:** add dry run functionality to unstage files ([8316f86](https://github.com/djh00t/klingon_tools/commit/8316f86aa76bd33c4a76f4c9dee4cfc6335d0e26))
+* **entrypoints:** add dryrun parameter to pull request summary and context ([976c6a6](https://github.com/djh00t/klingon_tools/commit/976c6a6be6056a316e337a15a7ed11d9e458c1ae))
+* **git_tools:** add function to unstage files from the repository ([9b467d0](https://github.com/djh00t/klingon_tools/commit/9b467d0c99706252c0fae4f53f26a9e1f3f24b3e))
+* **tests/test_openai_tools:** add unit tests for OpenAITools functionality ([a9749af](https://github.com/djh00t/klingon_tools/commit/a9749af54882622e07a57d95c90482a3a497275a))
+
+
+### Bug Fixes
+
+* **github-actions:** Configure Git for GitHub CLI in auto-pr workflow ([d8da557](https://github.com/djh00t/klingon_tools/commit/d8da55780e70cf8dc000c2f1200dbace5e96a07e))
+* **.github/workflows/release:** configure Git settings for GitHub CLI ([ff38752](https://github.com/djh00t/klingon_tools/commit/ff387523276440f03f1062ce0e00fdcaac88b2c4))
+* **push.py:** correct argument order in git_commit_deletes function call ([2c9ba21](https://github.com/djh00t/klingon_tools/commit/2c9ba211806d37f87998af6d32049e231bd40528))
+* **setup.py:** correct file opening mode in get_version function ([0d7f010](https://github.com/djh00t/klingon_tools/commit/0d7f01040ad9b7c1616a3a59ee787f8cc698b0a1))
+* **pr_body_gen.py:** handle errors during summary generation ([a89f171](https://github.com/djh00t/klingon_tools/commit/a89f17158df6f1dff923aff06546b2b28fd40a5d))
+* **openai_tools:** handle errors when generating pull request summary and ([8a2814c](https://github.com/djh00t/klingon_tools/commit/8a2814c9f06da41a296b08df4580b7a9afcc3408))
+* **pr_body_gen:** handle subprocess errors in context generation ([10977ed](https://github.com/djh00t/klingon_tools/commit/10977edd018bc45c62e3afc9d6c363a28fbe004d))
+* **.releaserc.js:** update headerPattern for better commit message parsing ([4fa2bee](https://github.com/djh00t/klingon_tools/commit/4fa2beec5ce0fe05fa247c80ca95af754a81b92a))
+* **.releaserc.js:** update headerPattern to support emoji characters ([4913ce4](https://github.com/djh00t/klingon_tools/commit/4913ce44ff54171a6a057ce830b2946e3156ab14))
+* **setup.py:** update version retrieval logic in setup.py ([cbadfc3](https://github.com/djh00t/klingon_tools/commit/cbadfc316807c9a246d3e603f527c20b69c08fe0))
+
 ## [2.0.1](https://github.com/djh00t/klingon_tools/compare/v2.0.0...v2.0.1) (2024-07-19)
 
 # [2.0.0](https://github.com/djh00t/klingon_tools/compare/v1.0.0...v2.0.0) (2024-07-17)
