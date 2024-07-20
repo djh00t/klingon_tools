@@ -24,7 +24,7 @@ def gh_pr_gen_summary():
     commit_result = get_commit_log("origin/release")
     diff = commit_result.stdout
     openai_tools = OpenAITools()
-    pr_summary = openai_tools.generate_pull_request_summary(diff)
+    pr_summary = openai_tools.generate_pull_request_summary(diff, dryrun=False)
     print(pr_summary)
 
 
@@ -33,7 +33,7 @@ def gh_pr_gen_context():
     commit_result = get_commit_log("origin/release")
     diff = commit_result.stdout
     openai_tools = OpenAITools()
-    pr_context = openai_tools.generate_pull_request_context(diff)
+    pr_context = openai_tools.generate_pull_request_context(diff, dryrun=False)
     print(pr_context)
 
 

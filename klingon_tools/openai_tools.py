@@ -498,7 +498,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
         return formatted_title
 
     def generate_pull_request_summary(
-        self, repo: Repo, diff: str, dryrun: bool = False
+        self, diff: str, dryrun: bool = False
     ) -> str:
         """
         Generates a pull request summary from the git log differences between
@@ -519,11 +519,6 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                 "pull_request_summary", commits
             )
 
-            if dryrun:
-                git_unstage_files(
-                    repo, repo.git.diff("--cached", "--name-only").splitlines()
-                )
-
             return generated_summary
         except subprocess.CalledProcessError as e:
             logger.error(f"Error getting commit log: {e}")
@@ -533,7 +528,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
             raise
 
     def generate_pull_request_context(
-        self, repo: Repo, diff: str, dryrun: bool = False
+        self, diff: str, dryrun: bool = False
     ) -> str:
         """
         Generates a pull request context from the git log differences between

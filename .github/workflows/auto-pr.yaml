@@ -52,6 +52,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_TITLE: ${{ env.PR_TITLE }}
 
+      - name: Configure Git & Login to GitHub CLI
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
       - name: Install Python Requirements
         run: make install
 
