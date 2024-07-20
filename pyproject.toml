@@ -1,6 +1,6 @@
 [tool.black]
 line-length = 79
-target-version = "2.0.1"
+target-version = "2.1.0"
 include = "\\.pyi?$"
 exclude = "\\.eggs|\\.git|\\.hg|\\.mypy_cache|\\.tox|\\.venv|_build|buck-out|build|dist"
 
@@ -36,4 +36,4 @@ sqlite_cache = true
 install_types = true
 
 [tool.semantic_release]
-version = "2.0.1"
+version = "2.1.0"
