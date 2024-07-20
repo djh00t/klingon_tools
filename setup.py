@@ -5,9 +5,9 @@ from setuptools import find_packages, setup
 
 def get_version():
     pyproject_file = os.path.join(os.path.dirname(__file__), "pyproject.toml")
-    with open(pyproject_file) as f:
+    with open(pyproject_file, "r") as f:
         pyproject_data = toml.load(f)
-        return pyproject_data["build-system"]["version"]
+    return pyproject_data["build-system"]["version"]
 
 
 with open("README.md", "r", encoding="utf-8") as fh:
