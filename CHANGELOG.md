@@ -1,3 +1,10 @@
+## [2.3.0-release.3](https://github.com/djh00t/klingon_tools/compare/v2.3.0-release.2...v2.3.0-release.3) (2024-07-22)
+
+
+### Bug Fixes
+
+* **workflow:** update source branch retrieval in release workflow ([0462193](https://github.com/djh00t/klingon_tools/commit/0462193422597c1046757d4eddfff382e7d5ffbd))
+
 ## [2.3.0-release.2](https://github.com/djh00t/klingon_tools/compare/v2.3.0-release.1...v2.3.0-release.2) (2024-07-22)
 
 
