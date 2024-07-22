@@ -1,3 +1,10 @@
+## [2.3.0-release.1](https://github.com/djh00t/klingon_tools/compare/v2.2.1-release.1...v2.3.0-release.1) (2024-07-22)
+
+
+### Features
+
+* **github/workflows/release:** rename create-pr to create-release-pr and ([bd938e5](https://github.com/djh00t/klingon_tools/commit/bd938e5a7bca2df47941257397c88590f4eed65a))
+
 ## [2.2.1-release.1](https://github.com/djh00t/klingon_tools/compare/v2.2.0...v2.2.1-release.1) (2024-07-22)
 
 ## [2.2.0](https://github.com/djh00t/klingon_tools/compare/v2.1.0...v2.2.0) (2024-07-22)
