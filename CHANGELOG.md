@@ -1,3 +1,26 @@
+## [2.2.0](https://github.com/djh00t/klingon_tools/compare/v2.1.0...v2.2.0) (2024-07-22)
+
+
+### Features
+
+* **update_version.py:** add script to update version in package.json and ([362bf44](https://github.com/djh00t/klingon_tools/commit/362bf44a4dd2070b2257d86f5935b473657b126c))
+* **github/workflows/semantic-release.sh:** add version update logging for ([86b73ea](https://github.com/djh00t/klingon_tools/commit/86b73ea77e090921925d886e670cad900471d1d5))
+
+
+### Bug Fixes
+
+* **package.json:** bump version to 2.1.1 ([902f867](https://github.com/djh00t/klingon_tools/commit/902f86760a603c4f19a4eafd6fd8620910882d21))
+* **workflows/semantic-release.sh:** correct paths to package.json and ([4cdbfed](https://github.com/djh00t/klingon_tools/commit/4cdbfeded8f22909bbfc0c12c5f96fbda85d480e))
+* **semantic-release.sh:** correct version extraction and replacement syntax in ([7ca0c5d](https://github.com/djh00t/klingon_tools/commit/7ca0c5d05a83d9d4a73524369b05da21d0895512))
+* **semantic-release:** correct version extraction from package.json ([2f1c011](https://github.com/djh00t/klingon_tools/commit/2f1c01183c7ed844fa22ddf4ddb70a971907113b))
+* **semantics:** improve semantic-release workflow for version updates ([df49f3e](https://github.com/djh00t/klingon_tools/commit/df49f3e66df0d8cba5d931dba677c324640580ed))
+* **.releaserc.js:** remove exec command for version update in release process ([390b54b](https://github.com/djh00t/klingon_tools/commit/390b54bf749f806e1cb8ef884a6eea7f521726b4))
+* **openai_tools:** simplify generate_pull_request_body method ([6c16e36](https://github.com/djh00t/klingon_tools/commit/6c16e3650fdb5b971baded5b2fad953cfcb01bd7))
+* **.releaserc.js:** update prepareCmd to include an empty argument for sed on ([f9f2477](https://github.com/djh00t/klingon_tools/commit/f9f24770a852725469917c97eb8defa3c580c105))
+* **.releaserc.js:** update prepareCmd to include pwd command for better ([4285516](https://github.com/djh00t/klingon_tools/commit/42855161b59a8154ad988aa32ca09a1e39b6fb64))
+* **semantic-release:** update version in pyproject.toml during release process ([e49674e](https://github.com/djh00t/klingon_tools/commit/e49674ea927dcda9bffb9203f085fc647b8c009f))
+* **pyproject.toml:** update version to use nextRelease.version variable ([07a4563](https://github.com/djh00t/klingon_tools/commit/07a45637c9e1a08398d37b19441b101547bb1609))
+
 ## [2.1.0](https://github.com/djh00t/klingon_tools/compare/v2.0.1...v2.1.0) (2024-07-20)
 
 
