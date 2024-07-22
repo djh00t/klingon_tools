@@ -122,7 +122,7 @@ jobs:
       - name: Create or Update PR
         id: pr
         run: |
-          SOURCE_BRANCH="release-v${{ steps.semantic-release.outputs.new_version }}"
+          SOURCE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
           PR_URL=$(gh pr list --head $SOURCE_BRANCH --json url --jq '.[0].url' || echo "")
           PR_TITLE=$(pr-title-generate)
           echo "PR_TITLE: $PR_TITLE"
