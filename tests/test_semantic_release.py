@@ -8,12 +8,18 @@ class TestSemanticRelease(unittest.TestCase):
 
     def test_package_json_exists(self):
         self.assertTrue(
-            os.path.exists("package.json"), "package.json does not exist"
+            os.path.exists(
+                os.path.join(os.path.dirname(__file__), "../package.json")
+            ),
+            "package.json does not exist",
         )
 
     def test_pyproject_toml_exists(self):
         self.assertTrue(
-            os.path.exists("pyproject.toml"), "pyproject.toml does not exist"
+            os.path.exists(
+                os.path.join(os.path.dirname(__file__), "../pyproject.toml")
+            ),
+            "pyproject.toml does not exist",
         )
 
     def test_package_json_version(self):
