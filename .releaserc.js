@@ -6,9 +6,6 @@ module.exports = {
     "@semantic-release/release-notes-generator",
     "@semantic-release/changelog",
     "@semantic-release/github",
-    ["@semantic-release/exec", {
-      "prepareCmd": "pwd && sed -i '' 's/^version = \".*\"/version = \"${nextRelease.version}\"/' ./pyproject.toml"
-    }],
     ["@semantic-release/git", {
       "assets": ["pyproject.toml", "CHANGELOG.md"],
       "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
