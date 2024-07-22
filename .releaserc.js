@@ -7,7 +7,7 @@ module.exports = {
     "@semantic-release/changelog",
     "@semantic-release/github",
     ["@semantic-release/exec", {
-      "prepareCmd": "sed -i 's/version = .*/version = \"${nextRelease.version}\"/' pyproject.toml"
+      "prepareCmd": "sed -i '' 's/version = .*/version = \"${nextRelease.version}\"/' pyproject.toml"
     }],
     ["@semantic-release/git", {
       "assets": ["pyproject.toml", "CHANGELOG.md"],
