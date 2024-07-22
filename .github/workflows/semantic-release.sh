@@ -16,6 +16,9 @@ fi
 # Update the version in package.json
 jq --arg new_version "$NEW_VERSION" '.version = $new_version' package.json > tmp.$$.json && mv tmp.$$.json package.json
 
+# Replace the placeholder in pyproject.toml
+sed -i'' -e "s/\${nextRelease.version}/$NEW_VERSION/g" pyproject.toml
+
 # Run semantic-release
 echo "Running semantic-release..."
 npx semantic-release
