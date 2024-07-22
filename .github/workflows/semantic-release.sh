@@ -15,6 +15,15 @@ if [ $? -eq 0 ]; then
         echo "Detected Linux"
         sed -i'' -e "s/^version = \".*\"/version = \"$NEW_VERSION\"/" ./pyproject.toml
     fi
+    echo "New version extracted: $NEW_VERSION"
+    echo "Updating pyproject.toml with new version: $NEW_VERSION"
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        echo "Detected macOS"
+        sed -i '' -e "s/^version = \".*\"/version = \"$NEW_VERSION\"/" ./pyproject.toml
+    else
+        echo "Detected Linux"
+        sed -i'' -e "s/^version = \".*\"/version = \"$NEW_VERSION\"/" ./pyproject.toml
+    fi
 echo "Running semantic-release..."
 npx semantic-release
 
