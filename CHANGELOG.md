@@ -1,3 +1,24 @@
+## [2.3.0-release.3](https://github.com/djh00t/klingon_tools/compare/v2.3.0-release.2...v2.3.0-release.3) (2024-07-22)
+
+
+### Bug Fixes
+
+* **workflow:** update source branch retrieval in release workflow ([0462193](https://github.com/djh00t/klingon_tools/commit/0462193422597c1046757d4eddfff382e7d5ffbd))
+
+## [2.3.0-release.2](https://github.com/djh00t/klingon_tools/compare/v2.3.0-release.1...v2.3.0-release.2) (2024-07-22)
+
+
+### Bug Fixes
+
+* **workflows/release.yaml:** correct source branch assignment in PR creation ([b516435](https://github.com/djh00t/klingon_tools/commit/b516435687d305e2e861a598f1dce6b084372a76))
+
+## [2.3.0-release.1](https://github.com/djh00t/klingon_tools/compare/v2.2.1-release.1...v2.3.0-release.1) (2024-07-22)
+
+
+### Features
+
+* **github/workflows/release:** rename create-pr to create-release-pr and ([bd938e5](https://github.com/djh00t/klingon_tools/commit/bd938e5a7bca2df47941257397c88590f4eed65a))
+
 ## [2.2.1-release.1](https://github.com/djh00t/klingon_tools/compare/v2.2.0...v2.2.1-release.1) (2024-07-22)
 
 ## [2.2.0](https://github.com/djh00t/klingon_tools/compare/v2.1.0...v2.2.0) (2024-07-22)

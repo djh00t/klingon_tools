@@ -23,11 +23,12 @@ sed -i'' -e "s/\${nextRelease.version}/$NEW_VERSION/g" pyproject.toml
 echo "Running semantic-release..."
 npx semantic-release
 
-# If semantic-release was successful, commit the changes
+# If semantic-release was successful, commit the changes to a new branch
 if [ $? -eq 0 ]; then
+    git checkout -b release-v$NEW_VERSION
     git add pyproject.toml
     git commit -m "chore: update pyproject.toml to $NEW_VERSION [skip ci]"
-    git push
+    git push origin release-v$NEW_VERSION
 else
     echo "semantic-release failed"
 fi
