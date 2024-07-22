@@ -50,10 +50,6 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          if [ "$(git rev-parse --abbrev-ref HEAD)" = "main" ]; then
-            echo "You must be on a branch named differently than 'main'"
-            exit 1
-          fi
           python -m pip install --upgrade pip
           pip install setuptools wheel twine packaging build toml
 

@@ -6,35 +6,32 @@ module.exports = {
     "@semantic-release/release-notes-generator",
     "@semantic-release/changelog",
     "@semantic-release/github",
-    "@semantic-release/git",
-    [
-      "@semantic-release/exec",
-      {
-        "prepareCmd": "python -m build",
-        "publishCmd": "twine upload dist/* -u __token__ -p $PYPI_USER_AGENT"
-      }
-    ],
+    ["@semantic-release/git", {
+      "assets": ["pyproject.toml", "CHANGELOG.md"],
+      "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+    }],
   ],
   preset: "conventionalcommits",
   releaseRules: [
-    { "type": ".*build.*", "release": "patch" },
-    { "type": ".*chore.*", "release": "patch" },
-    { "type": ".*ci.*", "release": "patch" },
-    { "type": ".*docs.*", "release": "patch" },
-    { "type": ".*feat.*", "release": "minor" },
-    { "type": ".*fix.*", "release": "patch" },
-    { "type": ".*perf.*", "release": "patch" },
-    { "type": ".*refactor.*", "release": "patch" },
-    { "type": ".*revert.*", "release": "patch" },
-    { "type": ".*style.*", "release": "patch" },
-    { "type": ".*test.*", "release": "patch" },
-    { "type": ".*other.*", "release": "patch" }
+    { type: "build", release: "patch" },
+    { type: "chore", release: "patch" },
+    { type: "ci", release: "patch" },
+    { type: "docs", release: "patch" },
+    { type: "feat", release: "minor" },
+    { type: "fix", release: "patch" },
+    { type: "perf", release: "patch" },
+    { type: "refactor", release: "patch" },
+    { type: "revert", release: "patch" },
+    { type: "style", release: "patch" },
+    { type: "test", release: "patch" },
+    { type: "other", release: "patch" },
   ],
   parserOpts: {
-    headerPattern: /^(?:\s*[\u{1F300}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}])?\s*(\[[^\]]*\])?\s*(?::\s*([^\s:]+))?\s*(.*)$/u,
-    noteKeywords: ["BREAKING CHANGE", "BREAKING CHANGES"]
+    headerPattern: /^(?:[\u{1F300}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]\s)?(\w*)(?:\((.*)\))?!?:\s(.*)$/u,
+    headerCorrespondence: ['type', 'scope', 'subject'],
+    noteKeywords: ["BREAKING CHANGE", "BREAKING CHANGES"],
   },
   writerOpts: {
-    commitsSort: ["subject", "scope"]
-  }
+    commitsSort: ["subject", "scope"],
+  },
 };

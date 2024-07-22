@@ -1,5 +1,5 @@
 import logging
-from klingon_tools.logger import log_tools, logger
+from klingon_tools.logger import log_tools
 from klingon_tools.git_log_helper import get_commit_log
 from klingon_tools.openai_tools import OpenAITools
 
@@ -11,7 +11,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 def gh_pr_gen_title():
-    logger.info("Generating PR title using OpenAITools...")
+    # logger.info("Generating PR title using OpenAITools...")
     commit_result = get_commit_log("origin/release")
     diff = commit_result.stdout
     openai_tools = OpenAITools()
@@ -20,7 +20,7 @@ def gh_pr_gen_title():
 
 
 def gh_pr_gen_summary():
-    logger.info("Generating PR summary using OpenAITools...")
+    # logger.info("Generating PR summary using OpenAITools...")
     commit_result = get_commit_log("origin/release")
     diff = commit_result.stdout
     openai_tools = OpenAITools()
@@ -29,7 +29,7 @@ def gh_pr_gen_summary():
 
 
 def gh_pr_gen_context():
-    logger.info("Generating PR context using OpenAITools...")
+    # logger.info("Generating PR context using OpenAITools...")
     commit_result = get_commit_log("origin/release")
     diff = commit_result.stdout
     openai_tools = OpenAITools()
@@ -38,7 +38,7 @@ def gh_pr_gen_context():
 
 
 def gh_pr_gen_body():
-    logger.info("Generating PR body using OpenAITools...")
+    # logger.info("Generating PR body using OpenAITools...")
     commit_result = get_commit_log("origin/release")
     diff = commit_result.stdout
     openai_tools = OpenAITools()
