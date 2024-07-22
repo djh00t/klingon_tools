@@ -5,15 +5,15 @@ npx semantic-release
 
 # If semantic-release was successful, update the version in pyproject.toml
 if [ $? -eq 0 ]; then
-    NEW_VERSION=$(grep '"version":' package.json | sed 's/.*"version": "\(.*\)",/\1/')
+    NEW_VERSION=$(grep '"version":' ./package.json | sed 's/.*"version": "\(.*\)",/\1/')
     echo "New version extracted: $NEW_VERSION"
     echo "Updating pyproject.toml with new version: $NEW_VERSION"
     if [[ "$OSTYPE" == "darwin"* ]]; then
         echo "Detected macOS"
-        sed -i '' -e "s/^version = .*/version = \"$NEW_VERSION\"/" pyproject.toml
+        sed -i '' -e "s/^version = .*/version = \"$NEW_VERSION\"/" ./pyproject.toml
     else
-        sed -i'' -e "s/^version = .*/version = \"$NEW_VERSION\"/" pyproject.toml
-        echo "Updated pyproject.toml on Linux"
+        echo "Detected Linux"
+        sed -i'' -e "s/^version = .*/version = \"$NEW_VERSION\"/" ./pyproject.toml
     fi
 echo "Running semantic-release..."
 npx semantic-release
