@@ -36,4 +36,4 @@ sqlite_cache = true
 install_types = true
 
 [tool.semantic_release]
-version = "2.0.1"
+version = "2.1.1"

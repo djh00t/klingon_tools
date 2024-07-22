@@ -1,6 +1,6 @@
 {
   "name": "klingon-tools",
-  "version": "2.0.1",
+  "version": "2.1.1",
   "description": "Klingon tools for various utilities",
   "scripts": {
     "semantic-release": "semantic-release"
