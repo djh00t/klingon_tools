@@ -1,18 +1,6 @@
 [tool.black]
 line-length = 79
-target-version = [
-    "py33",
-    "py33",
-    "py34",
-    "py35",
-    "py36",
-    "py37",
-    "py38",
-    "py39",
-    "py310",
-    "py311",
-    "py312",
-]
+target-version = ["py33", "py34", "py35", "py36", "py37", "py38", "py39", "py310", "py311", "py312"]
 include = "\\.pyi?$"
 exclude = "\\.eggs|\\.git|\\.hg|\\.mypy_cache|\\.tox|\\.venv|_build|buck-out|build|dist"
 
@@ -44,8 +32,6 @@ exclude = "tmp/"
 [build-system]
 requires = ["setuptools", "wheel", "packaging", "toml", "build", "twine"]
 build-backend = "setuptools.build_meta"
-sqlite_cache = true
-install_types = true
 
 [tool.semantic_release]
 version = "2.0.1"

@@ -298,7 +298,11 @@ def process_files(
 
     for file in files:
         # Log the current file being processed
-        log_message.info(message="Processing file", status=f"{file}")
+        if os.path.isfile(file):
+            log_message.info(message="Processing file", status=f"{file}")
+        else:
+            log_message.warning(message="Skipping directory", status=f"{file}")
+            continue
 
         try:
             # Process the file using the workflow_process_file function
