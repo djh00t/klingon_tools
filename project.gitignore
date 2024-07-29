@@ -10,4 +10,13 @@
 ###############################################################################
 
 # Don't add aider configs, logs, caches etc
-.aider*
+.aider**
+**/.aider**
+.aider_logs/
+
+# Ignore logs
+*.log
+**/*.log
+
+# Ignore cache files
+**.cache
