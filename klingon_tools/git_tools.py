@@ -327,16 +327,27 @@ def git_stage_diff(file_name: str, repo: Repo, modified_files: list) -> str:
     # Stage the specified file Process .pre-commit-config.yaml if modified
     process_pre_commit_config(repo, modified_files)
 
-    repo.index.add([file_name])
-    staged_files = repo.git.diff("--cached", "--name-only").splitlines()
-    logger.debug(message="Staged files", status=f"{staged_files}")
+    def stage_file(repo: Repo, file_name: str):
+        """Helper function to stage a file."""
+        repo.index.add([file_name])
+        staged_files = repo.git.diff("--cached", "--name-only").splitlines()
+        logger.debug(message="Staged files", status=f"{staged_files}")
 
-    # Check if the file was successfully staged
-    if file_name in staged_files:
-        logger.info(message="Staging file", status="✅")
-    else:
-        logger.error(message="Failed to stage file", status="❌")
-        sys.exit(1)
+        # Check if the file was successfully staged
+        if file_name in staged_files:
+            logger.info(message="Staging file", status="✅")
+        else:
+            logger.error(message="Failed to stage file", status="❌")
+            sys.exit(1)
+
+    # Stage the file in the main repo
+    stage_file(repo, file_name)
+
+    # Recursively stage files in submodules
+    for submodule in repo.submodules:
+        submodule_repo = submodule.module()
+        if submodule_repo.is_dirty(untracked_files=True):
+            stage_file(submodule_repo, file_name)
 
     # Generate the diff for the staged file
     diff = repo.git.diff("HEAD", file_name)
@@ -574,6 +585,16 @@ def push_changes_if_needed(repo: Repo, args) -> None:
     # committed_not_pushed
     committed_not_pushed = git_get_status(repo)[-1]
 
+    def push_submodules(repo: Repo):
+        """Recursively push changes in submodules."""
+        for submodule in repo.submodules:
+            submodule_repo = submodule.module()
+            if submodule_repo.is_dirty(untracked_files=True):
+                submodule_repo.git.add(A=True)
+                submodule_repo.index.commit("Update submodule")
+                push_submodules(submodule_repo)
+            submodule_repo.remotes.origin.push()
+
     try:
         # Check if there are new commits to push
         if (
@@ -587,6 +608,8 @@ def push_changes_if_needed(repo: Repo, args) -> None:
             else:
                 # Push the commit
                 git_push(repo)
+                # Push changes in submodules
+                push_submodules(repo)
 
                 # Perform cleanup after push operation
                 cleanup_lock_file(args.repo_path)
@@ -596,6 +619,8 @@ def push_changes_if_needed(repo: Repo, args) -> None:
                 status="🚀",
             )
             git_push(repo)
+            # Push changes in submodules
+            push_submodules(repo)
         else:
             logger.info(
                 message="No new commits to push. Skipping push.", status="🚫"
