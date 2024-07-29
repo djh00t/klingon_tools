@@ -68,11 +68,16 @@ jobs:
 
       - name: Upload to PyPI
         env:
-          TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+          TWINE_USERNAME: "__token__"
+          TWINE_PASSWORD: ${{ secrets.PYPI_USER_AGENT }}
         run: |
           python -m build
-          twine upload dist/*
+          for i in {1..5}; do
+            twine upload dist/* && break || {
+              echo "Upload failed, retrying in 5 seconds..."
+              sleep 5
+            }
+          done
 
       - name: Update GitHub Release
         env:
