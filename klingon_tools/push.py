@@ -95,22 +95,6 @@ def check_software_requirements(repo_path: str, log_message: Any) -> None:
     """
     # Log the start of the software requirements check
     log_message.info("Checking for software requirements", status="🔍")
-    # Define the path to the cache directory for pre-commit
-    cache_dir = os.path.join(repo_path, ".cache", "pre-commit")
-    # Create the cache directory if it doesn't exist
-    os.makedirs(cache_dir, exist_ok=True)
-    # Define the path to the pre-commit log file
-    log_file = os.path.join(cache_dir, "pre-commit.log")
-    # Check if the pre-commit log file exists
-    if not os.path.exists(log_file):
-        # Create the pre-commit log file if it doesn't exist
-        open(log_file, "w").close()
-        # Log the creation of the pre-commit log file
-        # Log that pre-commit is not installed
-        log_message.info(
-            "Created .cache/pre-commit/pre-commit.log",
-            status="✅",
-        )
 
     # Try to check if pre-commit is installed
     try:
@@ -298,6 +282,9 @@ def process_files(
 
     for file in files:
         # Log the current file being processed
+        if os.path.isdir(file):
+            log_message.warning(message="Skipping directory", status=f"{file}")
+            continue
         log_message.info(message="Processing file", status=f"{file}")
 
         try:

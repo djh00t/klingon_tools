@@ -1,0 +1,104 @@
+#!/bin/bash
+###
+### amnesia - rewrite history. amnesia for your repos.
+### Copyright (c) 2023 David Hooton <david@hooton.org>
+### Repo: https://github.com/djh00t/klingon_utils
+###
+
+VERSION="1.0.0"
+
+# Usage message
+usage() {
+    echo "Usage: $0 -s <string> -b <branch>"
+    exit 1
+}
+
+# Function to print the version message
+print_version() {
+    echo -e "amnesia Version $VERSION"
+    echo "Copyright (c) 2023 David Hooton <david@hooton.org>"
+    echo "Repo: https://github.com/djh00t/klingon_utils"
+    exit 0
+}
+
+# Parse command line arguments
+while (( "$#" )); do
+  case "$1" in
+    -s|--string)
+      SEARCH_STRING=$2
+      shift 2
+      ;;
+    -b|--branch)
+      BRANCH_NAME=$2
+      shift 2
+      ;;
+    -i|--install)
+      INSTALL_FLAG=1
+      shift
+      ;;
+    -v|--version)
+      print_version
+      shift
+      ;;
+    -*|--*=) # unsupported flags
+      echo "Error: Unsupported flag $1" >&2
+      usage
+      ;;
+    *) # preserve positional arguments
+      PARAMS="$PARAMS $1"
+      shift
+      ;;
+  esac
+done
+# set positional arguments in their proper place
+eval set -- "$PARAMS"
+
+# Function to handle the installation process
+install_script() {
+    cp $0 /usr/local/bin/amnesia
+    chmod +x /usr/local/bin/amnesia
+    echo "amnesia installed successfully to /usr/local/bin/amnesia"
+    exit 0
+}
+
+# Check if install flag is set
+if [ "$INSTALL_FLAG" = "1" ]; then
+    install_script
+fi
+
+# Check if SEARCH_STRING is set
+if [ -z "$SEARCH_STRING" ]; then
+    echo "You must provide a string to clean up."
+    usage
+fi
+
+export FILTER_BRANCH_SQUELCH_WARNING=1
+
+# The replacement string (leave empty if you want to delete the string)
+REPLACEMENT_STRING=""
+
+# The branch where you want to start rewriting history
+BRANCH_NAME=${BRANCH_NAME:-$(git rev-parse --abbrev-ref HEAD)}
+
+# Check if the git repository exists
+if [ ! -d .git ]; then
+    echo "This is not a Git repository."
+    exit 1
+fi
+
+# Rewriting history to modify the SEARCH_STRING in commit messages
+git filter-branch --force --msg-filter \
+"sed 's/$SEARCH_STRING/$REPLACEMENT_STRING/g'" \
+--prune-empty --tag-name-filter cat -- --all
+
+echo "Rewriting history for branch $BRANCH_NAME completed."
+
+# WARNING: This will clean the refs/original/* backup references made by git filter-branch.
+git for-each-ref --format='delete %(refname)' refs/original | git update-ref --stdin
+git reflog expire --expire=now --all
+git gc --prune=now
+
+# Push changes to remote repository
+git push origin --force --all
+
+echo "Congratulations your git has a rhino sized dose of amnesia."
