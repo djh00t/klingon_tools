@@ -1,3 +1,38 @@
+## [2.3.0-release.4](https://github.com/djh00t/klingon_tools/compare/v2.3.0-release.3...v2.3.0-release.4) (2024-07-29)
+
+
+### Features
+
+* **repo_templates:** add .gitmodules for gitignore submodule ([fffb73d](https://github.com/djh00t/klingon_tools/commit/fffb73d102e1d2809d16d44b0777e31862542ab6))
+* **repo_templates:** add .releaserc.js configuration for semantic release ([502e7dd](https://github.com/djh00t/klingon_tools/commit/502e7dd932fb3a81b7e9be9b62672e64a852dbf1))
+* **age.agekey:** add AGE secret key file ([0b9b892](https://github.com/djh00t/klingon_tools/commit/0b9b8927b0414e2f7c1e6f7ee4d67003219a4c8b))
+* **amnesia:** add amnesia script for rewriting Git history ([63232c2](https://github.com/djh00t/klingon_tools/commit/63232c21ccee0c24791033747fee94e390ba4378))
+* **Cxcel.py:** add CSV rendering application with live update functionality ([82f73cd](https://github.com/djh00t/klingon_tools/commit/82f73cdcaffc66e3b2e15c7b7935e0fcb93d59a0))
+* **templates/index.html:** add CSV viewer template ([2048275](https://github.com/djh00t/klingon_tools/commit/20482755655d3e5f90af5d157adbde853ecb8f73))
+* **main.py:** add CSV viewer with terminal and web interface ([b5d8a4d](https://github.com/djh00t/klingon_tools/commit/b5d8a4d519fc6e31d3b4b2ab3f9391c89de9c978))
+* **domainsearch:** add domain availability checker ([4daeed2](https://github.com/djh00t/klingon_tools/commit/4daeed2802a27275ee464aa6b3f2a0c11edc6562))
+* **archive:** add forbid-secrets-wrapper script to manage sensitive files ([ec5ec3f](https://github.com/djh00t/klingon_tools/commit/ec5ec3fcb90091416dfdf2e5b9f2f665debae8cc))
+* **workflow:** add full release GitHub Actions workflow ([a11a505](https://github.com/djh00t/klingon_tools/commit/a11a50589f3233507b6a2ece2a96d6914cbf4a0d))
+* **requirements.txt:** add initial dependencies for Cxcel project ([fe5311f](https://github.com/djh00t/klingon_tools/commit/fe5311f2008855d98cdb433bab71a347e8a34de0))
+* **treetool:** add initial implementation of Treetool (tt) script for ([4ebb758](https://github.com/djh00t/klingon_tools/commit/4ebb758910cd43e25d6eb039b025109784d6ebaf))
+* **Makefile:** add Makefile for klingon-tools Python package ([d06ece4](https://github.com/djh00t/klingon_tools/commit/d06ece486ac5cf4bc97df267bbffb14d0faf5d37))
+* **repo_templates:** add MANIFEST.in to include README.md and CHANGELOG.md ([0edb9bd](https://github.com/djh00t/klingon_tools/commit/0edb9bdaa2d407b7416c1a7101b36d206cfa621e))
+* **domains-01.csv:** add new domain availability data ([6f254ad](https://github.com/djh00t/klingon_tools/commit/6f254adcdd7c5f60d5de09d5a1401379a322d1ca))
+* **repo_templates:** add new public key file .age.pub ([8aec89f](https://github.com/djh00t/klingon_tools/commit/8aec89fff7cfe590a1cb11bb6c6c020b76cd080b))
+* **kt.py:** add new script for KT functionality ([7a8393c](https://github.com/djh00t/klingon_tools/commit/7a8393ca0e29d7ac0b9b75ea8e6e39d177dab33e))
+* **repo_templates:** add pre-commit configuration file with various hooks ([d5b956e](https://github.com/djh00t/klingon_tools/commit/d5b956e014511e6f525383d315de4fb3a67f6c3c))
+* **readme:** add README for Amnesia utility script ([3ad55ce](https://github.com/djh00t/klingon_tools/commit/3ad55cee9d9823a19adee7f832e99bd9c4ccf1e6))
+* **docs:** add README for Cxcel - Terminal and Web CSV Viewer ([3e5de2e](https://github.com/djh00t/klingon_tools/commit/3e5de2e55f9278522381fb73ad102f0efc16f554))
+* **requirements:** add requirements file for domainsearch ([3e678ee](https://github.com/djh00t/klingon_tools/commit/3e678ee55f910ab7e0ffa4cc4fae20faa3685b66))
+* **encrypt-decrypt.sh:** add script for encrypting and decrypting K8S files ([087400d](https://github.com/djh00t/klingon_tools/commit/087400d6894d37ebbfabaf8b2383229f3c324a05))
+* **repo_templates:** add SOPS configuration for managing secrets ([e68930f](https://github.com/djh00t/klingon_tools/commit/e68930f0da560d97fd7447c8813f605728f92e9a))
+* **kt/README.md:** create initial documentation for Klingon Tools ([ccd9b2f](https://github.com/djh00t/klingon_tools/commit/ccd9b2f09ded0aa8dbe32492eb05f9010e64c03f))
+
+
+### Bug Fixes
+
+* **push.py:** correct file processing check to avoid logging for directories ([39c7d0a](https://github.com/djh00t/klingon_tools/commit/39c7d0a51feb073301e622d668c9d15b558b57f5))
+
 ## [2.3.0-release.3](https://github.com/djh00t/klingon_tools/compare/v2.3.0-release.2...v2.3.0-release.3) (2024-07-22)
 
 
