@@ -4,13 +4,13 @@ import subprocess
 from typing import Any
 import os
 
-# Set logging level
-log_tools.set_default_style("pre-commit")
-log_tools.set_log_level("DEBUG")
-
 # Initialize logger
-logger = LogTools()
+logger = LogTools(debug=True)
 log_message = logger.log_message
+
+# Set logging level and style
+log_message.set_log_level("DEBUG")
+logger.set_default_style("pre-commit")
 
 def pytest_run_tests():
     # List to capture test results
@@ -21,16 +21,16 @@ def pytest_run_tests():
             if report.when == 'call':
                 test_name = report.nodeid
                 if report.passed:
-                    log_message.info(message=f"{test_name}", status="✅")
+                    log_message.info(message=f"Running {test_name}", status="Passed")
                     results.append((test_name, 'passed'))
                 elif report.failed:
-                    log_message.error(message=f"{test_name}", status="❌")
+                    log_message.error(message=f"Running {test_name}", status="Failed")
                     results.append((test_name, 'failed'))
                     # Print debug info after the log messages
                     log_message.debug(message=f"Debug info for {test_name}")
                     print(report.longrepr)
                 elif report.skipped:
-                    log_message.info(message=f"{test_name}", status="⏭️")
+                    log_message.info(message=f"Running {test_name}", status="Skipped")
                     results.append((test_name, 'skipped'))
 
     # Redirect stdout to suppress pytest output
