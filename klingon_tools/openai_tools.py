@@ -427,8 +427,11 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
             formatted_message = self.signoff_message(formatted_message)
 
             log_message.info(message="=" * 80, status="", style="none")
+            wrapped_message = "\n".join(
+                textwrap.wrap(formatted_message, width=79)
+            )
             log_message.info(
-                message=f"Generated commit message:\n\n{formatted_message}\n",
+                message=f"Generated commit message:\n\n{wrapped_message}\n",
                 status="",
             )
             log_message.info(message="=" * 80, status="", style="none")
@@ -451,9 +454,12 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                 )
 
                 log_message.info(message="=" * 80, status="", style="none")
+                wrapped_message = "\n".join(
+                    textwrap.wrap(formatted_message, width=79)
+                )
                 log_message.info(
-                    message=f"Generated commit message:\n\n"
-                    f"{formatted_message}\n",
+                    message="Generated commit message:"
+                    f"\n\n{wrapped_message}\n",
                     status="",
                 )
                 log_message.info(message="=" * 80, status="", style="none")
