@@ -34,12 +34,9 @@ class LogTools:
     in a clean and consistent manner with simple error handling.
 
     Attributes:
-        DEBUG (bool): Flag to enable debug mode. BOLD_GREEN (str): ANSI escape
-        code for bold green text. BOLD_YELLOW (str): ANSI escape code for bold
-        yellow text. BOLD_RED (str): ANSI escape code for bold red text. RESET
-        (str): ANSI escape code to reset text formatting. logger
-        (logging.Logger): Logger instance for logging messages. template (str):
-        Template for log messages.
+        debug (bool): Flag to enable debug mode.
+        logger(logging.Logger): Logger instance for logging messages.
+        template (str): Template for log messages.
     """
 
     BOLD_GREEN = "\033[1;32m"
@@ -49,9 +46,22 @@ class LogTools:
     logger = logging.getLogger(__name__)
     logging.basicConfig(
         level=logging.INFO, format="%(message)s"
-    )  # Default logging level without prefix
+    )
 
     template = None
+
+    def __init__(self, debug=False):
+        """Initializes LogTools with an optional debug flag.
+
+        Args:
+            debug (bool): Flag to enable debug mode. Defaults to False.
+        """
+        # Initialize the logger and set the debug flag
+        self.DEBUG = debug
+        self.log_message = LogTools.LogMessage(__name__, self)
+        self.logger = logging.getLogger(__name__)
+        if self.DEBUG:
+            self.configure_logging()
 
     @classmethod
     def set_template(cls, template):
@@ -64,6 +74,15 @@ class LogTools:
         cls.template = template
 
     VALID_STYLES = ["default", "pre-commit", "basic"]
+
+    def set_log_level(self, level):
+        """Sets the logging level for the logger.
+
+        Args:
+            level (str): The logging level to set (e.g., 'DEBUG', 'INFO').
+        """
+        self.logger.setLevel(level)
+        self.log_message.setLevel(level)
 
     def set_default_style(self, style):
         """Sets the default style for log messages.
@@ -80,19 +99,6 @@ class LogTools:
                 f"{', '.join(self.VALID_STYLES)}"
             )
         self.default_style = style
-
-    def __init__(self, debug=False):
-        """Initializes LogTools with an optional debug flag.
-
-        Args:
-            debug (bool): Flag to enable debug mode. Defaults to False.
-        """
-        # Initialize the logger and set the debug flag
-        self.DEBUG = debug
-        self.log_message = LogTools.LogMessage(__name__, self)
-        self.logger = logging.getLogger(__name__)
-        if self.DEBUG:
-            self.configure_logging()
 
     def configure_logging(self):
         """Configures the logging level to DEBUG."""
@@ -161,11 +167,14 @@ class LogTools:
                 )
                 else 0
             )
+            max_length = 76
+            if len(msg) > max_length:
+                msg = msg[:max_length - 3] + "..."
             if style == "pre-commit":
-                padding = 80 - len(f"{msg} {status}") - emoji_adjustment
+                padding = 76 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}{'.' * padding}{status}"
             elif style == "basic":
-                padding = 80 - len(f"{msg} {status}") - emoji_adjustment
+                padding = 76 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}{' ' * padding}{status}"
             elif style == "default" and status == "":
                 padding = 76 - len(f"{msg} {status}") - emoji_adjustment
@@ -173,7 +182,6 @@ class LogTools:
             elif style == "default":
                 padding = 76 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}... {' ' * padding}{status}"
-
             else:
                 padding = 76 - len(f"{msg} {status}") - emoji_adjustment
                 msg = f"{msg}... {' ' * padding}{status}"
@@ -289,8 +297,8 @@ class LogTools:
                 Running Install
                 numpy.................................................Passed
         """
-        # Define the decorator function
 
+        # Define the decorator function
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
