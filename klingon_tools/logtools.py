@@ -153,39 +153,34 @@ class LogTools:
                     message=msg, style=style, status=status
                 )
 
-            emoji_adjustment = (
-                1
-                if any(
-                    char in status
-                    for char in "🐛✨🔧⚙️🚀✅🛑🚫‼️❗️❌🚨⚠️⚠️↩️↪️🎯🔁🔄⏭️😀😁😂🤣"
-                    "😃😄😅😆😉😊😋😎😍😘😗😙😚🙂🤗🤔🤐"
-                    "😐😑😶😏😣😥😮🤐😯😪😫😴😌😛😜😝🤤"
-                    "😒😓😔😕🙃🤑😲☹🙁😖😞😟😤😢😭😦😧"
-                    "😨😩🤯😬😰😱😳🤪😵😡😠🤬😷🤒🤕🤢"
-                    "🤮🤧😇🤠🤡🤥🤫🤭🧐🤓😈👿👹👺💀👻"
-                    "👽👾🤖💩😺😸😹😻😼😽🙀😿😾📦🔍📖🥳"
-                )
-                else 0
-            )
-            max_length = 79 - len(status) - emoji_adjustment
-            if len(msg) > max_length:
-                msg = msg[:max_length - 3] + "..."
+            emoji_adjustment = 1 if any(char in status for char in "🐛✨🔧⚙️🚀✅🛑🚫‼️❗️❌🚨⚠️⚠️↩️↪️🎯🔁🔄⏭️😀😁😂🤣😃😄😅😆😉😊😋😎😍😘😗😙😚🙂🤗🤔🤐😐😑😶😏😣😥😮🤐😯😪😫😴😌😛😜😝🤤😒😓😔😕🙃🤑😲☹🙁😖😞😟😤😢😭😦😧😨😩🤯😬😰😱😳🤪😵😡😠🤬😷🤒🤕🤢🤮🤧😇🤠🤡🤥🤫🤭🧐🤓😈👿👹👺💀👻👽👾🤖💩😺😸😹😻😼😽🙀😿😾📦🔍📖🥳") else 0
+            total_length = 79
+            status_length = len(status) + emoji_adjustment
+            max_msg_length = total_length - status_length - 1  # -1 for space between msg and status
+
             if style == "pre-commit":
-                padding = max_length - len(msg)
-                msg = f"{msg}{'.' * padding}{status}"
+                if len(msg) > max_msg_length:
+                    msg = msg[:max_msg_length - 3] + "..."
+                padding = max_msg_length - len(msg)
+                msg = f"{msg}{'.' * padding} {status}"
             elif style == "basic":
-                padding = max_length - len(msg)
-                msg = f"{msg}{' ' * padding}{status}"
-            elif style == "default" and status == "":
-                padding = max_length - len(msg)
-                msg = f"{msg}{' ' * padding}{status}"
+                if len(msg) > max_msg_length:
+                    msg = msg[:max_msg_length - 3] + "..."
+                padding = max_msg_length - len(msg)
+                msg = f"{msg}{' ' * padding} {status}"
             elif style == "default":
-                padding = max_length - len(msg) - 4  # Account for "... "
-                msg = f"{msg}... {' ' * padding}{status}"
-            else:
-                padding = max_length - len(msg) - 4  # Account for "... "
-                msg = f"{msg}... {' ' * padding}{status}"
-            self.logger.log(level, msg, *args, **kwargs)
+                if status:
+                    max_msg_length -= 4  # Account for "... "
+                if len(msg) > max_msg_length:
+                    msg = msg[:max_msg_length - 3] + "..."
+                padding = max_msg_length - len(msg)
+                if status:
+                    msg = f"{msg}... {' ' * padding} {status}"
+                else:
+                    msg = f"{msg}{' ' * padding} {status}"
+
+            final_msg = msg.ljust(total_length)
+            self.logger.log(level, final_msg, *args, **kwargs)
 
         def debug(self, msg=None, *args, **kwargs):
             self._log(logging.DEBUG, msg, *args, **kwargs)
