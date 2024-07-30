@@ -16,6 +16,3 @@ from klingon_tools import LogTools
 # Initialize logging
 log_tools = LogTools()
 logger = log_tools.log_message
-
-# Debug print
-print(f"Logger initialized with default style: {log_tools.default_style}")

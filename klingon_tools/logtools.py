@@ -58,6 +58,7 @@ class LogTools:
         """
         # Initialize the logger and set the debug flag
         self.DEBUG = debug
+        self.default_style = "default"  # Set a default style
         self.log_message = LogTools.LogMessage(__name__, self)
         self.logger = logging.getLogger(__name__)
         if self.DEBUG:
