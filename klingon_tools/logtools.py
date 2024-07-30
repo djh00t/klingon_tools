@@ -167,23 +167,23 @@ class LogTools:
                 )
                 else 0
             )
-            max_length = 76
+            max_length = 79 - len(status) - emoji_adjustment
             if len(msg) > max_length:
                 msg = msg[:max_length - 3] + "..."
             if style == "pre-commit":
-                padding = 76 - len(f"{msg} {status}") - emoji_adjustment
+                padding = max_length - len(msg)
                 msg = f"{msg}{'.' * padding}{status}"
             elif style == "basic":
-                padding = 76 - len(f"{msg} {status}") - emoji_adjustment
+                padding = max_length - len(msg)
                 msg = f"{msg}{' ' * padding}{status}"
             elif style == "default" and status == "":
-                padding = 76 - len(f"{msg} {status}") - emoji_adjustment
+                padding = max_length - len(msg)
                 msg = f"{msg}{' ' * padding}{status}"
             elif style == "default":
-                padding = 76 - len(f"{msg} {status}") - emoji_adjustment
+                padding = max_length - len(msg) - 4  # Account for "... "
                 msg = f"{msg}... {' ' * padding}{status}"
             else:
-                padding = 76 - len(f"{msg} {status}") - emoji_adjustment
+                padding = max_length - len(msg) - 4  # Account for "... "
                 msg = f"{msg}... {' ' * padding}{status}"
             self.logger.log(level, msg, *args, **kwargs)
 
