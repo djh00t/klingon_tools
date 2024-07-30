@@ -4,13 +4,17 @@ import subprocess
 from typing import Any
 import os
 
-# Set logging level
-log_tools.set_default_style("basic")
+# Set logging level and style
+log_tools.set_default_style("pre-commit")
 log_tools.set_log_level("DEBUG")
 
 # Initialize logger
-logger = LogTools()
+logger = log_tools  # Use the same instance as imported
 log_message = logger.log_message
+
+# Debug prints
+print(f"Default style: {log_tools.default_style}")
+print(f"Logger default style: {logger.default_style}")
 
 def pytest_run_tests():
     # List to capture test results
