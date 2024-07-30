@@ -399,9 +399,11 @@ def startup_tasks(
     Raises:
         SystemExit: If the git repository initialization fails.
     """
-    # Set logging style and level if debug mode is enabled
+    # Always set logging style to "pre-commit"
+    log_tools.set_default_style("pre-commit")
+    
+    # Set logging level if debug mode is enabled
     if args.debug:
-        log_tools.set_default_style("pre-commit")
         log_tools.set_log_level("DEBUG")
 
     # Change the working directory to the repository path
