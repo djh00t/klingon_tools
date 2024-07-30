@@ -342,12 +342,13 @@ def process_files(
     _, _, modified_files, _, _ = git_get_status(repo)
 
 
-def run_push_prep(log_message: Any) -> None:
+def run_push_prep(log_message: Any, log_tools: Any) -> None:
     """
     Check for a "push-prep" target in the Makefile and run it if it exists.
 
     Args:
         log_message (Any): The logging function to use for output.
+        log_tools (Any): Additional logging tools.
 
     Raises:
         SystemExit: If running the 'push-prep' target fails.
@@ -415,7 +416,7 @@ def startup_tasks(
     # Ensure the pre-commit configuration file exists
     ensure_pre_commit_config(repo_path, log_message)
     # Run any pre-push preparation tasks defined in the Makefile
-    run_push_prep(log_message)
+    run_push_prep(log_message, log_tools)
     # Check and install any required software
     check_software_requirements(repo_path, log_message)
 
