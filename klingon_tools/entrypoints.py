@@ -33,7 +33,8 @@ import subprocess
 from klingon_tools.logger import log_tools
 from klingon_tools.git_log_helper import get_commit_log
 from klingon_tools.openai_tools import OpenAITools
-from ktest import pytest_run_tests
+import pytest
+import os
 
 # Configure logging to include process name
 log_tools.configure_logging()
@@ -45,15 +46,49 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 def ktest():
     """Run pytest and display the results.
 
-    This function runs the tests using pytest_run_tests from ktest.py
-    and ensures that the logging output is displayed.
+    This function runs the tests using pytest and ensures that the logging output is displayed.
 
     Entrypoint:
         ktest
     """
     log_tools.set_default_style("pre-commit")
     log_tools.set_log_level("DEBUG")
-    pytest_run_tests()
+    log_message = log_tools.log_message
+
+    # List to capture test results
+    results = []
+
+    class MyPlugin:
+        def pytest_runtest_logreport(self, report):
+            if report.when == 'call':
+                test_name = report.nodeid
+                if report.passed:
+                    log_message.info(message=f"{test_name}", status="✅")
+                    results.append((test_name, 'passed'))
+                elif report.failed:
+                    log_message.error(message=f"{test_name}", status="❌")
+                    results.append((test_name, 'failed'))
+                    # Print debug info after the log messages
+                    log_message.debug(message=f"Debug info for {test_name}")
+                    print(report.longrepr)
+                elif report.skipped:
+                    log_message.info(message=f"{test_name}", status="⏭️")
+                    results.append((test_name, 'skipped'))
+
+    # Redirect stdout to suppress pytest output
+    with open(os.devnull, 'w') as devnull:
+        original_stdout = os.dup(1)
+        os.dup2(devnull.fileno(), 1)
+        
+        try:
+            # Run pytest with the custom plugin
+            pytest.main(["tests", "--tb=short"], plugins=[MyPlugin()])
+        finally:
+            # Restore stdout
+            os.dup2(original_stdout, 1)
+
+    # Return the results
+    return results
 
 
 def gh_pr_gen_title():
