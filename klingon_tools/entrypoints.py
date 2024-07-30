@@ -9,6 +9,7 @@ Entrypoints:
     - pr-summary-generate: Generates a GitHub pull request summary.
     - pr-context-generate: Generates GitHub pull request context.
     - pr-body-generate: Generates a GitHub pull request body.
+    - ktest: Runs pytest and displays the results.
 
 Example:
     To generate a pull request title:
@@ -22,6 +23,9 @@ Example:
 
     To generate a pull request body:
         gh_pr_gen_body()
+
+    To run tests:
+        ktest()
 """
 
 import logging
@@ -29,12 +33,27 @@ import subprocess
 from klingon_tools.logger import log_tools
 from klingon_tools.git_log_helper import get_commit_log
 from klingon_tools.openai_tools import OpenAITools
+from ktest import pytest_run_tests
 
 # Configure logging to include process name
 log_tools.configure_logging()
 
 # Suppress logging from the httpx library
 logging.getLogger("httpx").setLevel(logging.WARNING)
+
+
+def ktest():
+    """Run pytest and display the results.
+
+    This function runs the tests using pytest_run_tests from ktest.py
+    and ensures that the logging output is displayed.
+
+    Entrypoint:
+        ktest
+    """
+    log_tools.set_default_style("pre-commit")
+    log_tools.set_log_level("DEBUG")
+    pytest_run_tests()
 
 
 def gh_pr_gen_title():
