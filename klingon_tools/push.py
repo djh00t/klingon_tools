@@ -11,16 +11,17 @@ Workflow:
 1. Parse command-line arguments
 2. Run startup tasks (setup logging, check software requirements, etc.)
 3. Get git status
-4. Process files based on the mode:
+4. Run unit tests
+5. Process files based on the mode:
    a. Single file mode: Process only the specified file
    b. One-shot mode: Process only the first untracked or modified file
    c. Batch mode: Process all untracked and modified files
-5. For each processed file:
+6. For each processed file:
    a. Stage the file
    b. Run pre-commit hooks
    c. Generate commit message (if not in dry-run mode)
    d. Commit the file (if not in dry-run mode)
-6. Push changes (if not in dry-run mode)
+7. Push changes (if not in dry-run mode)
 
 The script has several options:
 --repo-path: Specify the path to the git repository (default: current
@@ -247,6 +248,44 @@ def parse_arguments() -> argparse.Namespace:
 
     # Parse the arguments and return the result
     return parser.parse_args()
+
+
+def run_tests(log_message: Any = None, quiet: bool = False) -> bool:
+    """
+    Run pytest on the tests/ directory and log the results using LogTools.
+
+    This function runs pytest to execute unit tests. If pytest fails, it logs
+    detailed debug information and returns False.
+
+    Args:
+        log_message (Any): The logging function to use for output.
+        quiet (bool): Flag to run pytest in quiet mode. Defaults to False.
+
+    Returns:
+        bool: True if tests pass, False otherwise.
+    """
+    if log_message:                                                                                                                         
+        log_message.info("Running tests using pytest", status="🔍")
+    pytest_command = "pytest -v --no-header --no-summary --disable-warnings tests/"
+    if quiet:
+        pytest_command += " --quiet"
+    try:
+        result = subprocess.run(pytest_command, check=True, shell=True, capture_output=True, text=True)
+        for line in result.stdout.splitlines():
+            if "PASSED" in line:
+                test_name = line.split("::")[-1].strip()
+                log_message.info(message=test_name, status="✅")
+            elif "FAILED" in line:
+                test_name = line.split("::")[-1].strip()
+                log_message.error(message=test_name, status="❌")
+        return True
+    except subprocess.CalledProcessError as e:
+        for line in e.stdout.splitlines():
+            if "FAILED" in line:
+                test_name = line.split("::")[-1].strip()
+                log_message.error(message=test_name, status="❌")
+        log_message.error(f"ERROR DEBUG:\n{e.stderr}", status="❌")
+        return False
 
 
 def process_files(
@@ -549,6 +588,7 @@ def main():
     ):
         log_message.info("No files processed, nothing to do", status="🚫")
         return 0
+
     log_git_stats(
         deleted_files,
         untracked_files,
@@ -556,6 +596,11 @@ def main():
         staged_files,
         committed_not_pushed,
     )
+
+    # Run tests before processing any files
+    if not run_tests(log_message):
+        log_message.error("Exiting due to failing tests", status="❌")
+        return 1
 
     # Unstage all staged files if there are any
     if staged_files:
