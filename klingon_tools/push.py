@@ -352,43 +352,28 @@ def run_push_prep(log_message: Any) -> None:
     Raises:
         SystemExit: If running the 'push-prep' target fails.
     """
-    # Define the path to the Makefile in the current working directory
     makefile_path = os.path.join(os.getcwd(), "Makefile")
 
-    # Check if the Makefile exists
     if os.path.exists(makefile_path):
-
-        # Open the Makefile for reading
         with open(makefile_path, "r") as makefile:
-
-            # Check if the 'push-prep' target is defined in the Makefile
             if "push-prep:" in makefile.read():
-                log_message.info("Running 'push-prep'", status="✅")
-
-                # Run the 'push-prep' target using the make command
+                log_message.info(message="Running 'push-prep'", status="✅")
                 try:
                     subprocess.run(["make", "push-prep"], check=True)
-
-                # Log an error message if the 'push-prep' target fails
                 except subprocess.CalledProcessError as e:
                     log_message.error(
-                        f"Failed to run 'push-prep': {e}",
+                        message=f"Failed to run 'push-prep': {e}",
                         status="❌",
                     )
                     sys.exit(1)
-
-            # Log a message if the 'push-prep' target is not found in the
-            # Makefile
             else:
                 log_message.info(
-                    "'push-prep' target not found in Makefile",
+                    message="'push-prep' target not found in Makefile",
                     status="ℹ️",
                 )
-
-    # Log a message if the Makefile is not found in the root of the repository
     else:
         log_message.info(
-            "Makefile not found in the root of the repository",
+            message="Makefile not found in the root of the repository",
             status="ℹ️",
         )
 
@@ -435,15 +420,16 @@ def startup_tasks(
     # Retrieve the git user name and email
     user_name, user_email = get_git_user_info()
     # Log the git user name and email
-    log_message.info(message="Using git user name:", status=user_name)
-    log_message.info(message="Using git user email:", status=user_email)
+    log_message.info(message=f"Using git user name: {user_name}", status="✅")
+    log_message.info(message=f"Using git user email: {user_email}", status="✅")
 
     # Initialize the git repository object
     repo = git_get_toplevel()
     # Exit if the git repository initialization fails
     if repo is None:
         log_message.error(
-            "Failed to initialize git repository. Exiting.", status="❌"
+            message="Failed to initialize git repository. Exiting.",
+            status="❌"
         )
         sys.exit(1)
 
