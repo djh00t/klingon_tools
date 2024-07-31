@@ -167,8 +167,8 @@ def ensure_pre_commit_config(repo_path: str, log_message: Any) -> None:
         )
         # Define the URL to the .pre-commit-config.yaml template
         template_url = (
-            "https://raw.githubusercontent.com/djh00t/klingon_tools/main/"
-            "repo_templates/python/.pre-commit-config.yaml"
+            "https://raw.githubusercontent.com/djh00t/klingon_templates/main/"
+            "python/.pre-commit-config.yaml"
         )
         try:
             # Download the .pre-commit-config.yaml template
