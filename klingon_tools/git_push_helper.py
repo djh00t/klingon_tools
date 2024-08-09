@@ -1,5 +1,5 @@
 from git import GitCommandError, Repo
-from klingon_tools.logger import logger
+from klingon_tools.log_msg import log_message
 
 
 def git_push(repo: Repo) -> None:
@@ -39,7 +39,7 @@ def git_push(repo: Repo) -> None:
             try:
                 repo.git.stash("pop")
             except GitCommandError as e:
-                logger.error(
+                log_message.error(
                     "Failed to apply stashed changes",
                     status="❌",
                     reason=str(e),
@@ -50,14 +50,14 @@ def git_push(repo: Repo) -> None:
         # Push the changes to the remote repository
         repo.remotes.origin.push()
 
-        logger.info("Pushed changes to remote repository", status="✅")
+        log_message.info("Pushed changes to remote repository", status="✅")
     except GitCommandError as e:
-        logger.error(
+        log_message.error(
             "Failed to push changes to remote repository",
             status="❌",
             reason=str(e),
         )
     except Exception as e:
-        logger.error(
+        log_message.error(
             "An unexpected error occurred", status="❌", reason=str(e)
         )

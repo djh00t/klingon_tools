@@ -26,7 +26,7 @@ from openai import OpenAI
 from git import Repo
 
 from klingon_tools.git_user_info import get_git_user_info
-from klingon_tools.logger import logger
+from klingon_tools.log_msg import log_message
 from klingon_tools.git_unstage import git_unstage_files
 from klingon_tools.git_log_helper import get_commit_log
 
@@ -238,7 +238,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                 model="gpt-4o-mini",
             )
         except openai.APIConnectionError as e:
-            logger.error(f"Failed to connect to OpenAI API: {e}")
+            log_message.error(f"Failed to connect to OpenAI API: {e}")
             raise
 
         generated_content = response.choices[0].message.content.strip()
@@ -297,10 +297,10 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                 "other": "⚠️",
             }.get(commit_type, "")
         except ValueError as e:
-            logger.error(f"Commit message format error: {e}")
+            log_message.error(f"Commit message format error: {e}")
             raise
         except Exception as e:
-            logger.error(f"Unexpected error: {e}")
+            log_message.error(f"Unexpected error: {e}")
             raise
 
         formatted_message = (
@@ -377,7 +377,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                         check=True,
                     ).stdout
                 except subprocess.CalledProcessError as e:
-                    logger.error(f"Failed to get diff for {file}: {e}")
+                    log_message.error(f"Failed to get diff for {file}: {e}")
                     continue
 
                 generated_message = self.generate_content(
@@ -388,7 +388,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                     formatted_message = self.format_message(generated_message)
                     formatted_message = self.signoff_message(formatted_message)
                 except ValueError as e:
-                    logger.error(f"Error formatting commit message: {e}")
+                    log_message.error(f"Error formatting commit message: {e}")
                     if "must include a scope" in str(e):
                         commit_type, commit_description = (
                             generated_message.split(":", 1)
@@ -402,23 +402,17 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                         formatted_message = self.signoff_message(
                             formatted_message
                         )
-                        logger.error(
+                        log_message.error(
                             "Scope was missing. Please provide a more "
                             "specific scope."
                         )
 
-                logger.info(
-                    message="=" * 80,
-                    status="",
-                )
-                logger.info(
+                log_message.info(message="=" * 80, status="", style="none")
+                log_message.info(
                     f"Generated commit message for {file}:\n\n"
                     f"{formatted_message}\n"
                 )
-                logger.info(
-                    message="=" * 80,
-                    status="",
-                )
+                log_message.info(message="=" * 80, status="", style="none")
 
                 subprocess.run(
                     ["git", "commit", "-m", formatted_message, file],
@@ -432,23 +426,20 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
             formatted_message = self.format_message(generated_message)
             formatted_message = self.signoff_message(formatted_message)
 
-            logger.info(
-                message="=" * 80,
+            log_message.info(message="=" * 80, status="", style="none")
+            wrapped_message = "\n".join(
+                textwrap.wrap(formatted_message, width=79)
+            )
+            log_message.info(
+                message=f"Generated commit message:\n\n{wrapped_message}\n",
                 status="",
             )
-            logger.info(
-                message=f"Generated commit message:\n\n{formatted_message}\n",
-                status="",
-            )
-            logger.info(
-                message="=" * 80,
-                status="",
-            )
+            log_message.info(message="=" * 80, status="", style="none")
 
             return formatted_message
 
         except ValueError as e:
-            logger.error(f"Error formatting commit message: {e}")
+            log_message.error(f"Error formatting commit message: {e}")
             if "must include a scope" in str(e):
                 commit_type, commit_description = generated_message.split(
                     ":", 1
@@ -458,28 +449,25 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                     {commit_description.strip()}"
                 formatted_message = self.format_message(generated_message)
                 formatted_message = self.signoff_message(formatted_message)
-                logger.error(
+                log_message.error(
                     "Scope was missing. Please provide a more specific scope."
                 )
 
-                logger.info(
-                    message="=" * 80,
+                log_message.info(message="=" * 80, status="", style="none")
+                wrapped_message = "\n".join(
+                    textwrap.wrap(formatted_message, width=79)
+                )
+                log_message.info(
+                    message="Generated commit message:"
+                    f"\n\n{wrapped_message}\n",
                     status="",
                 )
-                logger.info(
-                    message=f"Generated commit message:\n\n"
-                    f"{formatted_message}\n",
-                    status="",
-                )
-                logger.info(
-                    message="=" * 80,
-                    status="",
-                )
+                log_message.info(message="=" * 80, status="", style="none")
 
                 return formatted_message
 
         except Exception as e:
-            logger.error(f"Unexpected error: {e}")
+            log_message.error(f"Unexpected error: {e}")
             raise
 
     def generate_pull_request_title(self, diff: str) -> str:
@@ -521,10 +509,10 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
 
             return generated_summary
         except subprocess.CalledProcessError as e:
-            logger.error(f"Error getting commit log: {e}")
+            log_message.error(f"Error getting commit log: {e}")
             raise
         except Exception as e:
-            logger.error(f"Unexpected error generating PR summary: {e}")
+            log_message.error(f"Unexpected error generating PR summary: {e}")
             raise
 
     def generate_pull_request_context(
@@ -551,10 +539,10 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
 
             return generated_context
         except subprocess.CalledProcessError as e:
-            logger.error(f"Error getting commit log: {e}")
+            log_message.error(f"Error getting commit log: {e}")
             raise
         except Exception as e:
-            logger.error(f"Unexpected error generating PR context: {e}")
+            log_message.error(f"Unexpected error generating PR context: {e}")
             raise
 
     def generate_pull_request_body(self, diff: str) -> str:
@@ -592,17 +580,11 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                 repo, repo.git.diff("--cached", "--name-only").splitlines()
             )
 
-        logger.info(
-            message="=" * 80,
-            status="",
-        )
-        logger.info(
+        log_message.info(message="=" * 80, status="", style="none")
+        log_message.info(
             message=f"Generated release body:\n\n{formatted_body}\n",
             status="",
         )
-        logger.info(
-            message="=" * 80,
-            status="",
-        )
+        log_message.info(message="=" * 80, status="", style="none")
 
         return formatted_body

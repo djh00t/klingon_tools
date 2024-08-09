@@ -18,7 +18,7 @@ import git
 from git import GitCommandError
 
 from klingon_tools.git_validate_commit import validate_commit_messages
-from klingon_tools.logger import logger
+from klingon_tools.log_msg import log_message
 from klingon_tools.openai_tools import OpenAITools
 
 
@@ -59,12 +59,14 @@ def git_push(repo: git.Repo) -> None:
                     commit_message = f"chore({file}): Cleanup deleted items"
                     repo.index.commit(commit_message)
                 except GitCommandError as e:
-                    logger.error(f"Failed to handle deletion for {file}: {e}")
+                    log_message.error(
+                        f"Failed to handle deletion for {file}: {e}"
+                    )
                     continue
         openai_tools = OpenAITools()
         # Validate commit messages
         if not validate_commit_messages(repo):
-            logger.error(
+            log_message.error(
                 "Commit message validation failed. Aborting push.", status="❌"
             )
             return
@@ -86,7 +88,7 @@ def git_push(repo: git.Repo) -> None:
                 repo.git.add(file)
                 repo.index.commit(commit_message)
             except subprocess.CalledProcessError as e:
-                logger.error(
+                log_message.error(
                     f"Failed to generate commit message for {file}: {e}"
                 )
 
@@ -117,13 +119,13 @@ def git_push(repo: git.Repo) -> None:
             push_changes(repo)
 
     except GitCommandError as e:
-        logger.error(
+        log_message.error(
             message="Failed to push changes to remote repository",
             status="❌",
             reason=str(e),
         )
     except Exception as e:
-        logger.error(
+        log_message.error(
             "An unexpected error occurred", status="❌", reason=str(e)
         )
 
@@ -165,7 +167,7 @@ def push_changes(repo: git.Repo) -> None:
             try:
                 repo.git.stash("pop")
             except GitCommandError as e:
-                logger.error(
+                log_message.error(
                     "Failed to apply stashed changes",
                     status="❌",
                     reason=str(e),
@@ -176,14 +178,14 @@ def push_changes(repo: git.Repo) -> None:
         # Push the changes to the remote repository
         repo.remotes.origin.push()
 
-        logger.info("Pushed changes to remote repository", status="✅")
+        log_message.info("Pushed changes to remote repository", status="✅")
     except GitCommandError as e:
-        logger.error(
+        log_message.error(
             "Failed to push changes to remote repository",
             status="❌",
             reason=str(e),
         )
     except Exception as e:
-        logger.error(
+        log_message.error(
             "An unexpected error occurred", status="❌", reason=str(e)
         )

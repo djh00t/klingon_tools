@@ -49,6 +49,7 @@ setup(
             "pr-summary-generate=klingon_tools.entrypoints:gh_pr_gen_summary",
             "pr-context-generate=klingon_tools.entrypoints:gh_pr_gen_context",
             "pr-body-generate=klingon_tools.entrypoints:gh_pr_gen_body",
+            "ktest=klingon_tools.push:run_tests",
         ],
     },
     include_package_data=True,

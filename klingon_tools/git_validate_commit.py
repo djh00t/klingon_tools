@@ -14,6 +14,9 @@ import re
 from git import Repo
 from klingon_tools.openai_tools import OpenAITools
 
+# from klingon_tools.log_msg import log_message, set_log_level,
+# set_default_style
+
 
 def is_commit_message_signed_off(commit_message: str) -> bool:
     """Check if the commit message is signed off.
