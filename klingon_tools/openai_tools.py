@@ -461,6 +461,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                     message="Generated commit message:"
                     f"\n\n{wrapped_message}\n",
                     status="",
+                    style="none",
                 )
                 log_message.info(message="=" * 80, status="", style="none")
 
