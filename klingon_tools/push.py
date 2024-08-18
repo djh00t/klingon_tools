@@ -125,6 +125,7 @@ def check_software_requirements(repo_path: str, log_message: Any) -> None:
                     "-U",
                     "pre-commit",
                     "cfgv",
+                    "pytest",
                 ],
                 check=True,
                 stdout=subprocess.PIPE,
@@ -266,6 +267,25 @@ def run_tests(log_message: Any = None, quiet: bool = False) -> bool:
     """
     if log_message:
         log_message.info("Running tests using pytest", status="🔍")
+    tests_dir = os.path.join(os.getcwd(), "tests")
+    if not os.path.exists(tests_dir):
+        log_message.info(
+            "Tests directory not found. Skipping tests.", status="🚫"
+        )
+        return True
+
+    test_files = [
+        f
+        for f in os.listdir(tests_dir)
+        if f.startswith("test_") and f.endswith(".py")
+    ]
+    if not test_files:
+        log_message.info(
+            "No test files found in tests directory. Skipping tests.",
+            status="🚫",
+        )
+        return True
+
     pytest_command = (
         "pytest -v --no-header --no-summary --disable-warnings tests/"
     )
@@ -367,13 +387,13 @@ def run_push_prep(log_message: Any) -> None:
                     subprocess.run(["make", "push-prep"], check=True)
                 except subprocess.CalledProcessError as e:
                     log_message.error(
-                        message=f"Failed to run 'push-prep': {e}",
+                        message=f"Failed to run push-prep: {e}",
                         status="❌",
                     )
                     sys.exit(1)
             else:
                 log_message.info(
-                    message="'push-prep' target not found in Makefile",
+                    message="push-prep target not found in Makefile",
                     status="ℹ️",
                 )
     else:
