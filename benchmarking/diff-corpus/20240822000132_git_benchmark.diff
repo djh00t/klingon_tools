@@ -1,0 +1,92 @@
+diff --git a/benchmarking/results/20240821171302_benchmark_results.json b/benchmarking/results/20240821171302_benchmark_results.json
+new file mode 100644
+index 0000000..d287213
+--- /dev/null
++++ b/benchmarking/results/20240821171302_benchmark_results.json
+@@ -0,0 +1,86 @@
++[
++    {
++        "model": "groq/llama3-8b-8192",
++        "time_taken": 0.536841869354248,
++        "raw_commit_message": "Here is a conventional commit message based on the provided diff:\n\n**commit message:** `feat(klingon-tools): Implement log level customization and OpenAI/LiteLLM tools replacement in ktest and PR generation functions`\n\n**Breakdown:**\n\n- `feat`: The type of change is a feature (`feat`).\n- `(klingon-tools)`: The scope of the change is the `klingon-tools` module.\n- `Implement log level customization`: This is the main change implemented in the commit, which is to customize the log level.\n- `and OpenAI/LiteLLM tools replacement`: This is a secondary change, replacing OpenAI tools with LiteLLM tools.\n- `in ktest and PR generation functions`: This specifies the locations where the changes were made.\n\nThis commit message follows the conventional commits format, which helps maintain a consistent and readable commit history.",
++        "cleaned_commit_message": "feat(klingon-tools): Implement log level customization and OpenAI/LiteLLM tools replacement in ktest and PR generation functions",
++        "raw_compliance": {
++            "format_compliance": 0,
++            "type_compliance": 0,
++            "scope_compliance": 1,
++            "high_level_description": 1,
++            "detailed_description": 0,
++            "accuracy_compliance": 0,
++            "content_compliance": 2
++        },
++        "cleaned_compliance": {
++            "format_compliance": 2,
++            "type_compliance": 1,
++            "scope_compliance": 1,
++            "high_level_description": 1,
++            "detailed_description": 0,
++            "accuracy_compliance": 0,
++            "content_compliance": 2
++        },
++        "response_quality": 7.0,
++        "speed_rank": 1,
++        "quality_rank": 1,
++        "overall_score": 2.1921455703736297
++    },
++    {
++        "model": "groq/llama3-70b-8192",
++        "time_taken": 1.0036969184875488,
++        "raw_commit_message": "Here is a conventional commit message based on the provided diff:\n\n`refactor(klingon_tools): migrate from OpenAITools to LiteLLMTools and enhance ktest functionality`\n\nThis commit message adheres to the conventional commit format, which consists of:\n\n* `refactor`: The type of change (in this case, a refactoring)\n* `(klingon_tools)`: The scope of the change (in this case, the `klingon_tools` module)\n* `migrate from OpenAITools to LiteLLMTools and enhance ktest functionality`: A brief description of the changes made in the commit.\n\nNote that this message summarizes the main changes made in the commit, which include:\n\n* Replacing `OpenAITools` with `LiteLLMTools` in several functions\n* Adding a `loglevel` parameter to the `ktest` function\n* Enhancing the logging behavior in the `ktest` function\n* Updating the return type of the `ktest` function to a list of dictionaries.",
++        "cleaned_commit_message": "refactor(klingon_tools): migrate from OpenAITools to LiteLLMTools and enhance ktest functionality",
++        "raw_compliance": {
++            "format_compliance": 0,
++            "type_compliance": 0,
++            "scope_compliance": 1,
++            "high_level_description": 1,
++            "detailed_description": 0,
++            "accuracy_compliance": 0,
++            "content_compliance": 2
++        },
++        "cleaned_compliance": {
++            "format_compliance": 2,
++            "type_compliance": 1,
++            "scope_compliance": 1,
++            "high_level_description": 1,
++            "detailed_description": 0,
++            "accuracy_compliance": 0,
++            "content_compliance": 2
++        },
++        "response_quality": 7.0,
++        "speed_rank": 2,
++        "quality_rank": 2,
++        "overall_score": 2.0331371642013685
++    },
++    {
++        "model": "groq/gemma-7b-it",
++        "time_taken": 1.582334041595459,
++        "raw_commit_message": "## Conventional Git Commit Message:\n\n```\nfeat: Add LiteLLMTools for PR title/summary/context/body generation (#123)\n\n- Replaced OpenAITools with LiteLLMTools for improved performance and accuracy in generating pull request metadata. This significantly improves the quality and consistency of generated titles, summaries, contexts, and bodies.\n- Updated `gh_pr_gen_title`, `gh_pr_gen_summary`, `gh_pr_gen_context`, and `gh_pr_gen_body` functions to use the new `LiteLLMTools` class.\n- Updated documentation to reflect the change in tools used.\n```",
++        "cleaned_commit_message": "feat: Add LiteLLMTools for PR title/summary/context/body generation (#123)\n\n- Replaced OpenAITools with LiteLLMTools for improved performance and accuracy in generating pull request metadata. This significantly improves the quality and consistency of generated titles, summaries, contexts, and bodies.\n- Updated `gh_pr_gen_title`, `gh_pr_gen_summary`, `gh_pr_gen_context`, and `gh_pr_gen_body` functions to use the new `LiteLLMTools` class.\n- Updated documentation to reflect the change in tools used.",
++        "raw_compliance": {
++            "format_compliance": 0,
++            "type_compliance": 0,
++            "scope_compliance": 0,
++            "high_level_description": 0,
++            "detailed_description": 0,
++            "accuracy_compliance": 0,
++            "content_compliance": 0
++        },
++        "cleaned_compliance": {
++            "format_compliance": 0,
++            "type_compliance": 0,
++            "scope_compliance": 0,
++            "high_level_description": 1,
++            "detailed_description": 0,
++            "accuracy_compliance": 0,
++            "content_compliance": 2
++        },
++        "response_quality": 7.0,
++        "speed_rank": 3,
++        "quality_rank": 3,
++        "overall_score": 0.6599999999999999
++    }
++]
