@@ -46,14 +46,32 @@ class TestSemanticRelease(unittest.TestCase):
                 "semantic_release section not found in pyproject.toml",
             )
             self.assertIn(
-                "version",
+                "version_variable",
                 data["tool"]["semantic_release"],
-                "version key not found in pyproject.toml",
+                "version_variable key not found in pyproject.toml",
             )
-            self.assertRegex(
-                data["tool"]["semantic_release"]["version"],
-                r"^\d+\.\d+\.\d+$",
-                "version format in pyproject.toml is incorrect",
+            self.assertIsInstance(
+                data["tool"]["semantic_release"]["version_variable"],
+                list,
+                "version_variable should be a list",
+            )
+            self.assertGreater(
+                len(data["tool"]["semantic_release"]["version_variable"]),
+                0,
+                "version_variable list is empty",
+            )
+            version_variable = data["tool"]["semantic_release"][
+                "version_variable"
+            ][0]
+            self.assertEqual(
+                version_variable,
+                "pyproject.toml:version",
+                f"Unexpected version_variable value: {version_variable}",
+            )
+            version_file = version_variable.split(":")[0]
+            self.assertTrue(
+                os.path.exists(version_file),
+                f"{version_file} does not exist",
             )
 
 
