@@ -44,16 +44,33 @@ Attributes:
     modified_files (list): List of modified files.
     staged_files (list): List of staged files.
     committed_not_pushed (list): List of committed but not pushed files.
+
+Best ollama models to use for git commit messages:
+  - gpt-4o - excellent (paid)
+  - gpt-4o-mini - very good (paid)
+  - chatgpt-4o-latest - very good (paid)
+  - deepseek-coder-v2 - very good
+  - codestral-latest - very good (paid)
+  - mistral-small-latest - Good content
+  - mistral-nemo - good content, weird formatting
+  - phi3:mini - Overly verbose
+  - llama2:latest - Good content but returns it with extra content around the
+    answer
+  - llama3.1:latest - Good content but returns it with extra content around the
+    answer.
+  - codeqwen:latest - Doesn't appear to know what conventional commits format
+    is.
+  - codellama:latest - Doesn't understand what a breaking change is.
 """
 import argparse
 import os
 import subprocess
 import sys
 import requests
+import datetime
 from git import Repo
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Optional
 from klingon_tools.git_tools import (
-    LOOP_MAX_PRE_COMMIT,
     cleanup_lock_file,
     get_git_user_info,
     git_commit_deletes,
@@ -64,13 +81,12 @@ from klingon_tools.git_tools import (
     log_git_stats,
     process_pre_commit_config,
     push_changes_if_needed,
-    git_stage_diff,
 )
-from klingon_tools.git_unstage import git_unstage_files
 
-# Initialize logging
 from klingon_tools.log_msg import log_message, set_log_level
-from klingon_tools.openai_tools import OpenAITools
+from klingon_tools.litellm_tools import LiteLLMTools
+from klingon_tools.git_unstage import git_unstage_files
+from klingon_tools.entrypoints import ktest
 
 # Initialize variables
 deleted_files = []
@@ -78,6 +94,42 @@ untracked_files = []
 modified_files = []
 staged_files = []
 committed_not_pushed = []
+
+
+def find_git_root(start_path: str) -> Optional[str]:
+    """
+    Find the root of the git repository by iterating up the directory
+    structure. Returns an absolute path and prompts to initialize a git
+    repository if not found.
+
+    Args:
+        start_path (str): The starting path to begin the search.
+
+    Returns:
+        Optional[str]: The path to the root of the git repository, or None if
+        not found.
+    """
+    current_path = start_path
+    while current_path != os.path.dirname(current_path):
+        if os.path.isdir(os.path.join(current_path, ".git")):
+            return os.path.abspath(current_path)
+        current_path = os.path.dirname(current_path)
+    return None
+
+
+def validate_commit_message(commit_message: str) -> bool:
+    """
+    Validate the commit message format.
+
+    Args:
+        commit_message (str): The commit message to validate.
+
+    Returns:
+        bool: True if the commit message is valid, False otherwise.
+    """
+    # Example validation: Check if the commit message is not empty and has a
+    # minimum length
+    return bool(commit_message and len(commit_message) > 10)
 
 
 def check_software_requirements(repo_path: str, log_message: Any) -> None:
@@ -88,8 +140,8 @@ def check_software_requirements(repo_path: str, log_message: Any) -> None:
     found.
 
     Args:
-        repo_path (str): The path to the git repository. log_message (Any): The
-        logging function to use for output.
+        repo_path (str): The path to the git repository.
+        log_message (Any): The logging function to use for output.
 
     Raises:
         SystemExit: If pre-commit installation fails.
@@ -218,6 +270,11 @@ def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Git repository status checker and committer."
     )
+    parser.add_argument(
+        "--skip-tests",
+        action="store_true",
+        help="Skip running tests",
+    )
 
     # Define command-line arguments
     # Define the --repo-path argument with a default value of the current
@@ -234,7 +291,10 @@ def parse_arguments() -> argparse.Namespace:
         "--debug", action="store_true", help="Enable debug mode"
     )
     parser.add_argument(
-        "--file-name", type=str, help="File name to stage and commit"
+        "--file-name",
+        type=str,
+        nargs="*",
+        help="File name(s) to stage and commit",
     )
     parser.add_argument(
         "--oneshot",
@@ -253,66 +313,32 @@ def parse_arguments() -> argparse.Namespace:
 
 def run_tests(log_message: Any = None, quiet: bool = False) -> bool:
     """
-    Run pytest on the tests/ directory and log the results using LogTools.
+    Run tests using the ktest function and log the results using LogTools.
 
-    This function runs pytest to execute unit tests. If pytest fails, it logs
-    detailed debug information and returns False.
+    This function runs the tests using the ktest function. If tests fail, it
+    logs detailed debug information and returns False.
 
     Args:
         log_message (Any): The logging function to use for output.
-        quiet (bool): Flag to run pytest in quiet mode. Defaults to False.
+        quiet (bool): Flag to run ktest in quiet mode. Defaults to False.
 
     Returns:
         bool: True if tests pass, False otherwise.
     """
     if log_message:
-        log_message.info("Running tests using pytest", status="🔍")
-    tests_dir = os.path.join(os.getcwd(), "tests")
-    if not os.path.exists(tests_dir):
-        log_message.info(
-            "Tests directory not found. Skipping tests.", status="🚫"
-        )
-        return True
-
-    test_files = [
-        f
-        for f in os.listdir(tests_dir)
-        if f.startswith("test_") and f.endswith(".py")
-    ]
-    if not test_files:
-        log_message.info(
-            "No test files found in tests directory. Skipping tests.",
-            status="🚫",
-        )
-        return True
-
-    pytest_command = (
-        "pytest -v --no-header --no-summary --disable-warnings tests/"
-    )
-    if quiet:
-        pytest_command += " --quiet"
+        # Log the start of the test execution
+        log_message.info("Running tests using ktest", status="🔍")
     try:
-        result = subprocess.run(
-            pytest_command,
-            check=True,
-            shell=True,
-            capture_output=True,
-            text=True,
-        )
-        for line in result.stdout.splitlines():
-            if "PASSED" in line:
-                test_name = line.split("::")[-1].strip()
-                log_message.info(message=test_name, status="✅")
-            elif "FAILED" in line:
-                test_name = line.split("::")[-1].strip()
-                log_message.error(message=test_name, status="❌")
-        return True
-    except subprocess.CalledProcessError as e:
-        for line in e.stdout.splitlines():
-            if "FAILED" in line:
-                test_name = line.split("::")[-1].strip()
-                log_message.error(message=test_name, status="❌")
-        log_message.error(f"ERROR DEBUG:\n{e.stderr}", status="❌")
+        # Execute the ktest function to run the tests
+        results = ktest()
+        # Return True if all tests passed, False otherwise
+        log_message.info(80 * "-", status="", style="none")
+        return all(test["outcome"] == "passed" for test in results)
+    except Exception as e:
+        # Log the error message and return False
+        log_message.error("ERROR DEBUG:", status="❌")
+        log_message.error(str(e), status="", style="none")
+        log_message.info(80 * "-", status="", style="none")
         return False
 
 
@@ -321,6 +347,7 @@ def process_files(
     repo: Repo,
     args: argparse.Namespace,
     log_message: Any,
+    litellm_tools: LiteLLMTools,
 ) -> None:
     """
     Process a list of files through the git workflow.
@@ -345,23 +372,51 @@ def process_files(
     """
     global modified_files  # Use the global modified_files list
 
+    file_counter = 0  # Initialize file counter
+
     for file in files:
-        # Log the current file being processed
+        file_counter += 1  # Increment file counter
+        # Check if the file exists
+        if not os.path.exists(file):
+            log_message.warning(
+                message="File does not exist or has already been committed: "
+                f"{file}",
+                status="❌",
+            )
+            continue
         if os.path.isdir(file):
             log_message.warning(message="Skipping directory", status=f"{file}")
             continue
-        log_message.info(message="Processing file", status=f"{file}")
+        log_message.debug(
+            message=f"Processing file: {file}", status="process_files ✅"
+        )
 
         try:
+            # Check if the file is already committed
+            if file in committed_not_pushed:
+                log_message.info(
+                    message=f"File already committed: {file}", status="⏭️"
+                )
+                continue
+
             # Process the file using the workflow_process_file function
             workflow_process_file(
-                file, modified_files, repo, args, log_message
+                file,
+                modified_files,
+                repo,
+                args,
+                log_message,
+                litellm_tools,
+                file_counter,
             )
         except Exception as e:
             # Log any errors that occur during processing
             log_message.error(
                 f"Error processing file {file}: {str(e)}", status="❌"
             )
+            print()
+            print(f"{str(e)}")
+            print()
 
     # After processing all files, update the modified_files list This step is
     # important if any files were committed and are no longer modified
@@ -409,6 +464,8 @@ def workflow_process_file(
     current_repo: Repo,
     current_args: argparse.Namespace,
     log_message: Any,
+    litellm_tools: LiteLLMTools,
+    file_counter: int,
 ) -> None:
     """
     Process a single file through the git workflow.
@@ -432,44 +489,96 @@ def workflow_process_file(
     """
     global modified_files, repo, args
 
-    # Stage the file and generate a diff of the file being processed
-    diff = git_stage_diff(file_name, current_repo, current_modified_files)
+    log_message.debug(
+        message="Processing file",
+        status="workflow_process_file ✅",
+    )
 
-    # Attempt pre-commit hooks and commit
-    attempt = 0
-    success = False
-    while attempt < LOOP_MAX_PRE_COMMIT:
-        # Run pre-commit hooks on the file
-        success, diff = git_pre_commit(
-            file_name, current_repo, current_modified_files
-        )
+    # Check if the file is already committed
+    if file_name in committed_not_pushed:
+        log_message.info(f"File already committed: {file_name}", status="⏭️")
+        return
 
-        if success:
-            if current_args.dryrun:
-                # Log dry run mode and skip commit and push
-                log_message.info(
-                    message="Dry run mode enabled. Skipping commit and push.",
-                    status="🚫",
-                )
-                break
-            else:
-                # Generate commit message and commit the file
-                openai_tools = OpenAITools(debug=args.debug)
-                commit_message = openai_tools.generate_commit_message(diff)
-                git_commit_file(file_name, current_repo, commit_message)
-                break
+    # Run pre-commit hooks on the file
+    success, diff = git_pre_commit(
+        file_name, current_repo, current_modified_files
+    )
+
+    # Get the root directory of the repository
+    repo_root = current_repo.working_dir
+
+    # Save diff only for every 5th file processed
+    if file_counter % 5 == 0:
+        # Get current date and time in YYYYMMDDHHMMSS format
+        now = datetime.datetime.now()
+        date_time = now.strftime("%Y%m%d%H%M%S")
+
+        # Log diff to
+        # {repo_root}/benchmarking/diff-corpus/YYYYMMDDHHMMSS_git_benchmark.diff
+        import textwrap
+
+        with open(
+            f"{repo_root}/benchmarking/diff-corpus/"
+            f"{date_time}_git_benchmark.diff",
+            "w",
+        ) as f:
+            wrapped_diff = textwrap.fill(
+                diff, width=79, subsequent_indent=" " * 12
+            )
+            f.write(wrapped_diff)
+
+    if success:
+        if current_args.dryrun:
+            # Log dry run mode and skip commit and push
+            log_message.info(
+                message="Dry run mode enabled. Skipping commit and push.",
+                status="🚫",
+            )
+            return
         else:
-            attempt += 1
-            if attempt == LOOP_MAX_PRE_COMMIT:
-                # Log pre-commit hook failure and exit
+            # Generate commit message and commit the file
+            for attempt in range(3):
+                try:
+                    commit_message = litellm_tools.generate_commit_message(
+                        diff
+                    )
+                    # Assuming validate_commit_message is a function to
+                    # validate the commit message format
+                    if validate_commit_message(commit_message):
+                        git_commit_file(
+                            file_name, current_repo, commit_message
+                        )
+                        break
+                    else:
+                        log_message.error(
+                            f"\n{commit_message}\n", status="", style="none"
+                        )
+                        diff += "\nCommit message format error"
+                        litellm_tools.update_prompt(
+                            "Commit message format error"
+                        )
+                except Exception as e:
+                    log_message.error(
+                        f"Failed to generate commit message for {file_name}: "
+                        f"{e}",
+                        status="❌",
+                    )
+                    return
+            else:
                 log_message.error(
-                    message="Pre-commit hooks failed. Exiting script.",
+                    f"Failed to generate valid commit message for {file_name}"
+                    "after 3 attempts",
                     status="❌",
                 )
-                # Exit script
-                sys.exit(1)
+                return
+    else:
+        log_message.error(
+            message="Pre-commit hooks failed. Exiting script.",
+            status="❌",
+        )
+        sys.exit(1)
 
-    # Debug logging if enabled
+    log_message.info(f"Finished processing file: {file_name}", status="✅")
     if current_args.debug:
         # Enable debug mode
         # Log debug mode and git status
@@ -503,8 +612,48 @@ def startup_tasks(args: argparse.Namespace) -> Tuple[Repo, str, str]:
     Raises:
         SystemExit: If the git repository initialization fails.
     """
-    # Change the working directory to the repository path
-    repo_path = args.repo_path
+
+    # Find the root of the git repository
+    repo_path = find_git_root(args.repo_path)
+    while repo_path is None:
+        user_input = (
+            input(
+                "No git repository found. Do you want to initialize a new "
+                "repository in the current directory? (y/n): "
+            )
+            .strip()
+            .lower()
+        )
+        if user_input == "y":
+            repo_path = os.getcwd()
+            subprocess.run(["git", "init"], cwd=repo_path, check=True)
+            log_message.info(
+                message=f"Initialized new git repository at {repo_path}",
+                status="✅",
+            )
+        elif user_input == "n":
+            log_message.error(
+                message="No git repository found. Exiting.", status="❌"
+            )
+            sys.exit(1)
+        else:
+            log_message.warning(
+                message="Invalid input. Please enter 'y' or 'n'.", status="⚠️"
+            )
+        log_message.warning(
+            message="No git repository found. Initializing a new repository.",
+            status="⚠️",
+        )
+        repo_path = args.repo_path
+        os.makedirs(repo_path, exist_ok=True)
+        subprocess.run(["git", "init"], cwd=repo_path, check=True)
+        log_message.info(
+            message="Initialized new git repository at", status=f"{repo_path}"
+        )
+    else:
+        log_message.info(
+            message="Using repository path", status=f"{repo_path}"
+        )
     os.chdir(repo_path)
 
     # Clean up any existing lock files in the repository
@@ -529,6 +678,7 @@ def startup_tasks(args: argparse.Namespace) -> Tuple[Repo, str, str]:
 
     # Initialize the git repository object
     repo = git_get_toplevel()
+
     # Exit if the git repository initialization fails
     if repo is None:
         log_message.error(
@@ -562,11 +712,39 @@ def main():
     # Parse command-line arguments
     args = parse_arguments()
 
-    # Set logging level if debug mode is enabled
+    # Initialize LiteLLMTools
+    litellm_tools = LiteLLMTools(
+        debug=args.debug,  # Set to True for debug mode
+        # model_primary="gpt-4o-mini",
+        # model_primary="ollama_chat/deepseek-coder-v2",
+        # model_primary="groq/mixtral-8x7b-32768",
+        # model_primary="groq/gemma-7b-it",
+        model_primary="groq/llama-3.1-70b-versatile",
+        # model_secondary="claude-3-haiku-20240307"
+        model_secondary="gpt-4o-mini",
+    )
+
+    # Set default logging level to INFO
+    set_log_level("INFO")
+
+    # Override logging level to DEBUG if debug mode is enabled
     if args.debug:
         set_log_level("DEBUG")
-    else:
-        set_log_level("INFO")
+
+    # Expand wildcards and check if the files specified by --file-name exist
+    # before running push-prep
+    file_name_list = []
+    if args.file_name:
+        import glob
+
+        for pattern in args.file_name:
+            file_name_list.extend(glob.glob(pattern))
+        for file_name in file_name_list:
+            if not os.path.exists(file_name):
+                log_message.error(
+                    message=f"File does not exist: {file_name}", status="❌"
+                )
+                return 1
 
     # Run startup tasks to initialize the script and get repo
     repo, user_name, user_email = startup_tasks(args)
@@ -605,10 +783,27 @@ def main():
         committed_not_pushed,
     )
 
-    # Run tests before processing any files
-    if not run_tests(log_message):
-        log_message.error("Exiting due to failing tests", status="❌")
-        return 1
+    # If --file-name is used, filter the lists to only include files in
+    # file_name_list
+    if file_name_list:
+        deleted_files = [f for f in deleted_files if f in file_name_list]
+        untracked_files = [f for f in untracked_files if f in file_name_list]
+        modified_files = [f for f in modified_files if f in file_name_list]
+        staged_files = [f for f in staged_files if f in file_name_list]
+        committed_not_pushed = [
+            f for f in committed_not_pushed if f in file_name_list
+        ]
+
+    # Run tests before processing any files unless --skip-tests is specified
+    if not args.skip_tests:
+        log_message.info("Running tests before processing files", status="🔍")
+        if not run_tests(log_message):
+            log_message.error("Exiting due to failing tests", status="❌")
+            return 1
+    else:
+        log_message.info(
+            "Skipping tests as per --skip-tests argument", status="🚫"
+        )
 
     # Unstage all staged files if there are any
     if staged_files:
@@ -621,16 +816,14 @@ def main():
     # If .pre-commit-config.yaml is modified, stage and commit it first
     process_pre_commit_config(repo, modified_files)
 
-    if args.file_name:
-        # Single file mode
-        log_message.info("File name mode enabled", status=args.file_name)
-        process_files([args.file_name], repo, args, log_message)
-    elif args.oneshot:
+    if args.oneshot:
         # One-shot mode: Process only the first file in files_to_process
         log_message.info("One-shot mode enabled", status="🎯")
         files_to_process = untracked_files + modified_files
         if files_to_process:
-            process_files([files_to_process[0]], repo, args, log_message)
+            process_files(
+                [files_to_process[0]], repo, args, log_message, litellm_tools
+            )
         else:
             log_message.info("No files to process.", status="🚫")
     else:
@@ -638,7 +831,9 @@ def main():
         log_message.info("Batch mode enabled", status="📦")
         files_to_process = untracked_files + modified_files
         if files_to_process:
-            process_files(files_to_process, repo, args, log_message)
+            process_files(
+                files_to_process, repo, args, log_message, litellm_tools
+            )
         else:
             log_message.info("No files to process.", status="🚫")
 
