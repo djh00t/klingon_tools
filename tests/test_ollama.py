@@ -4,6 +4,8 @@ import requests
 import os
 
 
+# Example: This test checks if the 'ollama' dependency is installed
+@pytest.mark.optional  # Mark as optional
 def is_ollama_installed():
     """Check if Ollama is installed by running 'ollama --version'."""
     try:
@@ -17,6 +19,8 @@ def is_ollama_installed():
         return False
 
 
+# This test depends on 'is_ollama_installed' to pass
+@pytest.mark.dependency(depends=["is_ollama_installed"])
 def can_connect_to_ollama():
     """Check if we can connect to Ollama server."""
     try:
