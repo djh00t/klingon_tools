@@ -13,8 +13,9 @@ Attributes:
 
 from klingon_tools import LogTools
 
-# Initialize logging
-log_tools = LogTools()
+# Initialize LogTools passing the debug value
+args = None  # Define args variable with a default value
+log_tools = LogTools(debug=args.debug if "args" in globals() else False)
 log_message = log_tools.log_message
 set_log_level = log_tools.set_log_level
 set_default_style = log_tools.set_default_style
