@@ -1,11 +1,55 @@
+[tool.poetry]
+name = "klingon_tools"
+version = "2.1.1"
+description = "A set of utilities for running and logging shell commands in a user-friendly manner."
+authors = ["David Hooton <klingon_tools+david@hooton.org>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/djh00t/klingon_tools"
+packages = [{ include = "klingon_tools" },]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+openai = "*"
+gitpython = "*"
+requests = "*"
+httpx = "*"
+pyyaml = "*"
+ruamel-yaml = "*"
+pre-commit = "*"
+psutil = "*"
+tabulate = "*"
+packaging = "*"
+jinja2 = "*"
+litellm = "*"
+iniconfig = "*"
+
+[tool.poetry.dev-dependencies]
+pytest = "^8.3.1"
+pytest-mock = "*"
+poetry = "*"
+
+[tool.poetry.scripts]
+push = "klingon_tools.push:main"
+gh-actions-update = "klingon_tools.gh_actions_update:main"
+pr-title-generate = "klingon_tools.entrypoints:gh_pr_gen_title"
+pr-summary-generate = "klingon_tools.entrypoints:gh_pr_gen_summary"
+pr-context-generate = "klingon_tools.entrypoints:gh_pr_gen_context"
+pr-body-generate = "klingon_tools.entrypoints:gh_pr_gen_body"
+ktest = "klingon_tools.entrypoints:ktest"
+kstart = "klingon_tools.kstart:main"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
 [tool.black]
 line-length = 79
-target-version = [ "py33", "py34", "py35", "py36", "py37", "py38", "py39", "py310", "py311", "py312"]
+target-version = ["py36", "py37", "py38", "py39", "py310", "py311", "py312"]
 include = "\\.pyi?$"
 exclude = "\\.eggs|\\.git|\\.hg|\\.mypy_cache|\\.tox|\\.venv|_build|buck-out|build|dist"
 
 [tool.flake8]
-# ignore = ["E501"]
 max-line-length = 79
 verbose = 3
 
@@ -29,14 +73,17 @@ ignore_patterns = ["temp/**/*.py", "temp2/*.py"]
 [tool.mypy]
 exclude = "tmp/"
 
-[build-system]
-requires = ["setuptools", "wheel", "packaging", "toml", "build", "twine"]
-build-backend = "setuptools.build_meta"
-
-[tool.semantic_release]
-version = "2.1.1"
-
 [tool.pytest.ini_options]
 addopts = "-ra -q"
 testpaths = ["tests"]
-minversion = "8.3.1 "
+minversion = "8.3.1"
+
+[tool.semantic_release]
+version_variable = ["pyproject.toml:version"]
+version_toml = ["pyproject.toml:tool.poetry.version"]
+version_pattern = ["README.md:version-{version}"]
+major_on_zero = false
+branch = "main"
+upload_to_pypi = true
+upload_to_release = true
+build_command = "pip install poetry && poetry build"
