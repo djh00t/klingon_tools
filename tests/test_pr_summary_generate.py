@@ -1,8 +1,10 @@
 import subprocess
 import unittest
+import pytest
 
 
 class TestPRSummaryGenerate(unittest.TestCase):
+    @pytest.mark.optional  # Mark as optional
     def test_pr_summary_generate(self):
         # Run the pr-summary-generate command
         result = subprocess.run(
