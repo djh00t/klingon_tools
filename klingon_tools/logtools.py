@@ -50,7 +50,7 @@ class LogTools:
 
     template = None
 
-    def __init__(self, debug=False):
+    def __init__(self, debug):
         """Initializes LogTools with an optional debug flag.
 
         Args:
@@ -61,8 +61,7 @@ class LogTools:
         self.default_style = "default"  # Set a default style
         self.log_message = LogTools.LogMessage(__name__, self)
         self.logger = logging.getLogger(__name__)
-        if self.DEBUG:
-            self.configure_logging()
+        self.set_log_level("DEBUG" if self.DEBUG else "INFO")
 
     def set_default_style(self, style):
         """Sets the default style for log messages.
@@ -87,6 +86,17 @@ class LogTools:
         Args:
             level (str): The logging level to set (e.g., 'DEBUG', 'INFO').
         """
+        # If level is not INFO print a message saying the level being set. Also
+        # make sure that the level is in uppercase and a valid level
+        level = level.upper()
+        if level not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
+            raise ValueError(
+                f"Invalid log level '{level}'. Valid levels are: "
+                "'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'"
+            )
+        if level != "INFO":
+            print(f"Setting log level to {level}")
+
         self.logger.setLevel(level)
         self.log_message.setLevel(level)
 
