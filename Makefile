@@ -1,7 +1,7 @@
-# Makefile for klingon-deps Python package
+# Makefile for klingon-tools Python package
 
 # Variables
-APP_NAME = "klingon-deps"
+APP_NAME = "klingon-tools"
 POETRY_USERNAME ?= __token__
 TEST_PYPI_PASSWORD ?= $(TEST_PYPI_USER_AGENT)
 PYPI_PASSWORD ?= $(PYPI_USER_AGENT)
