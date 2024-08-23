@@ -12,10 +12,7 @@ Typical usage example:
 import re
 
 from git import Repo
-from klingon_tools.openai_tools import OpenAITools
-
-# from klingon_tools.log_msg import log_message, set_log_level,
-# set_default_style
+from klingon_tools.litellm_tools import LiteLLMTools
 
 
 def is_commit_message_signed_off(commit_message: str) -> bool:
@@ -49,7 +46,7 @@ def is_conventional_commit(commit_message: str) -> bool:
     return re.match(conventional_commit_pattern, commit_message) is not None
 
 
-def validate_commit_messages(repo: Repo, openai_tools: OpenAITools) -> bool:
+def validate_commit_messages(repo: Repo, litellm_tools: LiteLLMTools) -> bool:
     """Validate all commit messages to ensure they are signed off and follow
     the Conventional Commits standard.
 
