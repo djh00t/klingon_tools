@@ -19,7 +19,7 @@ from git import GitCommandError
 
 from klingon_tools.git_validate_commit import validate_commit_messages
 from klingon_tools.log_msg import log_message
-from klingon_tools.openai_tools import OpenAITools
+from klingon_tools.litellm_tools import LiteLLMTools
 
 
 def git_push(repo: git.Repo) -> None:
@@ -63,7 +63,7 @@ def git_push(repo: git.Repo) -> None:
                         f"Failed to handle deletion for {file}: {e}"
                     )
                     continue
-        openai_tools = OpenAITools()
+        litellm_tools = LiteLLMTools()
         # Validate commit messages
         if not validate_commit_messages(repo):
             log_message.error(
@@ -81,7 +81,7 @@ def git_push(repo: git.Repo) -> None:
                     text=True,
                     check=True,
                 ).stdout
-                commit_message = openai_tools.generate_commit_message(
+                commit_message = litellm_tools.generate_commit_message(
                     file_diff
                 )
                 # Commit the file with the generated message
