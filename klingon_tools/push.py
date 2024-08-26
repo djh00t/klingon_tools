@@ -89,7 +89,7 @@ from klingon_tools.git_tools import (
 from klingon_tools.log_msg import log_message, set_log_level
 from klingon_tools.litellm_tools import LiteLLMTools
 from klingon_tools.git_unstage import git_unstage_files
-from klingon_tools.entrypoints import ktest
+from klingon_tools.ktest import ktest
 
 # Initialize variables
 deleted_files = []
