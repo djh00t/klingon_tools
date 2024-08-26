@@ -38,12 +38,16 @@ Usage:
     pr_context = tools.generate_pull_request_context(diff)
     pr_body = tools.generate_pull_request_body(diff)
 
-Best ollama models to use for git commit messages:
+Best LiteLLM models to use for git commit messages:
   - gpt-4o - excellent (paid)
   - gpt-4o-mini - very good (paid)
+  - claude-3-haiku-20240307 - very good (paid)
   - chatgpt-4o-latest - very good (paid)
   - deepseek-coder-v2 - very good
   - codestral-latest - very good (paid)
+  - groq/llama-3.1-70b-versatile - excellent (freemium)
+  - groq/mixtral-8x7b-32768 - very good (freemium)
+  - groq/gemma-7b-it - very good (freemium)
   - mistral-small-latest - Good content
   - mistral-nemo - good content, weird formatting
   - phi3:mini - Overly verbose
@@ -258,40 +262,6 @@ class LiteLLMTools:
             9. The word context must be in the returned content.
 
             Commit messages: \"{diff}\"
-            """,
-            "pull_request_body": """
-            Generate a comprehensive pull request body based on the provided
-            commit messages. Use the following template structure:
-
-            ## Description
-            [Provide a brief description of the changes introduced by this PR]
-
-            ## Motivation and Context
-            [Explain why this change is required and what problem it solves]
-
-            ## Types of Changes
-            [Mark which types of changes your code introduces. Use 'x' to mark
-            the boxes. Add bullet points under each selected type to briefly
-            describe the changes.]
-
-            - [ ] `feat`: ✨ A new feature
-            - [ ] `fix`: 🐛 A bug fix
-            - [ ] `docs`: 📚 Documentation only changes
-            - [ ] `style`: 💄 Changes that do not affect the meaning of the code
-            - [ ] `refactor`: ♻️ A code change that neither fixes a bug nor
-              adds a feature
-            - [ ] `perf`: 🚀 A code change that improves performance
-            - [ ] `test`: 🚨 Adding missing or correcting existing tests
-            - [ ] `build`: 🛠️ Changes that affect the build system or external
-              dependencies
-            - [ ] `ci`: ⚙️ Changes to our CI configuration files and scripts
-            - [ ] `chore`: 🔧 Other changes that don't modify src or test files
-            - [ ] `revert`: ⏪ Reverts a previous commit
-
-            Commit messages: \"{diff}\"
-
-            Fill out the template based on the provided commit messages,
-            ensuring a comprehensive and informative pull request body.
             """,
         }
 

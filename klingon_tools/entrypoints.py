@@ -189,30 +189,3 @@ def gh_pr_gen_context():
         print(f"Error: {e}")
         traceback.print_exc()
         return 1, None
-
-
-def gh_pr_gen_body():
-    """NOTE: This method & Entrypoint have been deprecated.
-    Generate and print a GitHub pull request body using OpenAI tools.
-
-    This function fetches the commit log from the 'origin/release' branch,
-    generates a pull request body using OpenAI's API, and prints the body.
-
-    Entrypoint:
-        pr-body-generate
-
-    Example:
-        gh_pr_gen_body()
-    """
-    try:
-        # log_message.info("Generating PR body using LiteLLMTools...")
-        commit_result = get_commit_log("origin/release")
-        diff = commit_result.stdout
-        litellm_tools = LiteLLMTools()
-        pr_body = litellm_tools.generate_pull_request_body(diff)
-        print(pr_body)
-        return 0
-    except Exception as e:
-        print(f"Error: {e}")
-        traceback.print_exc()
-        return 1, None
