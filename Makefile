@@ -2,9 +2,7 @@
 
 # Variables
 APP_NAME = "klingon-tools"
-POETRY_USERNAME ?= __token__
-TEST_PYPI_PASSWORD ?= $(TEST_PYPI_USER_AGENT)
-PYPI_PASSWORD ?= $(PYPI_USER_AGENT)
+PYPI_USER_AGENT ?= __token__
 
 # Clean the repository
 clean:
@@ -133,12 +131,12 @@ uninstall:
 # Upload to PyPI
 upload: test wheel
 	@echo "Uploading Version to PyPI..."
-	@poetry publish --username $(POETRY_USERNAME) --password $(PYPI_PASSWORD)
+	@TWINE_USER_AGENT="$(PYPI_USER_AGENT)" poetry publish --build
 
 # Upload to TestPyPI
 upload-test: test wheel
 	@echo "Uploading Version to TestPyPI..."
-	@poetry publish --repository testpypi --username $(POETRY_USERNAME) --password $(TEST_PYPI_PASSWORD)
+	@poetry publish --repository testpypi --username $(PYPI_USER_AGENT) --password $(PYPI_USER_AGENT)
 
 # Create a wheel distribution package
 wheel: clean
