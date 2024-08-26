@@ -157,12 +157,18 @@ class LogTools:
                 )
             if "message" in kwargs:
                 msg = kwargs.pop("message")
+            if "args" in kwargs:
+                args = kwargs.pop("args")
             if reason:
                 msg = f"{msg} ({reason})"
             if self.parent.template:
                 msg = self.parent.template.format(
                     message=msg, style=style, status=status
                 )
+
+            # If args are provided, format the message
+            if args:
+                msg = msg % args
 
             emoji_adjustment = (
                 1
@@ -330,17 +336,16 @@ class LogTools:
             def wrapper(*args, **kwargs):
                 display_message = message if message else func.__name__
                 padding = 72 - len(f"Running {display_message}... ")
-                # Handle exceptions and log errors
-                # Capture stdout and stderr to handle method output
                 if style == "pre-commit":
                     display_message = self._format_pre_commit(
                         display_message, status, reason
                     )
-                    print(display_message, end="")
+                    print(display_message, end="", flush=True)
                 else:
                     print(
                         f"Running {display_message}... " + " " * padding,
                         end="",
+                        flush=True,
                     )
 
                 # Capture stdout and stderr to handle method output
@@ -352,90 +357,55 @@ class LogTools:
                 try:
                     result = func(*args, **kwargs)
                     stdout = sys.stdout.getvalue()
-                    stderr = sys.stderr.getvalue()
 
-                    # Check the result and log accordingly
-                    if result is None or result:
-                        # Determine the color based on the status
-                        color = (
-                            LogTools.BOLD_GREEN
-                            if status == "OK"
-                            else (
-                                LogTools.BOLD_YELLOW
-                                if status == "WARNING"
-                                else LogTools.BOLD_RED
-                            )
+                    # Determine the color based on the status
+                    color = (
+                        LogTools.BOLD_GREEN
+                        if status == "OK"
+                        else (
+                            LogTools.BOLD_YELLOW
+                            if status == "WARNING"
+                            else LogTools.BOLD_RED
                         )
-                        if style == "pre-commit":
-                            print(f"{color}{status}{LogTools.RESET}")
-                        elif style == "basic":
-                            padding = 77 - len(
-                                f"Running {display_message} {status}"
-                            )
-                            print(
-                                f"\rRunning {display_message}"
-                                f"{' ' * padding}{color}{status}"
-                                f"{LogTools.RESET}"
-                            )
-                        if self.DEBUG and stdout:
-                            print(
-                                f"{LogTools.BOLD_GREEN}INFO "
-                                f"DEBUG:\n{LogTools.RESET}{stdout}"
-                            )
-                    elif result == 1:  # Assuming '1' is a warning
-                        # Log a warning message
-                        if style == "pre-commit":
-                            print(
-                                f"{LogTools.BOLD_YELLOW}{status}"
-                                f"{LogTools.RESET}"
-                            )
-                        else:
-                            print(
-                                f"\rRunning {display_message}... "
-                                f"{' ' * padding}"
-                                f"{LogTools.BOLD_YELLOW}WARNING"
-                                f"{LogTools.RESET}"
-                            )
-                        if self.DEBUG and stdout:
-                            self.log_message.warning(
-                                f"WARNING DEBUG:\n{stdout}"
-                            )
-                    else:
-                        if style == "pre-commit":
-                            print(
-                                f"{LogTools.BOLD_RED}{status}{LogTools.RESET}"
-                            )
-                        else:
-                            print(
-                                f"\rRunning {display_message}... "
-                                + " " * padding
-                                + f"{LogTools.BOLD_RED}ERROR{LogTools.RESET}"
-                            )
-                        if self.DEBUG and stderr:
-                            self.log_message.error(f"ERROR DEBUG:\n{stderr}")
+                    )
+
+                    return result, stdout, color, display_message
                 except Exception as e:
-                    # Handle exceptions and log errors
-                    if style == "pre-commit":
-                        print(f"{LogTools.BOLD_RED}{status}{LogTools.RESET}")
-                    elif style == "basic":
-                        padding = 77 - len(
-                            f"Running {display_message} {status}"
-                        )
-                        print(
-                            f"\rRunning {display_message}"
-                            f"{' ' * padding}{LogTools.BOLD_RED}ERROR"
-                            f"{LogTools.RESET}"
-                        )
-                    stderr = sys.stderr.getvalue()
-                    if self.DEBUG and stderr:
-                        self.log_message.info(f"ERROR DEBUG:\n{stdout}")
-                    raise e
+                    return None, "", str(e), LogTools.BOLD_RED, display_message
                 finally:
                     # Restore stdout and stderr to their original state
                     sys.stdout = old_stdout
                     sys.stderr = old_stderr
 
-            return wrapper
+            def print_status(result, stdout, color, display_message):
+                if style == "pre-commit":
+                    print(f"{color}{status}{LogTools.RESET}", flush=True)
+                elif style == "basic":
+                    padding = 77 - len(f"Running {display_message} {status}")
+                    print(
+                        f"\rRunning {display_message}"
+                        f"{' ' * padding}{color}{status}"
+                        f"{LogTools.RESET}",
+                        flush=True,
+                    )
+                else:  # default style
+                    print(f"{color}{status}{LogTools.RESET}", flush=True)
+
+                if self.DEBUG and stdout:
+                    print(
+                        f"{LogTools.BOLD_GREEN}INFO "
+                        f"DEBUG:\n{LogTools.RESET}{stdout}",
+                        flush=True,
+                    )
+
+            def execute(*args, **kwargs):
+                result, stdout, color, display_message = wrapper(
+                    *args, **kwargs
+                )
+                print_status(result, stdout, color, display_message)
+                return result
+
+            return execute
 
         return decorator
 
@@ -503,10 +473,19 @@ class LogTools:
                 display_name = self._format_pre_commit(
                     display_name, status, reason
                 )
-                print(display_name, end="")
+                print(display_name, end="", flush=True)
             elif style == "basic":
                 padding = 77 - len(f"Running {display_name} {status}")
-                print(f"Running {display_name}{' ' * padding}{status}")
+                print(
+                    f"Running {display_name}{' ' * padding}{status}",
+                    flush=True,
+                )
+            else:  # default style
+                print(
+                    f"Running {display_name}... " + " " * padding,
+                    end="",
+                    flush=True,
+                )
 
             # Capture stdout and stderr to handle command output
             old_stdout = sys.stdout
@@ -523,71 +502,42 @@ class LogTools:
                     text=True,
                 )
                 stdout = result.stdout
-                stderr = result.stderr
 
-                # Check the return code and log accordingly
-                if result.returncode == 0:
-                    # Determine the color based on the status
-                    color = (
-                        LogTools.BOLD_GREEN
-                        if status == "Passed"
-                        else (
-                            LogTools.BOLD_YELLOW
-                            if status == "WARNING"
-                            else LogTools.BOLD_RED
-                        )
+                # Determine the color based on the status
+                color = (
+                    LogTools.BOLD_GREEN
+                    if status == "Passed"
+                    else (
+                        LogTools.BOLD_YELLOW
+                        if status == "WARNING"
+                        else LogTools.BOLD_RED
                     )
-                    if style == "pre-commit":
-                        print(f"{color}{status}{LogTools.RESET}")
-                    else:
-                        print(
-                            f"\rRunning {display_name}... "
-                            + " " * padding
-                            + f"{color}{status}{LogTools.RESET}"
-                        )
-                    if self.DEBUG and stdout:
-                        self.log_message.info(f"INFO DEBUG:\n{stdout}")
-                elif result.returncode == 1:  # Assuming '1' is a warning
-                    # Log a warning message
-                    if style == "pre-commit":
-                        print(
-                            f"{LogTools.BOLD_YELLOW}{status}{LogTools.RESET}"
-                        )
-                    else:
-                        print(
-                            f"\rRunning {display_name}... "
-                            + " " * padding
-                            + f"{LogTools.BOLD_YELLOW}WARNING{LogTools.RESET}"
-                        )
-                    if self.DEBUG and stdout:
-                        self.log_message.warning(f"WARNING DEBUG:\n{stdout}")
-                else:
-                    if style == "pre-commit":
-                        print(f"{LogTools.BOLD_RED}{status}{LogTools.RESET}")
-                    elif style == "basic":
-                        padding = 77 - len(f"Running {display_name} {status}")
-                        print(
-                            f"\rRunning {display_name}"
-                            f"{' ' * padding}{LogTools.BOLD_RED}ERROR"
-                            f"{LogTools.RESET}"
-                        )
-                    if self.DEBUG and stderr:
-                        self.log_message.info(f"ERROR DEBUG:\n{stdout}")
-            except subprocess.CalledProcessError as e:
+                )
+
+                # Restore stdout and stderr to their original state
+                sys.stdout = old_stdout
+                sys.stderr = old_stderr
+
+                # Print the status
                 if style == "pre-commit":
-                    print(f"{LogTools.BOLD_RED}{status}{LogTools.RESET}")
-                else:
-                    print(
-                        f"\rRunning {display_name}... "
-                        + " " * padding
-                        + f"{LogTools.BOLD_RED}ERROR{LogTools.RESET}"
-                    )
-                stderr = sys.stderr.getvalue()
-                if self.DEBUG and stderr:
-                    self.log_message.info(f"ERROR DEBUG:\n{stdout}")
+                    print(f"{color}{status}{LogTools.RESET}", flush=True)
+                elif style == "basic":
+                    # This case is already handled above
+                    pass
+                else:  # default style
+                    print(f"{color}{status}{LogTools.RESET}", flush=True)
+
+                if self.DEBUG and stdout:
+                    self.log_message.info(f"INFO DEBUG:\n{stdout}")
+            except subprocess.CalledProcessError as e:
+                sys.stdout = old_stdout
+                sys.stderr = old_stderr
+                print(f"{LogTools.BOLD_RED}ERROR{LogTools.RESET}", flush=True)
+                if self.DEBUG:
+                    self.log_message.error(f"ERROR DEBUG:\n{e.stderr}")
                 raise e
             finally:
-                # Restore stdout and stderr to their original state
+                # Ensure stdout and stderr are restored
                 sys.stdout = old_stdout
                 sys.stderr = old_stderr
 
