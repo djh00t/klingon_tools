@@ -333,6 +333,7 @@ def run_tests(log_message: Any = None, quiet: bool = False) -> bool:
         log_message.info("Running tests using ktest", status="🔍")
     try:
         # Execute the ktest function to run the tests
+
         results = ktest()
         # Return True if all tests passed, False otherwise
         log_message.info(80 * "-", status="", style="none")
