@@ -1,100 +1,177 @@
+# tests/test_kstart.py
+"""
+This module contains pytest functions for testing the kstart module.
+
+It includes tests for git configuration, user prompts, and the main
+functionality of the kstart module.
+"""
+
 import os
 import sys
-import unittest
-from unittest.mock import patch
+import pytest
+import warnings
+from unittest.mock import patch, MagicMock
 from io import StringIO
+from datetime import datetime
 
 # Add the parent directory to sys.path to import kstart
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from klingon_tools import kstart  # noqa: E402
 
+# Filter out specific warnings
+warnings.filterwarnings(
+    "ignore", category=DeprecationWarning, module="pydantic"
+)
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="imghdr")
+warnings.filterwarnings(
+    "ignore", category=DeprecationWarning, module="importlib_resources"
+)
 
-class TestKStart(unittest.TestCase):
 
-    @patch("builtins.input")
-    @patch("subprocess.run")
-    def test_check_git_config(self, mock_subprocess, mock_input):
-        mock_input.side_effect = ["Test User", "test@example.com"]
-        mock_subprocess.return_value.returncode = 0
+@patch("builtins.input")
+@patch("klingon_tools.kstart.subprocess.run")
+def test_check_git_config(mock_subprocess_run, mock_input):
+    """
+    Test the check_git_config function.
 
-        with patch("configparser.ConfigParser.read"):
-            kstart.check_git_config()
+    Args:
+        mock_subprocess_run (MagicMock): Mock for subprocess.run.
+        mock_input (MagicMock): Mock for builtins.input.
+    """
+    mock_input.side_effect = ["Test User", "test@example.com"]
 
-        self.assertEqual(mock_subprocess.call_count, 2)
-        mock_subprocess.assert_any_call(
-            ["git", "config", "--global", "user.name", "Test User"]
-        )
-        mock_subprocess.assert_any_call(
-            ["git", "config", "--global", "user.email", "test@example.com"]
-        )
+    # Mock the subprocess.run calls for checking and setting config
+    mock_subprocess_run.side_effect = [
+        MagicMock(stdout=""),  # Simulate no existing user.name
+        MagicMock(stdout=""),  # Simulate no existing user.email
+        MagicMock(returncode=0),  # Simulate setting user.name
+    ]
 
-    @patch("builtins.input")
-    def test_prompt_with_default(self, mock_input):
-        mock_input.return_value = ""
+    kstart.check_git_config()
+
+    assert mock_subprocess_run.call_count == 3
+    mock_subprocess_run.assert_any_call(
+        ["git", "config", "--global", "user.name"],
+        capture_output=True,
+        text=True,
+    )
+    mock_subprocess_run.assert_any_call(
+        ["git", "config", "--global", "user.email"],
+        capture_output=True,
+        text=True,
+    )
+    mock_subprocess_run.assert_any_call(
+        ["git", "config", "--global", "user.name", "Test User"]
+    )
+
+
+def test_prompt_with_default():
+    """Test the prompt_with_default function."""
+    with patch("builtins.input", return_value=""):
         result = kstart.prompt_with_default("Test prompt", "default_value")
-        self.assertEqual(result, "default_value")
+        assert result == "default_value"
 
-        mock_input.return_value = "user_input"
+    with patch("builtins.input", return_value="user_input"):
         result = kstart.prompt_with_default("Test prompt", "default_value")
-        self.assertEqual(result, "user_input")
+        assert result == "user_input"
 
-    @patch("builtins.input")
-    @patch("subprocess.run")
-    @patch("configparser.ConfigParser.read")
-    @patch("configparser.ConfigParser.write")
-    def test_main(self, mock_write, mock_read, mock_subprocess, mock_input):
-        mock_input.side_effect = [
-            "Test User",  # Git user.name
-            "test@test.com",  # Git user.email
-            "testuser",  # GitHub username
-            "c",  # Issue type choice (feature)
-            "Test Feature",  # Feature branch title
-            "123,456",  # Linked issues
-        ]
-        mock_subprocess.return_value.returncode = 0
 
+@patch("builtins.input")
+@patch("klingon_tools.kstart.subprocess.run")
+@patch("klingon_tools.kstart.configparser.ConfigParser")
+@patch("klingon_tools.kstart.datetime")
+@patch("os.path.exists")
+def test_main(
+    mock_exists,
+    mock_datetime,
+    mock_configparser,
+    mock_subprocess_run,
+    mock_input,
+):
+    """
+    Test the main function of kstart.
+
+    Args:
+        mock_exists (MagicMock): Mock for os.path.exists.
+        mock_datetime (MagicMock): Mock for datetime.
+        mock_configparser (MagicMock): Mock for ConfigParser.
+        mock_subprocess_run (MagicMock): Mock for subprocess.run.
+        mock_input (MagicMock): Mock for builtins.input.
+    """
+    mock_exists.return_value = False
+    mock_input.side_effect = [
+        "testuser",  # GitHub username
+        "c",  # Issue type choice (feature)
+        "Test Feature",  # Feature branch title
+        "123,456",  # Linked issues
+    ]
+    mock_datetime.now.return_value = datetime(2024, 1, 1)
+    mock_config = MagicMock()
+    mock_configparser.return_value = mock_config
+    mock_config.__getitem__.return_value = {}
+
+    with patch("builtins.open", MagicMock()):
         with patch("sys.stdout", new=StringIO()) as fake_out:
             kstart.main()
 
-        self.assertIn("Pushed branch:", fake_out.getvalue())
+    assert "Pushed branch:" in fake_out.getvalue()
+    assert mock_input.call_count == 4
 
-        # Check if the correct number of inputs were consumed
-        self.assertEqual(mock_input.call_count, 6)
 
-    @patch("builtins.input")
-    @patch("subprocess.run")
-    @patch("configparser.ConfigParser.read")
-    @patch("configparser.ConfigParser.write")
-    def test_main_invalid_issue_type(
-        self, mock_write, mock_read, mock_subprocess, mock_input
-    ):
-        mock_input.side_effect = [
-            "Test User",  # Git user.name
-            "test@test.com",  # Git user.email
-            "testuser",  # GitHub username
-            "d",  # Invalid issue type choice
-            "Test Feature",  # Feature branch title
-            "123,456",  # Linked issues
-        ]
-        mock_subprocess.return_value.returncode = 0
+@patch("builtins.input")
+@patch("klingon_tools.kstart.subprocess.run")
+@patch("klingon_tools.kstart.configparser.ConfigParser")
+@patch("klingon_tools.kstart.datetime")
+@patch("os.path.exists")
+def test_main_invalid_issue_type(
+    mock_exists,
+    mock_datetime,
+    mock_configparser,
+    mock_subprocess_run,
+    mock_input,
+):
+    """
+    Test the main function with an invalid issue type input.
 
+    Args:
+        mock_exists (MagicMock): Mock for os.path.exists.
+        mock_datetime (MagicMock): Mock for datetime.
+        mock_configparser (MagicMock): Mock for ConfigParser.
+        mock_subprocess_run (MagicMock): Mock for subprocess.run.
+        mock_input (MagicMock): Mock for builtins.input.
+    """
+    mock_exists.return_value = False
+    mock_input.side_effect = [
+        "testuser",  # GitHub username
+        "d",  # Invalid issue type choice
+        "Test Feature",  # Feature branch title
+        "123,456",  # Linked issues
+    ]
+    mock_datetime.now.return_value = datetime(2024, 1, 1)
+    mock_config = MagicMock()
+    mock_configparser.return_value = mock_config
+    mock_config.__getitem__.return_value = {"ISSUE_TYPE": "feature"}
+
+    with patch("builtins.open", MagicMock()):
         with patch("sys.stdout", new=StringIO()) as fake_out:
             kstart.main()
 
-        self.assertIn(
-            "Invalid choice. Using default: 'feature'.", fake_out.getvalue()
-        )
-        self.assertIn("Pushed branch:", fake_out.getvalue())
+    assert "Invalid choice. Using default: 'feature'." in fake_out.getvalue()
+    assert "Pushed branch:" in fake_out.getvalue()
+    assert mock_input.call_count == 4
 
-        # Check if the correct number of inputs were consumed
-        self.assertEqual(mock_input.call_count, 6)
 
-    @patch("klingon_tools.kstart.main")
-    def test_entrypoint(self, mock_main):
-        # Test that kstart.main() is called when the module is run
-        kstart.main()
-        mock_main.assert_called_once()
+@patch("klingon_tools.kstart.main")
+def test_entrypoint(mock_main):
+    """
+    Test the entrypoint of the kstart module.
+
+    Args:
+        mock_main (MagicMock): Mock for kstart.main function.
+    """
+    kstart.main()
+    mock_main.assert_called_once()
 
 
 if __name__ == "__main__":
-    unittest.main()
+    pytest.main([__file__])
