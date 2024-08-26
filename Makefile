@@ -6,7 +6,7 @@ PYPI_USER_AGENT ?= __token__
 
 # Clean the repository
 clean:
-	@echo "Cleaning up repo............................................................. 🧹"
+	@echo "Cleaning up repo.............................................................. 🧹"
 	@make push-prep
 	@pre-commit clean
 	@find . -type f -name '*.pyc' -delete
@@ -107,6 +107,7 @@ release: ensure-node ensure-semantic-release
 
 # Pre-push cleanup target
 push-prep:
+
 	@echo "Running poetry lock......................................................... 🔒"
 	@poetry lock
 	@echo "Removing temporary files.................................................... 🧹"
