@@ -6,19 +6,32 @@ from datetime import datetime
 
 
 def check_git_config():
-    config = configparser.ConfigParser()
-    config.read(os.path.expanduser("~/.gitconfig"))
+    """Check and set Git configuration for user name and email."""
 
-    if "user" not in config:
-        config["user"] = {}
+    def get_git_config(key):
+        result = subprocess.run(
+            ["git", "config", "--global", key], capture_output=True, text=True
+        )
+        return result.stdout.strip()
 
-    if "name" not in config["user"]:
-        name = input("Enter your Git username: ")
-        subprocess.run(["git", "config", "--global", "user.name", name])
+    def set_git_config(key, value):
+        subprocess.run(["git", "config", "--global", key, value])
 
-    if "email" not in config["user"]:
-        email = input("Enter your Git email: ")
-        subprocess.run(["git", "config", "--global", "user.email", email])
+    # Check and set user.name
+    user_name = get_git_config("user.name")
+    if not user_name:
+        user_name = input("Enter your Git user name: ")
+        set_git_config("user.name", user_name)
+
+    # Check and set user.email
+    user_email = get_git_config("user.email")
+    if not user_email:
+        user_email = input("Enter your Git email: ")
+        set_git_config("user.email", user_email)
+
+    print(
+        f"Git config set: user.name = {user_name}, user.email = {user_email}"
+    )
 
 
 def load_branch_metadata():

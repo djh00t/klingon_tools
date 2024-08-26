@@ -371,10 +371,8 @@ def update_action_version(
         None
     """
     log_message.debug(
-        "Updating action %s in file %s to version %s",
-        action_name,
-        file_path,
-        latest_version,
+        message="Updating action %s in file %s to version %s",
+        args=(action_name, file_path, latest_version),
     )
 
     # Read the YAML file content
@@ -390,7 +388,8 @@ def update_action_version(
         for step in job.get("steps", []):
             if "uses" in step and step["uses"].startswith(action_name):
                 log_message.debug(
-                    "Found action %s in job %s", action_name, job_name
+                    message="Found action %s in job %s",
+                    args=(action_name, job_name),
                 )
                 step["uses"] = f"{action_name}@{latest_version}"
                 updated = True
@@ -398,20 +397,21 @@ def update_action_version(
     # Write the updated content back to the file if any updates were made
     if updated:
         log_message.info(
-            "Action %s updated to version %s in file %s",
-            action_name,
-            latest_version,
-            file_path,
+            message="Action {} updated to version {} in file {}".format(
+                action_name, latest_version, file_path
+            )
         )
         with open(file_path, "w") as file:
             yaml.dump(content, file)
     else:
         log_message.warning(
-            "No updates made for action %s in file %s", action_name, file_path
+            message="No updates made for action %s in file %s",
+            args=(action_name, file_path),
         )
 
     log_message.debug(
-        "Updated %s to %s in %s", action_name, latest_version, file_path
+        message="Updated %s to %s in %s",
+        args=(action_name, latest_version, file_path),
     )
 
 
