@@ -75,13 +75,13 @@ class LiteLLMTools:
     def __init__(
         self,
         debug=False,
-        # model_primary="gpt-4o-mini",
+        model_primary="gpt-4o-mini",
         # model_primary="ollama_chat/deepseek-coder-v2",
-        model_primary="groq/mixtral-8x7b-32768",
+        # model_primary="groq/mixtral-8x7b-32768",
         # model_primary="groq/gemma-7b-it",
         # model_primary="groq/llama-3.1-70b-versatile",
-        # model_secondary="claude-3-haiku-20240307"
-        model_secondary="gpt-4o-mini",
+        model_secondary="claude-3-haiku-20240307",
+        # model_secondary="gpt-4o-mini"
     ):
         """
         Initializes the LiteLLMTools class.
@@ -184,6 +184,9 @@ class LiteLLMTools:
             Example output:
             "Error handling, refactor user registration, and README update"
 
+            PLEASE NOTE: IT IS CRITICAL to keep the title length under 72
+            characters or this process will fail.
+
             Commit messages: \"{diff}\"
             """,
             "XXX_pull_request_title": """
@@ -237,26 +240,24 @@ class LiteLLMTools:
             concise context statement for the changes in the pull request that
             clearly explains why the changes have been made.
 
-            Use bullet points to list the reasons for the changes, but use as
-            few as possible to keep the context concise.
-
-            Content should be returned as markdown without headings or font
-            styling, bullet points and plain paragraph text are ok.
-
             IMPORTANT GUIDELINES:
             1. Explain why these changes were necessary.
-            2. Use bullet points to list the main reasons for the changes.
-            3. Keep it brief but informative - aim for 3-5 bullet points.
+            2. Use bullet points to list the main reasons for the changes,but
+            use as few as possible to keep the context concise.
+            3. Keep it brief but informative - aim for no more than 10 bullet
+            points.
             4. Focus on the business or technical motivations behind the
             changes.
             5. If addressing any issues or bugs, mention them concisely.
             6. Avoid technical implementation details unless crucial for
             understanding the context.
+            7. Content should be returned as markdown without headings or font
+            styling, bullet points and plain paragraph text are ok.
+            8. Provide a context that helps reviewers understand the motivation
+            and importance of these changes.
+            9. The word context must be in the returned content.
 
             Commit messages: \"{diff}\"
-
-            Provide a context that helps reviewers understand the motivation
-            and importance of these changes.
             """,
             "pull_request_body": """
             Generate a comprehensive pull request body based on the provided
@@ -570,6 +571,8 @@ class LiteLLMTools:
 
         """
         generated_title, _ = self.generate_content("pull_request_title", diff)
+        if len(generated_title) > 72:
+            generated_title = generated_title[:69] + "..."
         return generated_title
 
     def generate_pull_request_summary(

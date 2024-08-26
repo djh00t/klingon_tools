@@ -35,6 +35,7 @@ from klingon_tools.log_msg import log_message, set_default_style, set_log_level
 from klingon_tools.litellm_tools import LiteLLMTools
 import pytest
 import os
+import traceback
 
 
 def ktest(loglevel="INFO"):
@@ -97,7 +98,9 @@ def ktest(loglevel="INFO"):
             # Restore stdout
             os.dup2(original_stdout, 1)
 
-    # Return the results in the expected format
+    if __name__ == "__main__":
+        for result in results:
+            print(f"{result['name']}: {result['outcome']}")
     return [
         {"name": test_name, "outcome": outcome}
         for test_name, outcome in results
@@ -117,13 +120,17 @@ def gh_pr_gen_title():
     Example:
         pr_title = gh_pr_gen_title()
     """
-    commit_result = get_commit_log("origin/release")
-    diff = commit_result.stdout
-    litellm_tools = LiteLLMTools()
-    pr_title = litellm_tools.generate_pull_request_title(diff)
-
-    print(pr_title)  # Print the title
-    return pr_title  # Return the title
+    try:
+        commit_result = get_commit_log("origin/release")
+        diff = commit_result.stdout
+        litellm_tools = LiteLLMTools()
+        pr_title = litellm_tools.generate_pull_request_title(diff)
+        print(pr_title)
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        traceback.print_exc()
+        return 1, None
 
 
 def gh_pr_gen_summary():
@@ -139,16 +146,20 @@ def gh_pr_gen_summary():
     Example:
         gh_pr_gen_summary()
     """
-    # log_message.info("Generating PR summary using LiteLLMTools...")
-    commit_result = get_commit_log("origin/release")
-    diff = commit_result.stdout
-    litellm_tools = LiteLLMTools()
-    pr_summary = litellm_tools.generate_pull_request_summary(
-        diff, dryrun=False
-    )
-
-    print(pr_summary)
-    return pr_summary
+    try:
+        # log_message.info("Generating PR summary using LiteLLMTools...")
+        commit_result = get_commit_log("origin/release")
+        diff = commit_result.stdout
+        litellm_tools = LiteLLMTools()
+        pr_summary = litellm_tools.generate_pull_request_summary(
+            diff, dryrun=False
+        )
+        print(pr_summary)
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        traceback.print_exc()
+        return 1, None
 
 
 def gh_pr_gen_context():
@@ -164,16 +175,20 @@ def gh_pr_gen_context():
     Example:
         gh_pr_gen_context()
     """
-    # log_message.info("Generating PR context using LiteLLMTools...")
-    commit_result = get_commit_log("origin/release")
-    diff = commit_result.stdout
-    litellm_tools = LiteLLMTools()
-    pr_context = litellm_tools.generate_pull_request_context(
-        diff, dryrun=False
-    )
-
-    print(pr_context)
-    return pr_context
+    try:
+        # log_message.info("Generating PR context using LiteLLMTools...")
+        commit_result = get_commit_log("origin/release")
+        diff = commit_result.stdout
+        litellm_tools = LiteLLMTools()
+        pr_context = litellm_tools.generate_pull_request_context(
+            diff, dryrun=False
+        )
+        print(pr_context)
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        traceback.print_exc()
+        return 1, None
 
 
 def gh_pr_gen_body():
@@ -189,11 +204,15 @@ def gh_pr_gen_body():
     Example:
         gh_pr_gen_body()
     """
-    # log_message.info("Generating PR body using LiteLLMTools...")
-    commit_result = get_commit_log("origin/release")
-    diff = commit_result.stdout
-    litellm_tools = LiteLLMTools()
-    pr_body = litellm_tools.generate_pull_request_body(diff)
-
-    print(pr_body)
-    return pr_body
+    try:
+        # log_message.info("Generating PR body using LiteLLMTools...")
+        commit_result = get_commit_log("origin/release")
+        diff = commit_result.stdout
+        litellm_tools = LiteLLMTools()
+        pr_body = litellm_tools.generate_pull_request_body(diff)
+        print(pr_body)
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        traceback.print_exc()
+        return 1, None
