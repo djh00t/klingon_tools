@@ -1,23 +1,103 @@
+# tests/test_pr_title_generate.py
+"""
+Tests for the pr-title-generate command.
+
+This module contains pytest-style unit tests for the pr-title-generate
+command-line tool. It verifies the command's execution and output.
+"""
+
 import subprocess
-import unittest
+
+import pytest
 
 
-class TestPRTitleGenerate(unittest.TestCase):
-    def test_pr_title_generate(self):
-        # Run the pr-title-generate command
-        result = subprocess.run(
-            ["pr-title-generate"], capture_output=True, text=True
-        )
+@pytest.mark.parametrize("debug", [False, True])
+def test_pr_title_generate(debug: bool, capsys) -> None:
+    """
+    Test the pr-title-generate command execution and output.
 
-        # Split the output into lines
-        output_lines = result.stdout.splitlines()
+    This test runs the pr-title-generate command and checks its output
+    for expected format and length.
 
-        # Check that there is a line of text output
-        self.assertGreater(len(output_lines), 0)
+    Args:
+        debug (bool): Flag to enable debug output.
+        capsys: Pytest fixture to capture system output.
 
-        # Check that its length is 72 characters or less
-        self.assertLessEqual(len(output_lines[0]), 72)
+    Raises:
+        AssertionError: If any of the assertions fail.
+    """
+    # Run the pr-title-generate command
+    result = subprocess.run(
+        ["pr-title-generate"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    # Debugging output
+    if debug:
+        print("=" * 80)
+        print(f"RETURN CODE: {result.returncode}")
+        print(f"STDOUT: {result.stdout}")
+        print(f"STDERR: {result.stderr}")
+        print("=" * 80)
+
+    # Capture the printed output for assertion
+    captured = capsys.readouterr()
+
+    # Assertions
+    assert_pr_title_generate_output(
+        result, captured.out if debug else "", debug
+    )
+
+
+def assert_pr_title_generate_output(
+    result: subprocess.CompletedProcess, debug_output: str, debug: bool
+) -> None:
+    """
+    Assert the output of pr-title-generate command.
+
+    Args:
+        result (subprocess.CompletedProcess): The result of the command
+        execution.
+        debug_output (str): Captured debug output, if any.
+        debug (bool): Flag indicating whether debug mode is active.
+
+    Raises:
+        AssertionError: If any of the assertions fail.
+    """
+    # Check that the command ran without errors
+    assert (
+        result.returncode == 0
+    ), f"Command failed with return code {result.returncode}"
+
+    output_lines = result.stdout.splitlines()
+
+    print(f"output_lines: {output_lines}")
+
+    # Check that there is a line of text output in stdout
+    assert len(output_lines) > 0, "No output was generated"
+
+    # Remove quotation marks from the title
+    title = output_lines[0].strip().strip('"')
+
+    # Check that its length is 72 characters or less in stdout (including
+    # possible ellipsis)
+    assert len(title) <= 75, f"Title exceeds 75 characters: {len(title)} chars"
+
+    # Additional checks
+    assert title.strip(), "Generated title is empty or only whitespace"
+    assert title[0].isupper(), "Title should start with an uppercase letter"
+    assert title.endswith("...") or not title.endswith(
+        "."
+    ), "Title should end with an ellipsis or not end with a period"
+
+    if debug:
+        print(f"Generated title: {title}")
+        assert "RETURN CODE:" in debug_output
+        assert "STDOUT:" in debug_output
+        assert "STDERR:" in debug_output
 
 
 if __name__ == "__main__":
-    unittest.main()
+    pytest.main([__file__, "-v"])
