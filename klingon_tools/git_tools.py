@@ -622,6 +622,14 @@ def clean_commit_message(message: str) -> str:
     lines = message.strip().split('\n')
     if lines:
         first_line = lines[0]
+        # Add space after emoji if it's present and not followed by a space
+        first_line = re.sub(
+            r'^([\u2600-\u26FF\u2700-\u27BF\U0001F300-\U0001F5FF'
+            r'\U0001F600-\U0001F64F\U0001F680-\U0001F6FF'
+            r'\U0001F900-\U0001F9FF])(\S)',
+            r'\1 \2',
+            first_line
+        )
         if not re.match(
             r'^[\u2600-\u26FF\u2700-\u27BF\U0001F300-\U0001F5FF'
             r'\U0001F600-\U0001F64F\U0001F680-\U0001F6FF'
