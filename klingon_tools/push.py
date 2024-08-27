@@ -597,16 +597,28 @@ def generate_and_validate_commit_message(
         litellm_tools: LiteLLMTools,
         log_message: Any
         ) -> Optional[str]:
+    """Generate and validate a conventional commit message using LiteLLMTools.
+
+    Args:
+        diff (str): The diff of the file to be committed.
+        litellm_tools (LiteLLMTools): Tool instance to generate the commit
+            message.
+        log_message (Any): Logger instance to capture warnings and errors.
+
+    Returns:
+        Optional[str]: A valid commit message or None if validation fails.
+    """
     for attempt in range(3):
         try:
             commit_message = litellm_tools.generate_commit_message(diff)
-            # Remove any leading 'plaintext' or '```' markers
+
+            # Remove any leading 'plaintext' or '```' markers from the commit
             commit_message = re.sub(
-                r'^(plaintext| plaintext|```)\s*',
-                '',
-                commit_message.strip()
+                r'^(plaintext|```)\s*', '', commit_message.strip()
             )
-            # Ensure there's a space after the emoji if present
+
+            # Ensure there's a space between the emoji and the first non-space
+            # character
             emoji_pattern = (
                 r'^([\u2600-\u26FF\u2700-\u27BF\U0001F300-\U0001F5FF'
                 r'\U0001F600-\U0001F64F\U0001F680-\U0001F6FF'
@@ -617,24 +629,27 @@ def generate_and_validate_commit_message(
                 r'\1 \2',
                 commit_message
             )
-            # Add space between emoji and commit type if missing
+
+            # Add a space between the emoji and commit type if missing
             commit_types = (
                 r'(feat|fix|chore|docs|style|refactor|perf|test|build|ci|'
                 r'revert|wip)'
             )
             commit_message = re.sub(
-                f'{emoji_pattern}{commit_types}',
+                fr'{emoji_pattern}{commit_types}',
                 r'\1 \2',
                 commit_message,
                 flags=re.IGNORECASE
             )
 
-            # Handle dependency update commits
+            # Handle dependency update commits by converting type to 'build'
             if 'dependencies' in diff.lower() or 'deps' in diff.lower():
                 commit_message = re.sub(
-                    r'^(feat|fix|chore):', 'build:', commit_message
+                    r'^(feat|fix|chore):', 'build:', commit_message,
+                    flags=re.IGNORECASE
                 )
 
+            # Validate the commit message against conventional commit standards
             if is_conventional_commit(commit_message):
                 return commit_message
 
