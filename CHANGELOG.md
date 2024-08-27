@@ -1,3 +1,16 @@
+## [2.3.0-release.7](https://github.com/djh00t/klingon_tools/compare/v2.3.0-release.6...v2.3.0-release.7) (2024-08-27)
+
+
+### Features
+
+* **requirements:** add litellm to project dependencies ([8a80794](https://github.com/djh00t/klingon_tools/commit/8a80794e9f066a29f5882b555ea205a62b908295))
+* **push:** add pytest support and test directory checks ([d6f04f2](https://github.com/djh00t/klingon_tools/commit/d6f04f2e451e246af38f09010a3e70b7344ad9f1))
+
+
+### Bug Fixes
+
+* **openai_tools:** set style parameter to 'none' for generated commit message ([f8f215f](https://github.com/djh00t/klingon_tools/commit/f8f215fd01f9924ac75a18e6b5dd2364c524f5f2))
+
 ## [2.3.0-release.6](https://github.com/djh00t/klingon_tools/compare/v2.3.0-release.5...v2.3.0-release.6) (2024-08-09)
 
 
