@@ -46,7 +46,8 @@ def is_conventional_commit(commit_message: str) -> bool:
         r"^[\u2600-\u26FF\u2700-\u27BF\U0001F300-\U0001F5FF"
         r"\U0001F600-\U0001F64F\U0001F680-\U0001F6FF\U0001F900-\U0001F9FF]?\s*"
         r"(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert|wip)"
-        r"\([\w\/-]+\):\s"
+        # Allow word characters, slashes, periods, and hyphens in scope
+        r"\([\w\/.-]+\):\s"
         r".{10,}"  # At least 10 characters after the colon
     )
 
