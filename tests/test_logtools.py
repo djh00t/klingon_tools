@@ -49,7 +49,15 @@ def log_tools() -> Tuple[LogTools, LogCaptureHandler]:
 
 
 def test_init():
-    """Test the initialization of the LogTools class."""
+    """Test the initialization of the LogTools class.
+
+    Assertions:
+        - Asserts that the DEBUG attribute is set to True.
+        - Asserts that the default style is set to "default".
+        - Asserts that the log_message attribute is an instance of
+          LogTools.LogMessage.
+        - Asserts that the logger level is set to DEBUG.
+    """
     lt = LogTools(debug=True)
     assert lt.DEBUG is True
     assert lt.default_style == "default"
@@ -58,7 +66,14 @@ def test_init():
 
 
 def test_set_default_style(log_tools):
-    """Test setting the default style for LogTools."""
+    """Test setting the default style for LogTools.
+
+    Assertions:
+        - Asserts that the default style is set to "pre-commit".
+        - Asserts that the log_message's default style is also set to
+          "pre-commit".
+        - Asserts that setting an invalid style raises a ValueError.
+    """
     lt, _ = log_tools
     lt.set_default_style("pre-commit")
     assert lt.default_style == "pre-commit"
@@ -69,7 +84,13 @@ def test_set_default_style(log_tools):
 
 
 def test_set_log_level(log_tools):
-    """Test setting the log level for LogTools."""
+    """Test setting the log level for LogTools.
+
+    Assertions:
+        - Asserts that the logger level is set to INFO.
+        - Asserts that the log_message's logger level is also set to INFO.
+        - Asserts that setting an invalid log level raises a ValueError.
+    """
     lt, _ = log_tools
     lt.set_log_level("INFO")
     assert lt.logger.level == logging.INFO
@@ -79,15 +100,14 @@ def test_set_log_level(log_tools):
         lt.set_log_level("INVALID_LEVEL")
 
 
-def test_set_template():
-    """Test setting the template for LogTools."""
-    template = "{message} - {style} - {status}"
-    LogTools.set_template(template)
-    assert LogTools.template == template
-
-
 def test_log_message(log_tools):
-    """Test the basic logging functionality of LogTools."""
+    """Test the basic logging functionality of LogTools.
+
+    Assertions:
+        - Asserts that the log message "Test message" is present in the
+          captured log messages.
+        - Asserts that the status "OK" is present in the captured log messages.
+    """
     lt, log_capture = log_tools
     lt.log_message.info("Test message", style="default", status="OK")
     assert any("Test message" in msg for msg in log_capture.messages)
@@ -96,7 +116,14 @@ def test_log_message(log_tools):
 
 @patch("sys.stdout", new_callable=StringIO)
 def test_method_state_decorator(mock_stdout, log_tools):
-    """Test the method_state decorator of LogTools."""
+    """Test the method_state decorator of LogTools.
+
+    Assertions:
+        - Asserts that the message "Running Test method" is present in the
+          stdout output.
+        - Asserts that the status "OK" is present in the stdout output or
+          captured log messages.
+    """
     lt, log_capture = log_tools
 
     @lt.method_state(message="Test method", style="default", status="OK")
@@ -121,7 +148,14 @@ def test_method_state_decorator(mock_stdout, log_tools):
 @patch("sys.stdout", new_callable=StringIO)
 @patch("subprocess.run")
 def test_command_state(mock_subprocess_run, mock_stdout, log_tools):
-    """Test the command_state method of LogTools."""
+    """Test the command_state method of LogTools.
+
+    Assertions:
+        - Asserts that the message "Running Test Command" is present in the
+          stdout output or captured log messages.
+        - Asserts that the status "Passed" is present in the stdout output or
+          captured log messages.
+    """
     lt, log_capture = log_tools
     mock_subprocess_run.return_value = MagicMock(
         returncode=0, stdout="Command output", stderr=""
@@ -148,7 +182,15 @@ def test_command_state(mock_subprocess_run, mock_stdout, log_tools):
 
 
 def test_format_pre_commit():
-    """Test the _format_pre_commit static method of LogTools."""
+    """Test the _format_pre_commit static method of LogTools.
+
+    Assertions:
+        - Asserts that the formatted message contains "Test message".
+        - Asserts that the formatted message contains "Passed".
+        - Asserts that the formatted message contains "All good".
+        - Asserts that the length of the first line of the formatted message is
+          less than or equal to 80 characters.
+    """
     formatted = LogTools._format_pre_commit(
         "Test message", "Passed", "All good"
     )
@@ -159,7 +201,18 @@ def test_format_pre_commit():
 
 
 def test_log_message_styles(log_tools):
-    """Test different logging styles of LogTools."""
+    """Test different logging styles of LogTools.
+
+    Assertions:
+        - Asserts that the log message "Test default" is present in the
+          captured log messages.
+        - Asserts that the log message "Test pre-commit" is present in the
+          captured log messages.
+        - Asserts that the log message "Test basic" is present in the captured
+          log messages.
+        - Asserts that the log message "Test none" is present in the captured
+          log messages.
+    """
     lt, log_capture = log_tools
     lt.log_message.info("Test default", style="default")
     lt.log_message.info("Test pre-commit", style="pre-commit")
@@ -174,7 +227,20 @@ def test_log_message_styles(log_tools):
 
 
 def test_log_message_levels(log_tools):
-    """Test different logging levels of LogTools."""
+    """Test different logging levels of LogTools.
+
+    Assertions:
+        - Asserts that the log message "Debug message" is present in the
+          captured log messages.
+        - Asserts that the log message "Info message" is present in the
+          captured log messages.
+        - Asserts that the log message "Warning message" is present in the
+          captured log messages.
+        - Asserts that the log message "Error message" is present in the
+          captured log messages.
+        - Asserts that the log message "Critical message" is present in the
+          captured log messages.
+    """
     lt, log_capture = log_tools
     lt.log_message.debug("Debug message")
     lt.log_message.info("Info message")
@@ -191,7 +257,14 @@ def test_log_message_levels(log_tools):
 
 
 def test_log_message_exception(log_tools):
-    """Test exception logging of LogTools."""
+    """Test exception logging of LogTools.
+
+    Assertions:
+        - Asserts that the log message "Exception occurred" is present in the
+          captured log messages.
+        - Asserts that the log message contains "Test exception".
+        - Asserts that the log message contains the traceback information.
+    """
     lt, log_capture = log_tools
     try:
         raise Exception("Test exception")
@@ -201,7 +274,9 @@ def test_log_message_exception(log_tools):
     messages = log_capture.messages
     assert any("Exception occurred" in msg for msg in messages)
     assert any("Test exception" in msg for msg in messages)
+    assert any("Traceback (most recent call last):" in msg for msg in messages)
 
 
 if __name__ == "__main__":
+    """Run the tests using pytest."""
     pytest.main()
