@@ -96,6 +96,7 @@ class LiteLLMTools:
             model_secondary (str, optional): Secondary model to use. Defaults
             to "claude-3-haiku-20240307".
         """
+        os.environ['LITELLM_LOG'] = 'DEBUG'
 
         # Set the logging level for LiteLLM, requests, urllib3 and httpx to
         # WARNING to prevent excessive stdout logging
@@ -133,43 +134,60 @@ class LiteLLMTools:
         # AI Templates
         self.templates = {
             "commit_message_system": """
-            Generate a commit message based solely on the staged diffs
-            provided, ensuring accuracy and relevance to the actual changes.
-            Avoid speculative or unnecessary footers, such as references to
-            non-existent issues.
+            You are an AI assistant specialized in generating clear, concise,
+            and informative git commit messages, pull request titles, contexts
+            and summaries.
+
+            Your task is to analyze code diffs and produce git repository
+            documentation that accurately reflect the changes made.
+
+            Follow best practices for commit messages, including using the
+            Conventional Commits format when appropriate.
+
+            When provided with message length or column widths, **they are
+            mandatory and must not be exceeded.**
+            """,
+            "commit_message_user": """
+            Generate a git commit message based on these diffs: "{diff}"
 
             Follow the Conventional Commits standard using the following
-            format: ``` <type>(scope): <description>
+            format:
+            <type>(scope): <description>
 
-            ```
+            [optional body]
+
+            [optional footer(s)]
+
+            The first line of a conventional commit must not exceed 100 chars
+            and must be followed by a blank line. The body and footer are both
+            optional but must be separated by a blank line if present.
+
             Consider the following options when selecting commit types:
-            • build: updates to build system & external dependencies
-            • chore: changes that don't modify src or test files
-            • ci: changes to CI configuration files and scripts
-            • docs: updates to documentation & comments
-            • feat: add new feature or function to the codebase
-            • fix: correct bugs and other errors in code
-            • perf: improve performance without changing existing functionality
-            • refactor: code changes that neither fix bugs nor add features
-            • revert: Reverts a previous commit
-            • style: changes that do not affect the meaning of the code
-            (white-space, formatting, missing semi-colons, etc) but improve
-            readability, consistency, or maintainability
-            • test: add, update, correct unit tests
-            • other:  Changes that don't fit into the above categories
+            - build: updates to build system & external dependencies
+            - chore: changes that don't modify src or test files
+            - ci: changes to CI configuration files and scripts
+            - docs: updates to documentation & comments
+            - feat: add new feature or function to the codebase
+            - fix: correct bugs and other errors in code
+            - perf: improve performance without changing existing functionality
+            - refactor: code changes that neither fix bugs nor add features
+            - revert: Reverts a previous commit
+            - style: changes that do not affect the meaning of the code
+            (white-space, formatting, missing semi-colons, etc)
+            - test: add, update, correct unit tests
+            - other: Changes that don't fit into the above categories
 
             Scope: Select the most specific of application name, file name,
             class name, method/function name, or feature name for the commit
-            scope. If in doubt, use the name of the file being modified.
+            scope. If in doubt, use the name of the file being modified. *Scope
+            is not optional.*
 
             Breaking Changes: Include a `BREAKING CHANGE:` footer or append !
             after type/scope for commits that introduce breaking changes.
-
-            Footers: Breaking change is the only footer permitted. Do not add
+            Breaking change is the only footer permitted. Do not add
             "Co-authored-by" or other footers unless explicitly requested.
-            """,
-            "commit_message_user": """
-            Generate a git commit message based on these diffs: \"{diff}\"
+
+            Ensure the commit message is accurate, relevant, and concise.
             """,
             "pull_request_title": """
             Generate a pull request title (72 characters or less) summarizing
