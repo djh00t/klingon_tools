@@ -137,38 +137,32 @@ class LogTools:
         def _log(
             self,
             level,
-            msg=None,
-            style=None,
-            status="OK",
-            reason=None,
             *args,
-            **kwargs,
+            **kwargs
         ):
+            msg = kwargs.get('message') or (args[0] if args else None)
+            style = kwargs.get('style', self.default_style)
+            status = kwargs.get('status', "OK")
+            reason = kwargs.get('reason')
+
             if style is None:
-                style = (
-                    self.default_style
-                    if hasattr(self, "default_style")
-                    else self.parent.default_style
-                )
+                # Output plain text without formatting when style is None
+                final_msg = msg
+                self.logger.log(level, final_msg)
+                return
+
             if style not in self.parent.VALID_STYLES:
                 raise ValueError(
                     f"Invalid style '{style}'. Valid styles are: "
                     f"{', '.join(self.parent.VALID_STYLES)}"
                 )
-            if "message" in kwargs:
-                msg = kwargs.pop("message")
-            if "args" in kwargs:
-                args = kwargs.pop("args")
+
             if reason:
                 msg = f"{msg} ({reason})"
             if self.parent.template:
                 msg = self.parent.template.format(
                     message=msg, style=style, status=status
                 )
-
-            # If args are provided, format the message
-            if args:
-                msg = msg % args
 
             emoji_adjustment = (
                 1
@@ -213,32 +207,37 @@ class LogTools:
                     msg = f"{msg}{' ' * padding} {status}"
             elif style == "none":
                 final_msg = msg
-                self.logger.log(level, final_msg, *args, **kwargs)
+                self.logger.log(level, final_msg)
                 return
 
             final_msg = msg.ljust(total_length)
-            self.logger.log(level, final_msg, *args, **kwargs)
+            self.logger.log(level, final_msg)
 
-        def debug(self, msg=None, *args, **kwargs):
-            self._log(logging.DEBUG, msg, *args, **kwargs)
+        def debug(self, *args, **kwargs):
+            self._log(logging.DEBUG, *args, **kwargs)
 
-        def info(self, msg=None, *args, **kwargs):
-            self._log(logging.INFO, msg, *args, **kwargs)
+        def info(self, *args, **kwargs):
+            self._log(logging.INFO, *args, **kwargs)
 
-        def warning(self, msg=None, *args, **kwargs):
-            self._log(logging.WARNING, msg, *args, **kwargs)
+        def warning(self, *args, **kwargs):
+            self._log(logging.WARNING, *args, **kwargs)
 
-        def error(self, msg=None, *args, **kwargs):
-            self._log(logging.ERROR, msg, *args, **kwargs)
+        def error(self, *args, **kwargs):
+            self._log(logging.ERROR, *args, **kwargs)
 
-        def critical(self, msg=None, *args, **kwargs):
-            self._log(logging.CRITICAL, msg, *args, **kwargs)
+        def critical(self, *args, **kwargs):
+            self._log(logging.CRITICAL, *args, **kwargs)
 
-        def exception(self, msg=None, *args, exc_info=True, **kwargs):
-            self._log(logging.ERROR, msg, exc_info=exc_info, *args, **kwargs)
+        def exception(self, *args, exc_info=True, **kwargs):
+            kwargs['exc_info'] = exc_info
+            self._log(logging.ERROR, *args, **kwargs)
+            if exc_info:
+                import traceback
+                tb = traceback.format_exc()
+                self._log(logging.ERROR, tb, style="none")
 
-        def log(self, level, msg, *args, **kwargs):
-            self._log(level, msg, *args, **kwargs)
+        def log(self, level, *args, **kwargs):
+            self._log(level, *args, **kwargs)
 
         def setLevel(self, level):
             self.logger.setLevel(level)
