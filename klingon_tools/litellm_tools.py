@@ -158,9 +158,10 @@ class LiteLLMTools:
 
             [optional footer(s)]
 
-            The first line of a conventional commit must not exceed 100 chars
-            and must be followed by a blank line. The body and footer are both
-            optional but must be separated by a blank line if present.
+            The first line of a conventional commit must not exceed 79
+            characters and must be followed by a blank line. The body and
+            footer are both optional but must be separated by a blank line if
+            present.
 
             Consider the following options when selecting commit types:
             - build: updates to build system & external dependencies
@@ -188,6 +189,8 @@ class LiteLLMTools:
             "Co-authored-by" or other footers unless explicitly requested.
 
             Ensure the commit message is accurate, relevant, and concise.
+            **REMEMBER: No more than 79 characters on the first line, followed
+            by a blank line.**
             """,
             "pull_request_title": """
             Generate a pull request title (72 characters or less) summarizing
