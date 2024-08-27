@@ -1,0 +1,26 @@
+diff --git a/klingon_tools/push.py b/klingon_tools/push.py index
+            42cc941..7a7c767 100644 --- a/klingon_tools/push.py +++
+            b/klingon_tools/push.py @@ -51,6 +51,9 @@ Best ollama models to use
+            for git commit messages:    - chatgpt-4o-latest - very good (paid)
+            - deepseek-coder-v2 - very good    - codestral-latest - very good
+            (paid) +  - groq/llama-3.1-70b-versatile - excellent (freemium) +
+            - groq/mixtral-8x7b-32768 - very good (freemium) +  -
+            groq/gemma-7b-it - very good (freemium)    - mistral-small-latest -
+            Good content    - mistral-nemo - good content, weird formatting
+            - phi3:mini - Overly verbose @@ -715,11 +718,14 @@ def main():
+            # Initialize LiteLLMTools      litellm_tools = LiteLLMTools(
+            debug=args.debug,  # Set to True for debug mode +        #
+            Excellent          # model_primary="gpt-4o-mini", +        # Large
+            allowances for unpaid users +
+            model_primary="groq/llama-3.1-70b-versatile",          #
+            model_primary="ollama_chat/deepseek-coder-v2",          #
+            model_primary="groq/mixtral-8x7b-32768",          #
+            model_primary="groq/gemma-7b-it", -
+            model_primary="groq/llama-3.1-70b-versatile", +        #
+            model_primary="claude-3-haiku-20240307",          #
+            model_secondary="claude-3-haiku-20240307"
+            model_secondary="gpt-4o-mini",      ) @@ -746,7 +752,7 @@ def
+            main():                  )                  return 1   -    # Run
+            startup tasks to initialize the script and get repo +    # Run
+            startup tasks to ini`ti`alize the script and get repo      repo,
+            user_name, user_email = startup_tasks(args)        if repo is None:

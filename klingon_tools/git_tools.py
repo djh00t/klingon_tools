@@ -35,7 +35,7 @@ from klingon_tools.git_validate_commit import (
     validate_commit_messages,
 )
 from klingon_tools.log_msg import log_message
-from klingon_tools.openai_tools import OpenAITools
+from klingon_tools.litellm_tools import LiteLLMTools
 
 LOOP_MAX_PRE_COMMIT = 10
 
@@ -245,7 +245,15 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
                     ),
                     status="⚠️",
                 )
-            repo.index.remove([file], working_tree=True)
+                try:
+                    repo.index.remove([file], working_tree=True)
+                except git_exc.GitCommandError as e:
+                    log_message.error(
+                        message=f"Failed to stage deleted file {file}",
+                        status="❌",
+                    )
+                    log_message.exception(message=f"{e}")
+                    continue
 
             # Generate the commit message with scope
             commit_message = f"chore({file}): Committing deleted file"
@@ -293,33 +301,6 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
         git_push(repo)
 
 
-def git_unstage_files(repo: Repo, staged_files: list) -> None:
-    """Unstages all staged files in the given repository.
-
-    This function iterates over all staged files in the repository and
-    un-stages them. It logs the status of each file as it is un-staged.
-
-    Args:
-        repo: An instance of the git.Repo object representing the repository.
-
-    Returns:
-        None
-    """
-    log_message.info(message="Un-staging all staged files", status="🔄")
-    log_message.debug(message="Staged files", status=f"{staged_files}")
-
-    # Iterate over each staged file and un-stage it
-    for file in staged_files:
-        try:
-            repo.git.reset("--", file)
-            log_message.info(message="Un-staging file", status=f"{file}")
-        except git_exc.GitCommandError as e:
-            log_message.error(
-                message="Error un-staging file", status=f"{file}"
-            )
-            log_message.exception(message=f"{e}")
-
-
 def git_stage_diff(file_name: str, repo: Repo, modified_files: list) -> str:
     """Stages a file, generates a diff, and returns the diff.
 
@@ -334,20 +315,33 @@ def git_stage_diff(file_name: str, repo: Repo, modified_files: list) -> str:
     Returns:
         A string containing the diff of the staged file.
     """
-    # Stage the specified file Process .pre-commit-config.yaml if modified
+    log_message.info(message="Staging file", status=f"{file_name}")
     process_pre_commit_config(repo, modified_files)
 
     def stage_file(repo: Repo, file_name: str):
         """Helper function to stage a file."""
-        repo.index.add([file_name])
-        staged_files = repo.git.diff("--cached", "--name-only").splitlines()
-        log_message.debug(message="Staged files", status=f"{staged_files}")
+        try:
+            log_message.debug(
+                message="Staging file in repo", status=f"{repo.working_dir}"
+            )
+            repo.index.add([file_name])
+            log_message.debug(message="File staged successfully.", status="✅")
+            staged_files = repo.git.diff(
+                "--cached", "--name-only"
+            ).splitlines()
+            log_message.debug(message="Staged files", status=f"{staged_files}")
 
-        # Check if the file was successfully staged
-        if file_name in staged_files:
-            log_message.info(message="Staging file", status="✅")
-        else:
-            log_message.error(message="Failed to stage file", status="❌")
+            # Check if the file was successfully staged
+            if file_name in staged_files:
+                log_message.info(message="Staged file", status="✅")
+            else:
+                log_message.error(
+                    f"Failed to stage file: {file_name}", status="❌"
+                )
+                sys.exit(1)
+        except Exception as e:
+            log_message.error(f"Error staging file: {file_name}", status="❌")
+            log_message.exception(message=f"{e}")
             sys.exit(1)
 
     # Stage the file in the main repo
@@ -360,11 +354,16 @@ def git_stage_diff(file_name: str, repo: Repo, modified_files: list) -> str:
             stage_file(submodule_repo, file_name)
 
     # Generate the diff for the staged file
-    diff = repo.git.diff("HEAD", file_name)
-    if diff:
-        log_message.info(message="Diff generated", status="✅")
-    else:
-        log_message.error(message="Failed to generate diff", status="❌")
+    try:
+        log_message.debug(f"Generating diff for file: {file_name}")
+        diff = repo.git.diff("HEAD", file_name)
+        if diff:
+            log_message.info(message="Diff generated", status="✅")
+        else:
+            log_message.error(message="Failed to generate diff", status="❌")
+    except Exception as e:
+        log_message.error(message="Error generating diff", status="❌")
+        log_message.exception(message=f"{e}")
 
     return diff
 
@@ -388,12 +387,19 @@ def git_pre_commit(
         True if the pre-commit hooks pass without modifying the file, otherwise
         exits the script after the maximum number of attempts.
     """
-    attempt = 0  # Initialize the attempt counter
-
     # Stage the file and generate a diff of the file being processed
     diff = git_stage_diff(file_name, repo, modified_files)
 
+    attempt = 0  # Initialize the attempt counter
+    log_message.info(80 * "-", status="", style="none")
+    log_message.info("Starting pre-commit hooks for", status=f"{file_name}")
+
     while attempt < LOOP_MAX_PRE_COMMIT:
+        # Log start of attempt number
+        log_message.info(
+            message="Running pre-commit attempt",
+            status=f"{attempt + 1}/{LOOP_MAX_PRE_COMMIT}",
+        )
         env = os.environ.copy()  # Copy the current environment variables
         # Set PYTHONUNBUFFERED to ensure real-time output
         env["PYTHONUNBUFFERED"] = "1"
@@ -441,12 +447,20 @@ def git_pre_commit(
             )
         )
 
+        log_message.debug(
+            message="Pre-commit hooks completed with return code",
+            status=f"{result.returncode}",
+        )
         if (
             "files were modified by this hook" in result.stdout
             or "Fixing" in result.stdout
         ):
             # Log that the file was modified by the pre-commit hook
             log_message.info(message=80 * "-", status="", style="none")
+            log_message.info(
+                f"File {file_name} was modified by pre-commit hooks",
+                status="🔄",
+            )
             log_message.info(
                 message=("File modified by pre-commit, restaging"),
                 status="🔄",
@@ -468,7 +482,9 @@ def git_pre_commit(
                 )
                 sys.exit(1)  # Exit the script if maximum attempts reached
         if result.returncode == 0:  # Check if pre-commit hooks passed
-            log_message.info(message="Pre-commit completed", status="✅")
+            log_message.info(
+                f"Pre-commit hooks passed for {file_name}", status="✅"
+            )
             return True, diff  # Return True if hooks passed
 
         if (
@@ -487,8 +503,14 @@ def git_pre_commit(
             log_message.debug(
                 message=f"Pre-commit stderr: {result.stderr}", status=""
             )
+            log_message.info(80 * "-", status="", style="none")
             sys.exit(1)
 
+    log_message.error(
+        f"Pre-commit hooks did not pass for {file_name} after "
+        f"{LOOP_MAX_PRE_COMMIT} attempts",
+        status="❌",
+    )
     return False, diff  # Return False if pre-commit hooks did not pass
 
 
@@ -516,12 +538,12 @@ def git_commit_file(
         if commit_message is None:
             # Generate the diff for the staged file
             diff = repo.git.diff("HEAD", file_name)
-            openai_tools = OpenAITools()
+            litellm_tools = LiteLLMTools()
             commit_message = None
             while not commit_message or not is_conventional_commit(
                 commit_message
             ):
-                commit_message = openai_tools.generate_commit_message(diff)
+                commit_message = litellm_tools.generate_commit_message(diff)
 
         # Commit the file with the generated commit message
         if commit_message:
@@ -532,8 +554,8 @@ def git_commit_file(
         log_message.info(message="File committed", status="✅")
 
         # Example call to validate_commit_messages
-        openai_tools = OpenAITools()
-        validate_commit_messages(repo, openai_tools)
+        litellm_tools = LiteLLMTools()
+        validate_commit_messages(repo, litellm_tools)
     except ValueError as ve:
         # Log an error message if the commit message format is invalid
         log_message.error(message="Commit message format error", status="❌")
@@ -660,9 +682,9 @@ def process_pre_commit_config(repo: Repo, modified_files: list) -> None:
         log_message.info(
             message=".pre-commit-config.yaml staged", status="Committing"
         )
-        openai_tools = OpenAITools()
+        litellm_tools = LiteLLMTools()
         diff = repo.git.diff("HEAD", ".pre-commit-config.yaml")
-        commit_message = openai_tools.generate_commit_message(diff)
+        commit_message = litellm_tools.generate_commit_message(diff)
         repo.index.commit(commit_message)
         log_message.info(
             message=".pre-commit-config.yaml committed", status="✅"

@@ -1,0 +1,21 @@
+diff --git a/benchmarking/diff-corpus/20240822000121_git_benchmark.diff b/benchmarking/diff-corpus/20240822000121_git_benchmark.diff
+new file mode 100644
+index 0000000..0f180ce
+--- /dev/null
++++ b/benchmarking/diff-corpus/20240822000121_git_benchmark.diff
+@@ -0,0 +1,15 @@
++diff --git a/benchmarking/diff-corpus/20240821235824_git_benchmark.diff b/benchmarking/diff-corpus/20240821235824_git_benchmark.diff
++new file mode 100644
++index 0000000..a23a3e4
++--- /dev/null
+++++ b/benchmarking/diff-corpus/20240821235824_git_benchmark.diff
++@@ -0,0 +1,9 @@
+++diff --git a/benchmarking/diff-corpus/20240821234141_git_benchmark.diff b/benchmarking/diff-corpus/20240821234141_git_benchmark.diff
+++new file mode 100644
+++index 0000000..2fb108d
+++--- /dev/null
++++++ b/benchmarking/diff-corpus/20240821234141_git_benchmark.diff
+++@@ -0,0 +1,3 @@
++++diff --git a/.branch-metadata b/.branch-metadata
++++new file mode 100644
++++index 0000000..e69de29

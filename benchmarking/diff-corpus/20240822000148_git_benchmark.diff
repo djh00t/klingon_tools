@@ -1,0 +1,18 @@
+diff --git a/benchmarking/results/benchmark_results.json b/benchmarking/results/benchmark_results.json
+new file mode 100644
+index 0000000..dc351a4
+--- /dev/null
++++ b/benchmarking/results/benchmark_results.json
+@@ -0,0 +1,12 @@
++[
++    {
++        "model": "groq/gemma-7b-it",
++        "time_taken": 1.8754980564117432,
++        "raw_compliance": 0,
++        "cleaned_compliance": 0,
++        "response_quality": 7.0,
++        "speed_rank": 1,
++        "quality_rank": 1,
++        "overall_score": 0.21
++    }
++]

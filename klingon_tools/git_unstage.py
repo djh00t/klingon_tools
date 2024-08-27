@@ -15,7 +15,7 @@ def git_unstage_files(repo: Repo, staged_files: list) -> None:
     Returns:
         None
     """
-    log_message.info(message="Un-staging all staged files", status="🔄")
+    log_message.info(message="Un-staging staged files", status="🔄")
     log_message.debug(message="Staged files", status=f"{staged_files}")
 
     # Iterate over each staged file and un-stage it

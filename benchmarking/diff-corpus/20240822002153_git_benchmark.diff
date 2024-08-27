@@ -1,0 +1,9 @@
+diff --git a/.gitignore b/.gitignore
+index 2ac7280..ed62520 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -280,3 +280,4 @@ var/
+ ## klingon_templates/gitignore/klingon_templates/languages/python.gitignore end
+ get_docstrings.py
+ ktest.py
++klingon_templates/

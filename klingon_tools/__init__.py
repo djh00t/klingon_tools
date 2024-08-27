@@ -7,4 +7,6 @@ class LogTools(_LogTools):
         super().__init__(debug)
 
 
+__version__ = "0.0.0"
+
 __all__ = ["LogTools"]

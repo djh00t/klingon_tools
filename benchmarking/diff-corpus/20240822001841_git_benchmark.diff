@@ -1,0 +1,62 @@
+diff --git a/benchmarking/diff-corpus/20240822000452_git_benchmark.diff b/benchmarking/diff-corpus/20240822000452_git_benchmark.diff
+new file mode 100644
+index 0000000..eb689b4
+--- /dev/null
++++ b/benchmarking/diff-corpus/20240822000452_git_benchmark.diff
+@@ -0,0 +1,56 @@
++diff --git a/benchmarking/diff-corpus/20240822000237_git_benchmark.diff b/benchmarking/diff-corpus/20240822000237_git_benchmark.diff
++new file mode 100644
++index 0000000..e22b829
++--- /dev/null
+++++ b/benchmarking/diff-corpus/20240822000237_git_benchmark.diff
++@@ -0,0 +1,50 @@
+++diff --git a/benchmarking/diff-corpus/20240822000117_git_benchmark.diff b/benchmarking/diff-corpus/20240822000117_git_benchmark.diff
+++new file mode 100644
+++index 0000000..52e82ae
+++--- /dev/null
++++++ b/benchmarking/diff-corpus/20240822000117_git_benchmark.diff
+++@@ -0,0 +1,44 @@
++++diff --git a/benchmarking/diff-corpus/20240821235821_git_benchmark.diff b/benchmarking/diff-corpus/20240821235821_git_benchmark.diff
++++new file mode 100644
++++index 0000000..6d9a821
++++--- /dev/null
+++++++ b/benchmarking/diff-corpus/20240821235821_git_benchmark.diff
++++@@ -0,0 +1,38 @@
+++++diff --git a/benchmarking/diff-corpus/20240821231428_git_benchmark.diff b/benchmarking/diff-corpus/20240821231428_git_benchmark.diff
+++++new file mode 100644
+++++index 0000000..cdac3e6
+++++--- /dev/null
++++++++ b/benchmarking/diff-corpus/20240821231428_git_benchmark.diff
+++++@@ -0,0 +1,32 @@
++++++diff --git a/benchmarking/diff-corpus/20240821225524_git_benchmark.diff b/benchmarking/diff-corpus/20240821225524_git_benchmark.diff
++++++new file mode 100644
++++++index 0000000..3b0f1b2
++++++--- /dev/null
+++++++++ b/benchmarking/diff-corpus/20240821225524_git_benchmark.diff
++++++@@ -0,0 +1,26 @@
+++++++diff --git a/benchmarking/conventional_commit_benchmark.yaml b/benchmarking/conventional_commit_benchmark.yaml
+++++++new file mode 100644
+++++++index 0000000..c8069c0
+++++++--- /dev/null
++++++++++ b/benchmarking/conventional_commit_benchmark.yaml
+++++++@@ -0,0 +1,20 @@
++++++++# conventional_commit_benchmark.yaml
++++++++models_to_test:
++++++++  - groq/gemma-7b-it
++++++++  - groq/llama3-8b-8192
++++++++  - groq/llama3-70b-8192
++++++++
++++++++scoring_weights:
++++++++  time_weight: 0.20
++++++++  raw_compliance_weight: 0.15
++++++++  cleaned_compliance_weight: 0.15
++++++++  response_quality_weight: 0.30
++++++++  speed_rank_weight: 0.10
++++++++  quality_rank_weight: 0.10
++++++++
++++++++output_config:
++++++++  output_format: json
++++++++  file_name_format: "YYYYMMDDHHMMSS_benchmark_results"
++++++++
++++++++# Add the diff file path to the config
++++++++diff_file: "diff-corpus/20240821_git_benchmark.diff"

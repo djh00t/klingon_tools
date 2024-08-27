@@ -7,8 +7,6 @@ Functions:
         Generates content based on a specific template.
     format_message(message: str, dryrun: bool = False) -> str:
         Formats a message with line wrapping and sign-off.
-    unstage_files():
-        Unstages all staged files.
     generate_commit_message(diff: str, dryrun: bool = False) -> str:
         Generates a commit message.
     generate_pull_request_title(diff: str, dryrun: bool = False) -> str:

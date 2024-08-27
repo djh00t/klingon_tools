@@ -1,0 +1,11 @@
+diff --git a/klingon_tools/__init__.py b/klingon_tools/__init__.py
+index d5d5c18..9a44804 100644
+--- a/klingon_tools/__init__.py
++++ b/klingon_tools/__init__.py
+@@ -7,4 +7,6 @@ class LogTools(_LogTools):
+         super().__init__(debug)
+
+
++__version__ = "0.0.0"
++
+ __all__ = ["LogTools"]

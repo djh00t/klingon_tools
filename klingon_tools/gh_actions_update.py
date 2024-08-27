@@ -1,4 +1,5 @@
-"""Module for updating GitHub Actions versions in workflows.
+"""
+Module for updating GitHub Actions versions in workflows.
 
 This module provides functionality to check and update GitHub Actions versions
 in YAML workflow files within a repository. It supports filtering by action,
@@ -38,21 +39,23 @@ def can_display_emojis(no_emojis_flag: bool, args: argparse.Namespace) -> bool:
     # Check if emojis are disabled by the --no-emojis flag
     if no_emojis_flag:
         if not args.quiet:
-            log_message.debug("Emojis are disabled by the --no-emojis flag.")
+            log_message.debug(
+                message="Emojis are disabled by the --no-emojis flag."
+            )
         return False
 
     # Check the LANG environment variable for UTF-8 support
     lang = os.getenv("LANG", "")
     if "UTF-8" in lang:
         log_message.debug(
-            "Terminal supports emojis based on LANG: %s 😎", lang
+            message=f"Terminal supports emojis based on LANG: {lang} 😎"
         )
         return True
 
     # Log a warning if emojis may not be supported
     if not args.quiet:
         log_message.warning(
-            "Terminal may not support emojis based on LANG: %s", lang
+            message=f"Terminal may not support emojis based on LANG: {lang} 😎"
         )
 
     return False
@@ -91,7 +94,8 @@ def get_latest_version(repo_name: str) -> str:
     # Construct the URL for the GitHub API request
     url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
     log_message.debug(
-        "Fetching latest version for repo: %s using URL: %s", repo_name, url
+        message=f"Fetching latest version for repo: {repo_name} using "
+        f"URL: {url}"
     )
 
     # Set up headers for the API request
@@ -106,19 +110,19 @@ def get_latest_version(repo_name: str) -> str:
 
     # Make the API request to fetch the latest release
     response = requests.get(url, headers=headers)
-    log_message.debug(f"Response status code: {response.status_code}")
+    log_message.debug(message=f"Response status code: {response.status_code}")
 
     # Check if the request was successful
     if response.status_code == 200:
         log_message.debug(
-            f"Latest version for {repo_name}: "
+            message=f"Latest version for {repo_name}: "
             f"{response.json()['tag_name']}"
         )
         return response.json()["tag_name"]
 
     # Log an error if the request failed
     log_message.error(
-        f"Failed to fetch latest version for {repo_name}, "
+        message=f"Failed to fetch latest version for {repo_name}, "
         f"status code: {response.status_code}"
     )
     return None
@@ -243,10 +247,10 @@ def find_github_actions(args: argparse.Namespace) -> dict:
                 if file.endswith(".yml") or file.endswith(".yaml"):
                     file_path = os.path.join(root, file)
                     yaml_files.append(file_path)
-                    log_message.debug(f"Found YAML file: {file_path}")
+                    log_message.debug(message=f"Found YAML file: {file_path}")
 
-    log_message.debug(f"YAML files to process: {yaml_files}")
-    log_message.debug(f"Arguments received: {args}")
+    log_message.debug(message=f"YAML files to process: {yaml_files}")
+    log_message.debug(message=f"Arguments received: {args}")
 
     # Process each YAML file to find GitHub Actions
     for file_path in yaml_files:
@@ -254,25 +258,25 @@ def find_github_actions(args: argparse.Namespace) -> dict:
         yaml.preserve_quotes = True
         with open(file_path, "r") as f:
             workflow_data = yaml.load(f)
-            log_message.debug(f"Processing file: {file_path}")
-            log_message.debug(f"Workflow data: {workflow_data}")
+            log_message.debug(message=f"Processing file: {file_path}")
+            log_message.debug(message=f"Workflow data: {workflow_data}")
 
             if "jobs" in workflow_data:
-                log_message.debug(f"Found jobs in {file_path}")
+                log_message.debug(message=f"Found jobs in {file_path}")
                 for job_name, job in workflow_data["jobs"].items():
                     if "steps" in job:
                         for step in job["steps"]:
                             if "uses" in step:
                                 log_message.debug(
-                                    f"Found action: {step['uses']} in job: "
-                                    f"{job_name}"
+                                    message=f"Found action: {step['uses']}"
+                                    f" in job: {job_name}"
                                 )
                                 action_name, current_version = step[
                                     "uses"
                                 ].split("@")
-                                log_message.debug(f"Step data: {step}")
+                                log_message.debug(message=f"Step data: {step}")
                                 log_message.debug(
-                                    f"Action name: {action_name}, "
+                                    message=f"Action name: {action_name}, "
                                     f"Current version: {current_version}"
                                 )
 
@@ -367,10 +371,8 @@ def update_action_version(
         None
     """
     log_message.debug(
-        "Updating action %s in file %s to version %s",
-        action_name,
-        file_path,
-        latest_version,
+        message="Updating action %s in file %s to version %s",
+        args=(action_name, file_path, latest_version),
     )
 
     # Read the YAML file content
@@ -386,7 +388,8 @@ def update_action_version(
         for step in job.get("steps", []):
             if "uses" in step and step["uses"].startswith(action_name):
                 log_message.debug(
-                    "Found action %s in job %s", action_name, job_name
+                    message="Found action %s in job %s",
+                    args=(action_name, job_name),
                 )
                 step["uses"] = f"{action_name}@{latest_version}"
                 updated = True
@@ -394,20 +397,21 @@ def update_action_version(
     # Write the updated content back to the file if any updates were made
     if updated:
         log_message.info(
-            "Action %s updated to version %s in file %s",
-            action_name,
-            latest_version,
-            file_path,
+            message="Action {} updated to version {} in file {}".format(
+                action_name, latest_version, file_path
+            )
         )
         with open(file_path, "w") as file:
             yaml.dump(content, file)
     else:
         log_message.warning(
-            "No updates made for action %s in file %s", action_name, file_path
+            message="No updates made for action %s in file %s",
+            args=(action_name, file_path),
         )
 
     log_message.debug(
-        "Updated %s to %s in %s", action_name, latest_version, file_path
+        message="Updated %s to %s in %s",
+        args=(action_name, latest_version, file_path),
     )
 
 

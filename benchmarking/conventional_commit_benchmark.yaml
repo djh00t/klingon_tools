@@ -1,0 +1,20 @@
+# conventional_commit_benchmark.yaml
+models_to_test:
+  - groq/gemma-7b-it
+  - groq/llama3-8b-8192
+  - groq/llama3-70b-8192
+
+scoring_weights:
+  time_weight: 0.20
+  raw_compliance_weight: 0.15
+  cleaned_compliance_weight: 0.15
+  response_quality_weight: 0.30
+  speed_rank_weight: 0.10
+  quality_rank_weight: 0.10
+
+output_config:
+  output_format: json
+  file_name_format: "YYYYMMDDHHMMSS_benchmark_results"
+
+# Add the diff file path to the config
+diff_file: "diff-corpus/20240821_git_benchmark.diff"

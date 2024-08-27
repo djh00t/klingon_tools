@@ -1,0 +1,633 @@
+diff --git a/benchmarking/diff-corpus/20240822000229_git_benchmark.diff b/benchmarking/diff-corpus/20240822000229_git_benchmark.diff
+new file mode 100644
+index 0000000..76eb9cf
+--- /dev/null
++++ b/benchmarking/diff-corpus/20240822000229_git_benchmark.diff
+@@ -0,0 +1,627 @@
++diff --git a/benchmarking/conventional_commit_benchmark_v2.py b/benchmarking/conventional_commit_benchmark_v2.py
++new file mode 100644
++index 0000000..45ba507
++--- /dev/null
+++++ b/benchmarking/conventional_commit_benchmark_v2.py
++@@ -0,0 +1,621 @@
+++from datetime import datetime
+++from tabulate import tabulate
+++import argparse
+++import json
+++import litellm
+++import logging
+++import re
+++import sys
+++import time
+++import yaml
+++
+++# Set the logging level for LiteLLM, requests, urllib3 and httpx to
+++# WARNING to prevent excessive stdout logging
+++logging.getLogger("LiteLLM").setLevel(logging.WARNING)
+++logging.getLogger("requests").setLevel(logging.WARNING)
+++logging.getLogger("urllib3").setLevel(logging.WARNING)
+++logging.getLogger("httpx").setLevel(logging.WARNING)
+++
+++# Initialize logging
+++try:
+++    logging.basicConfig(level=logging.INFO)
+++    logger = logging.getLogger(__name__)
+++except Exception as e:
+++    print(f"Failed to initialize logger: {e}")
+++
+++
+++def load_config(file_path: str = "conventional_commit_benchmark.yaml") -> dict:
+++    """
+++    Loads the YAML configuration from the specified file.
+++
+++    Args:
+++        file_path (str): Path to the YAML configuration file.
+++
+++    Returns:
+++        dict: The configuration data from the YAML file.
+++    """
+++    try:
+++        with open(file_path, "r") as f:
+++            return yaml.safe_load(f)
+++    except FileNotFoundError:
+++        logger.error(f"YAML configuration file not found: {file_path}")
+++        return {}
+++
+++
+++def parse_args(config: dict) -> argparse.Namespace:
+++    """
+++    Parses command-line arguments and falls back to YAML config when necessary.
+++
+++    Args:
+++        config (dict): The configuration dictionary from the YAML file.
+++
+++    Returns:
+++        argparse.Namespace: Parsed arguments.
+++    """
+++    parser = argparse.ArgumentParser(
+++        description="Benchmark Models for Conventional Commits"
+++    )
+++
+++    parser.add_argument(
+++        "--models",
+++        nargs="+",
+++        default=config.get("models_to_test", []),
+++        help="List of models to benchmark.",
+++    )
+++
+++    parser.add_argument(
+++        "--time_weight",
+++        type=float,
+++        default=config["scoring_weights"].get("time_weight", 0.20),
+++        help="Weight for time scoring in overall score calculation.",
+++    )
+++
+++    parser.add_argument(
+++        "--raw_compliance_weight",
+++        type=float,
+++        default=config["scoring_weights"].get("raw_compliance_weight", 0.15),
+++        help="Weight for raw compliance scoring.",
+++    )
+++
+++    parser.add_argument(
+++        "--cleaned_compliance_weight",
+++        type=float,
+++        default=config["scoring_weights"].get(
+++            "cleaned_compliance_weight", 0.15
+++        ),
+++        help="Weight for cleaned compliance scoring.",
+++    )
+++
+++    parser.add_argument(
+++        "--response_quality_weight",
+++        type=float,
+++        default=config["scoring_weights"].get("response_quality_weight", 0.30),
+++        help="Weight for response quality scoring.",
+++    )
+++
+++    parser.add_argument(
+++        "--speed_rank_weight",
+++        type=float,
+++        default=config["scoring_weights"].get("speed_rank_weight", 0.10),
+++        help="Weight for speed ranking in overall score calculation.",
+++    )
+++
+++    parser.add_argument(
+++        "--quality_rank_weight",
+++        type=float,
+++        default=config["scoring_weights"].get("quality_rank_weight", 0.10),
+++        help="Weight for quality ranking in overall score calculation.",
+++    )
+++
+++    parser.add_argument(
+++        "--output_format",
+++        type=str,
+++        default=config["output_config"].get("output_format", "json"),
+++        help="Output format for the results (e.g., json, markdown).",
+++    )
+++
+++    parser.add_argument(
+++        "--file_name_format",
+++        type=str,
+++        default=config["output_config"].get(
+++            "file_name_format", "YYYYMMDDHHMMSS_benchmark_results"
+++        ),
+++        help="Pattern for the output file name.",
+++    )
+++
+++    parser.add_argument(
+++        "--debug",
+++        action="store_true",
+++        help="Enable debug mode to log raw and clean model responses.",
+++    )
+++
+++    return parser.parse_args()
+++
+++
+++def get_output_filename(base_name: str) -> str:
+++    """
+++    Generates a file name with the current timestamp appended to the base name.
+++
+++    Args:
+++        base_name (str): The base name of the output file.
+++
+++    Returns:
+++        str: The generated file name with the timestamp.
+++    """
+++    current_time = datetime.now().strftime("%Y%m%d%H%M%S")
+++    if "YYYYMMDDHHMMSS" in base_name:
+++        base_name = base_name.replace("YYYYMMDDHHMMSS", current_time)
+++    return base_name
+++
+++
+++def calculate_time_score(time_taken: float, max_time: float) -> float:
+++    """
+++    Calculate the time score based on the time taken compared to the max time.
+++
+++    Args:
+++        time_taken (float): Time taken by the model to generate the commit msg.
+++        max_time (float): The maximum time taken by any model.
+++
+++    Returns:
+++        float: The normalized time score.
+++    """
+++    if max_time == 0:
+++        return 1.0
+++    return 1 - (time_taken / max_time)
+++
+++
+++def calculate_compliance_score(
+++    raw_compliance: dict, cleaned_compliance: dict
+++) -> float:
+++    """
+++    Calculate the compliance score by summing up raw and cleaned compliance.
+++
+++    Args:
+++        raw_compliance (dict): Compliance results for the raw commit message.
+++        cleaned_compliance (dict): Compliance results for the cleaned message.
+++
+++    Returns:
+++        float: The total compliance score.
+++    """
+++    raw_score = sum(raw_compliance.values())
+++    cleaned_score = sum(cleaned_compliance.values())
+++    return raw_score + cleaned_score
+++
+++
+++def check_compliance_with_regex(commit_message: str) -> dict:
+++    """
+++    Perform regex-based checks for commit message compliance.
+++
+++    Args:
+++        commit_message (str): The commit message to be evaluated.
+++
+++    Returns:
+++        dict: A dictionary containing the results of the compliance checks.
+++    """
+++    compliance_results = {
+++        "format_compliance": 0,
+++        "type_compliance": 0,
+++        "scope_compliance": 0,
+++        "high_level_description": 0,
+++        "detailed_description": 0,
+++        "accuracy_compliance": 0,
+++        "content_compliance": 0,
+++    }
+++
+++    format_regex = (
+++        r"^(feat|fix|build|chore|ci|docs|perf|refactor|revert|style|test|"
+++        r"other)\((.*?)\): (.+)"
+++    )
+++    if re.match(format_regex, commit_message):
+++        compliance_results["format_compliance"] = 2
+++
+++    type_regex = (
+++        r"^(feat|fix|build|chore|ci|docs|perf|refactor|revert|style|test|"
+++        r"other)\(.*?\):"
+++    )
+++    if re.match(type_regex, commit_message):
+++        compliance_results["type_compliance"] = 1
+++
+++    scope_regex = r"\((.*?)\):"
+++    scope_match = re.search(scope_regex, commit_message)
+++    if scope_match:
+++        compliance_results["scope_compliance"] = 1
+++
+++    high_level_desc_regex = r"^[A-Za-z].{10,100}"
+++    first_line = commit_message.splitlines()[0]
+++    if re.match(high_level_desc_regex, first_line):
+++        compliance_results["high_level_description"] = 1
+++
+++    detailed_description_regex = r".{20,}"
+++    if len(commit_message.splitlines()) > 1 and re.match(
+++        detailed_description_regex, commit_message.splitlines()[1]
+++    ):
+++        compliance_results["detailed_description"] = 1
+++
+++    if not re.search(r"[^\n]*```[^\n]*", commit_message):
+++        compliance_results["content_compliance"] = 2
+++
+++    return compliance_results
+++
+++
+++def evaluate_compliance_and_quality(
+++    model: str, raw_commit_message: str, cleaned_commit_message: str, diff: str
+++):
+++    """
+++    Evaluate the compliance and quality of the commit message using regex and
+++    LLM.
+++
+++    Args:
+++        model (str): The model being evaluated.
+++        raw_commit_message (str): The original commit message generated.
+++        cleaned_commit_message (str): The cleaned commit message.
+++        diff (str): The git diff used for the commit message.
+++
+++    Returns:
+++        dict: Results containing the compliance and quality scores.
+++    """
+++    try:
+++        raw_compliance = check_compliance_with_regex(raw_commit_message)
+++        cleaned_compliance = check_compliance_with_regex(
+++            cleaned_commit_message
+++        )
+++
+++        quality_response = litellm.completion(
+++            model=model,
+++            messages=[
+++                {
+++                    "role": "system",
+++                    "content": """
+++                    Evaluate the overall quality and accuracy of the
+++                    following commit messages based on the git diff provided.
+++                    Provide a score out of 10 focusing on how well the
+++                    message describes the changes and omits critical details.
+++                    """,
+++                },
+++                {
+++                    "role": "user",
+++                    "content": f"Raw commit message: {raw_commit_message}\n"
+++                    "Cleaned commit message: "
+++                    f"{cleaned_commit_message}\n"
+++                    f"Diff: {diff}",
+++                },
+++            ],
+++        )
+++
+++        quality_score = re.search(
+++            r"Quality: (\d+)/10", quality_response.choices[0].message.content
+++        )
+++        response_quality = (
+++            float(quality_score.group(1)) if quality_score else 7.0
+++        )
+++
+++        return {
+++            "raw_compliance": raw_compliance,
+++            "cleaned_compliance": cleaned_compliance,
+++            "response_quality": response_quality,
+++        }
+++
+++    except Exception as e:
+++        logger.error(f"Failed to evaluate compliance and quality: {e}")
+++        return {
+++            "raw_compliance": {},
+++            "cleaned_compliance": {},
+++            "response_quality": 7.0,
+++        }
+++
+++
+++def generate_commit_message_raw(model: str, diff: str) -> str:
+++    """
+++    Generate a raw commit message using the model based on the provided diff.
+++
+++    Args:
+++        model (str): The model name to use for generating the commit message.
+++        diff (str): The git diff to base the commit message on.
+++
+++    Returns:
+++        str: The generated raw commit message.
+++    """
+++    try:
+++        response = litellm.completion(
+++            model=model,
+++            messages=[
+++                {
+++                    "role": "system",
+++                    "content": "Generate a git conventional commit message "
+++                    "based on this diff.",
+++                },
+++                {
+++                    "role": "user",
+++                    "content": f"Generate a commit message based on this "
+++                    f'diff: "{diff}"',
+++                },
+++            ],
+++        )
+++        return response.choices[0].message.content.strip()
+++    except Exception as e:
+++        logger.error(f"Failed to generate commit message: {e}")
+++        return ""
+++
+++
+++def benchmark_models(
+++    diff: str,
+++    models: list,
+++    scoring_weights: dict,
+++    output_format: str,
+++    file_name_format: str,
+++    debug: bool = False,
+++):
+++    """
+++    Benchmarks multiple models by generating commit messages from a diff and
+++    evaluating their compliance and quality.
+++
+++    Args:
+++        diff (str): The git diff to base the commit message on.
+++        models (list): List of model names to benchmark.
+++        scoring_weights (dict): Dictionary containing the weights for scoring.
+++        output_format (str): The format of the output (e.g., json, markdown).
+++        file_name_format (str): The pattern for naming the output file.
+++        debug (bool): If true, log raw and cleaned responses.
+++
+++    Returns:
+++        None
+++    """
+++    results = []
+++    max_time_taken = 0
+++
+++    for model in models:
+++        start_time = time.time()
+++        raw_commit_message = generate_commit_message_raw(model, diff)
+++        cleaned_commit_message = extract_content_within_backticks(
+++            raw_commit_message
+++        )
+++        end_time = time.time()
+++        elapsed_time = end_time - start_time
+++        max_time_taken = max(max_time_taken, elapsed_time)
+++
+++        if debug:
+++            logger.info(f"Model: {model}")
+++            logger.info(f"Raw commit message: {raw_commit_message}")
+++            logger.info(f"Cleaned commit message: {cleaned_commit_message}")
+++
+++        evaluation_results = evaluate_compliance_and_quality(
+++            model, raw_commit_message, cleaned_commit_message, diff
+++        )
+++
+++        result = {
+++            "model": model,
+++            "time_taken": elapsed_time,
+++            "raw_compliance": evaluation_results["raw_compliance"],
+++            "cleaned_compliance": evaluation_results["cleaned_compliance"],
+++            "response_quality": evaluation_results["response_quality"],
+++            "speed_rank": 0,
+++            "quality_rank": 0,
+++        }
+++        results.append(result)
+++
+++    results.sort(key=lambda x: x["time_taken"])
+++    for i, result in enumerate(results):
+++        result["speed_rank"] = i + 1
+++
+++    results.sort(key=lambda x: x["response_quality"], reverse=True)
+++    for i, result in enumerate(results):
+++        result["quality_rank"] = i + 1
+++
+++    for result in results:
+++        result["overall_score"] = calculate_overall_score(
+++            result["time_taken"],
+++            max_time_taken,
+++            result["raw_compliance"],
+++            result["cleaned_compliance"],
+++            result["response_quality"],
+++            result["speed_rank"],
+++            result["quality_rank"],
+++            len(models),
+++            weights=scoring_weights,
+++        )
+++
+++    output_file = get_output_filename(file_name_format)
+++    with open(f"{output_file}.json", "w") as f:
+++        json.dump(results, f, indent=4)
+++
+++    headers = [
+++        "Name",
+++        "Time",
+++        "Raw Format",
+++        "Raw Type",
+++        "Raw Scope",
+++        "Raw High-Level Description",
+++        "Raw Detailed Description",
+++        "Raw Accuracy",
+++        "Raw Content Compliance",
+++        "Clean Format Compliance",
+++        "Clean Type",
+++        "Clean Scope",
+++        "Clean High-Level Description",
+++        "Clean Detailed Description",
+++        "Clean Accuracy",
+++        "Clean Content Compliance",
+++        "Response Quality",
+++        "Speed Rank",
+++        "Quality Rank",
+++        "Overall Score",
+++    ]
+++
+++    table_data = []
+++    for result in results:
+++        raw = result["raw_compliance"]
+++        cleaned = result["cleaned_compliance"]
+++        table_data.append(
+++            [
+++                result["model"],
+++                f'{result["time_taken"]:.2f} seconds',
+++                raw["format_compliance"],
+++                raw["type_compliance"],
+++                raw["scope_compliance"],
+++                raw["high_level_description"],
+++                raw["detailed_description"],
+++                raw["accuracy_compliance"],
+++                raw["content_compliance"],
+++                cleaned["format_compliance"],
+++                cleaned["type_compliance"],
+++                cleaned["scope_compliance"],
+++                cleaned["high_level_description"],
+++                cleaned["detailed_description"],
+++                cleaned["accuracy_compliance"],
+++                cleaned["content_compliance"],
+++                result["response_quality"],
+++                result["speed_rank"],
+++                result["quality_rank"],
+++                f'{result["overall_score"]:.2f}',
+++            ]
+++        )
+++
+++    markdown_table = tabulate(table_data, headers, tablefmt="pipe")
+++    with open(f"{output_file}.md", "w") as f:
+++        f.write(markdown_table)
+++
+++    logging.info(
+++        f"Benchmark results saved to {output_file}.json and {output_file}.md"
+++    )
+++
+++
+++def normalize_rank(rank: int, model_count: int) -> float:
+++    """
+++    Normalize the rank of a model to a value between 0 and 1.
+++
+++    Args:
+++        rank (int): The rank of the model (1 is the best).
+++        model_count (int): The total number of models.
+++
+++    Returns:
+++        float: The normalized rank score between 0 and 1.
+++    """
+++    if model_count == 0:
+++        return 1.0
+++    return 1 - ((rank - 1) / (model_count - 1))
+++
+++
+++def calculate_overall_score(
+++    time_taken,
+++    max_time,
+++    raw_compliance,
+++    cleaned_compliance,
+++    response_quality,
+++    speed_rank,
+++    quality_rank,
+++    model_count,
+++    weights=None,
+++):
+++    """
+++    Calculate the overall score for a model based on different factors.
+++
+++    Args:
+++        time_taken (float): Time taken by the model.
+++        max_time (float): Maximum time taken by any model.
+++        raw_compliance (dict): Compliance results for the raw commit message.
+++        cleaned_compliance (dict): Compliance results for the cleaned commit.
+++        response_quality (float): Quality score of the commit message.
+++        speed_rank (int): Rank based on speed.
+++        quality_rank (int): Rank based on quality.
+++        model_count (int): Total number of models.
+++        weights (dict): Weights for different scoring factors.
+++
+++    Returns:
+++        float: The overall score for the model.
+++    """
+++    if weights is None:
+++        weights = {
+++            "time_weight": 0.20,
+++            "raw_compliance_weight": 0.15,
+++            "cleaned_compliance_weight": 0.15,
+++            "response_quality_weight": 0.30,
+++            "speed_rank_weight": 0.10,
+++            "quality_rank_weight": 0.10,
+++        }
+++
+++    time_score = calculate_time_score(time_taken, max_time)
+++    # compliance_score = calculate_compliance_score(
+++    #    raw_compliance, cleaned_compliance
+++    # )
+++
+++    normalized_speed_rank = normalize_rank(speed_rank, model_count)
+++    normalized_quality_rank = normalize_rank(quality_rank, model_count)
+++
+++    overall_score = (
+++        weights["time_weight"] * time_score
+++        + weights["raw_compliance_weight"] * sum(raw_compliance.values())
+++        + weights["cleaned_compliance_weight"]
+++        * sum(cleaned_compliance.values())
+++        + weights["response_quality_weight"] * (response_quality / 10)
+++        + weights["speed_rank_weight"] * normalized_speed_rank
+++        + weights["quality_rank_weight"] * normalized_quality_rank
+++    )
+++
+++    return overall_score
+++
+++
+++def extract_content_within_backticks(text: str) -> str:
+++    """
+++    Extracts the content within backticks from the given text.
+++
+++    Args:
+++        text (str): The input text.
+++
+++    Returns:
+++        str: The content within backticks.
+++    """
+++    triple_backtick_match = re.search(
+++        r"```(?:[^\n]*\n)?(.*?)\n?```", text, re.DOTALL
+++    )
+++    if triple_backtick_match:
+++        return triple_backtick_match.group(1).strip()
+++    single_backtick_match = re.search(r"`(.*?)`", text, re.DOTALL)
+++    if single_backtick_match:
+++        return single_backtick_match.group(1).strip()
+++    return text.strip()
+++
+++
+++if __name__ == "__main__":
+++    logging.basicConfig(
+++        level=logging.DEBUG if "--debug" in sys.argv else logging.INFO
+++    )
+++    logger = logging.getLogger(__name__)
+++
+++    config = load_config()
+++
+++    args = parse_args(config)
+++
+++    logger.info(f"Models to benchmark: {args.models}")
+++    logger.info(f"Scoring weights: {vars(args)}")
+++    logger.info(f"Output format: {args.output_format}")
+++    logger.info(f"File name format: {args.file_name_format}")
+++
+++    diff_file_path = config.get("diff_file", None)
+++    if not diff_file_path:
+++        logger.error("Diff file not specified in YAML config or arguments.")
+++        exit(1)
+++
+++    try:
+++        logger.info(f"Loading diff file from {diff_file_path}")
+++        with open(diff_file_path, "r") as diff_file:
+++            diff_content = diff_file.read()
+++    except FileNotFoundError:
+++        logger.error(f"Diff file not found: {diff_file_path}")
+++        exit(1)
+++
+++    output_file = get_output_filename(args.file_name_format)
+++    benchmark_models(
+++        diff=diff_content,
+++        models=args.models,
+++        scoring_weights={
+++            "time_weight": args.time_weight,
+++            "raw_compliance_weight": args.raw_compliance_weight,
+++            "cleaned_compliance_weight": args.cleaned_compliance_weight,
+++            "response_quality_weight": args.response_quality_weight,
+++            "speed_rank_weight": args.speed_rank_weight,
+++            "quality_rank_weight": args.quality_rank_weight,
+++        },
+++        output_format=args.output_format,
+++        file_name_format=output_file,
+++        debug=args.debug,
+++    )
