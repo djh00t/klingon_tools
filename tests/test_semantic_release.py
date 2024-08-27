@@ -9,7 +9,6 @@ configuration in package.json and pyproject.toml files.
 import os
 import json
 from typing import Dict, Any
-
 import pytest
 import toml
 
