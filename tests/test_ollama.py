@@ -59,8 +59,15 @@ def can_connect_to_ollama() -> bool:
 
 @pytest.mark.optional
 def test_ollama_prerequisites():
-    """
-    Test if Ollama is installed and the API is accessible.
+    """Test if Ollama is installed and the API is accessible.
+
+    This test checks two prerequisites:
+    1. Ollama is installed and accessible in the system PATH.
+    2. The Ollama API can be connected to.
+
+    Assertions:
+        - Asserts that Ollama is installed and accessible in the system PATH.
+        - Asserts that the Ollama API is accessible.
 
     This test checks two prerequisites:
     1. Ollama is installed and accessible in the system PATH.
@@ -76,15 +83,17 @@ def test_ollama_prerequisites():
 @pytest.mark.dependency(depends=["test_ollama_prerequisites"])
 @pytest.mark.optional
 def test_models_available():
-    """
-    Test if there are any models available on the Ollama server.
+    """Test if there are any models available on the Ollama server.
 
     This test depends on the successful completion of
     test_ollama_prerequisites.
 
+    Assertions:
+        - Asserts that the status code of the response is 200.
+        - Asserts that there are models available on the Ollama server.
+        - Prints information about the available models.
+
     Raises:
-        AssertionError: If no models are available or if there's an error in
-        retrieving the models.
         pytest.fail: If there's a request exception or JSON decoding error.
     """
     try:
@@ -117,16 +126,20 @@ def test_models_available():
 @pytest.mark.dependency(depends=["test_models_available"])
 @pytest.mark.optional
 def test_model_functionality():
-    """
-    Test the functionality of an available model on the Ollama server.
+    """Test the functionality of an available model on the Ollama server.
 
     This test depends on the successful completion of test_models_available. It
     selects the first available model and tests it with a simple arithmetic
     question.
 
+    Assertions:
+        - Asserts that the status code of the response is 200.
+        - Asserts that there are models available to test.
+        - Asserts that the model's response to the arithmetic question is
+          correct.
+        - Asserts that the response contains expected metadata fields.
+
     Raises:
-        AssertionError: If the model's response is incorrect or if there's an
-        error in the process.
         pytest.fail: If there's a request exception, JSON decoding error, or
         any other assertion error.
     """
