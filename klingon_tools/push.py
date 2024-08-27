@@ -602,7 +602,7 @@ def generate_and_validate_commit_message(
             commit_message = litellm_tools.generate_commit_message(diff)
             # Remove any leading 'plaintext' or '```' markers
             commit_message = re.sub(
-                r'^(plaintext|```)\s*', '', commit_message.strip()
+                r'^(plaintext| plaintext|```)\s*', '', commit_message.strip()
             )
             # Ensure there's a space after the emoji if present
             commit_message = re.sub(
