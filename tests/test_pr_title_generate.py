@@ -16,8 +16,19 @@ def test_pr_title_generate(debug: bool, capsys) -> None:
     """
     Test the pr-title-generate command execution and output.
 
-    This test runs the pr-title-generate command and checks its output
-    for expected format and length.
+    This test runs the pr-title-generate command and checks its output for
+    expected format and length.
+
+    Assertions:
+    1. Check that the command ran without errors (return code 0).
+    2. Verify that there is a line of text output in stdout.
+    3. Ensure that the title length is 75 characters or less.
+    4. Check that the generated title is not empty or only whitespace.
+    5. Verify that the title starts with an uppercase letter.
+    6. Ensure that the title ends with an ellipsis or does not end with a
+    period.
+    7. If in debug mode, check for the presence of "RETURN CODE:", "STDOUT:",
+    and "STDERR:" in the debug output.
 
     Args:
         debug (bool): Flag to enable debug output.
