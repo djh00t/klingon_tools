@@ -1,20 +1,41 @@
-import warnings
 from klingon_tools.log_msg import log_message, set_default_style, set_log_level
-import pytest
-import os
 
 
-# Filter out specific warnings
-warnings.filterwarnings(
-    "ignore", category=DeprecationWarning, module="pydantic"
-)
-warnings.filterwarnings("ignore", category=DeprecationWarning, module="imghdr")
-warnings.filterwarnings(
-    "ignore", category=DeprecationWarning, module="importlib_resources"
-)
+class TestLogPlugin:
+    def __init__(self, log_message, results):
+        self.log_message = log_message
+        self.results = results
+
+    def pytest_runtest_logreport(self, report):
+        if report.when == "call" or (
+               report.when == "setup" and report.outcome == "failed"
+                ):
+            test_name = report.nodeid
+            if report.passed:
+                self.log_message.info(message=f"{test_name}", status="✅")
+                self.results.append((test_name, "passed"))
+            elif report.failed:
+                # Check if the test is optional and log as warning
+                if "optional" in report.keywords:
+                    self.log_message.warning(
+                        message=f"{test_name} (optional)", status="⚠️"
+                    )
+                    self.results.append((test_name, "optional-failed"))
+                else:
+                    self.log_message.error(message=f"{test_name}", status="❌")
+                    self.results.append((test_name, "failed"))
+                # Only print debug info if in debug mode
+                if self.log_message.logger.getEffectiveLevel() <= 10:
+                    self.log_message.debug(
+                        message=f"Debug info for {test_name}"
+                        )
+                    print(report.longrepr)
+            elif report.skipped:
+                self.log_message.info(message=f"{test_name}", status="⏭️")
+                self.results.append((test_name, "skipped"))
 
 
-def ktest(loglevel="INFO"):
+def ktest(loglevel="INFO", as_entrypoint=True, suppress_output=True):
     """
     Run pytest and display the results with the specified log level.
 
@@ -25,9 +46,13 @@ def ktest(loglevel="INFO"):
         loglevel (str): The logging level to use. Can be one of:
                         'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'.
                         Defaults to 'INFO'.
+        as_entrypoint (bool): Whether the function is being run as an
+        entrypoint. suppress_output (bool): Whether to suppress pytest output
+        and only show TestLogPlugin output.
 
-    Entrypoint:
-        ktest
+    Returns:
+        int: The exit code (0 for success, 1 for failure) when run as an
+        entrypoint. list: A list of test results when not run as an entrypoint.
     """
     # Set the default logging style
     set_default_style("pre-commit")
@@ -35,61 +60,58 @@ def ktest(loglevel="INFO"):
     # Set the logging level based on the passed argument
     set_log_level(loglevel.upper())
 
-    try:
-        # List to capture test results
-        results = []
+    # List to capture test results
+    results = []
 
-        class TestLogPlugin:
-            def pytest_runtest_logreport(self, report):
-                if report.when == "call":
-                    test_name = report.nodeid
-                    if report.passed:
-                        log_message.info(message=f"{test_name}", status="✅")
-                        results.append((test_name, "passed"))
-                    elif report.failed:
-                        # Check if the test is optional and log as warning
-                        if "optional" in report.keywords:
-                            log_message.warning(
-                                message=f"{test_name} (optional)", status="⚠️"
-                            )
-                            results.append((test_name, "optional-failed"))
-                        else:
-                            log_message.error(
-                                message=f"{test_name}", status="❌"
-                            )
-                            results.append((test_name, "failed"))
-                        # Print debug info after the log messages
-                        log_message.debug(
-                            message=f"Debug info for {test_name}"
-                        )
-                        print(report.longrepr)
-                    elif report.skipped:
-                        log_message.info(message=f"{test_name}", status="⏭️")
-                        results.append((test_name, "skipped"))
+    # Create an instance of TestLogPlugin
+    plugin = TestLogPlugin(log_message, results)
 
-        # Redirect stdout to suppress pytest output (to prevent double logging)
-        with open(os.devnull, "w") as devnull:
-            original_stdout = os.dup(1)
-            os.dup2(devnull.fileno(), 1)
+    # Run pytest with the custom plugin
+    import pytest
+    import io
+    import sys
 
-            try:
-                # Run pytest with the custom plugin
-                log_message.debug("Running pytest with custom plugin")
-                pytest.main(["tests", "--tb=short"], plugins=[TestLogPlugin()])
-            finally:
-                # Restore stdout
-                os.dup2(original_stdout, 1)
+    if suppress_output:
+        # Capture stdout and stderr
+        captured_output = io.StringIO()
+        sys.stdout = captured_output
+        sys.stderr = captured_output
 
-        if __name__ == "__main__":
-            for result in results:
-                print(f"{result['name']}: {result['outcome']}")
-        return [
-            {"name": test_name, "outcome": outcome}
-            for test_name, outcome in results
-        ]
-    except ImportError as e:
-        log_message.error(f"ImportError: {e}", status="❌")
-        return []
-    except Exception as e:
-        log_message.error(f"Unexpected error: {e}", status="❌")
-        return []
+    exit_code = pytest.main(
+        [
+            "tests",
+            "--tb=short",
+            "--import-mode=importlib",
+            "-v"
+        ],
+        plugins=[plugin]
+        )
+
+    if suppress_output:
+        # Restore stdout and stderr
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
+
+    # Process the results
+    results_obj = [
+        {"name": test_name, "outcome": outcome}
+        for test_name, outcome in results
+    ]
+
+    if as_entrypoint:
+        return exit_code
+    else:
+        return results_obj
+
+
+def ktest_entrypoint():
+    """
+    Entrypoint for running ktest as a script.
+    """
+    import sys
+    # Run ktest as an entrypoint
+    sys.exit(ktest(as_entrypoint=True))
+
+
+if __name__ == "__main__":
+    ktest_entrypoint()
