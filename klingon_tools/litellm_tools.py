@@ -146,6 +146,9 @@ class LiteLLMTools:
 
             When provided with message length or column widths, **they are
             mandatory and must not be exceeded.**
+
+            Return all results as raw plain text containing only the answer
+            unless otherwise specified.
             """,
             "commit_message_user": """
             Generate a git commit message based on these diffs: "{diff}"
