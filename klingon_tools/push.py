@@ -608,37 +608,31 @@ def generate_and_validate_commit_message(
     Returns:
         Optional[str]: A valid commit message or None if validation fails.
     """
+    emoji_pattern = (
+        r'^([\u2600-\u26FF\u2700-\u27BF\U0001F300-\U0001F5FF'
+        r'\U0001F600-\U0001F64F\U0001F680-\U0001F6FF'
+        r'\U0001F900-\U0001F9FF])'
+    )
+    commit_types = (
+        r'(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert|wip)'
+    )
+
     for attempt in range(3):
         try:
             commit_message = litellm_tools.generate_commit_message(diff)
 
-            # Remove any leading 'plaintext' or '```' markers from the commit
+            # Remove any leading 'plaintext' or '```' markers
             commit_message = re.sub(
                 r'^(plaintext|```)\s*', '', commit_message.strip()
             )
 
             # Ensure there's a space between the emoji and the first non-space
-            # character
-            emoji_pattern = (
-                r'^([\u2600-\u26FF\u2700-\u27BF\U0001F300-\U0001F5FF'
-                r'\U0001F600-\U0001F64F\U0001F680-\U0001F6FF'
-                r'\U0001F900-\U0001F9FF])'
+            # character, or between emoji and commit type
+            commit_message = re.sub(
+                fr'{emoji_pattern}(\S)', r'\1 \2', commit_message
             )
             commit_message = re.sub(
-                fr'{emoji_pattern}(\S)',
-                r'\1 \2',
-                commit_message
-            )
-
-            # Add a space between the emoji and commit type if missing
-            commit_types = (
-                r'(feat|fix|chore|docs|style|refactor|perf|test|build|ci|'
-                r'revert|wip)'
-            )
-            commit_message = re.sub(
-                fr'{emoji_pattern}{commit_types}',
-                r'\1 \2',
-                commit_message,
+                fr'{emoji_pattern}{commit_types}', r'\1 \2', commit_message,
                 flags=re.IGNORECASE
             )
 
