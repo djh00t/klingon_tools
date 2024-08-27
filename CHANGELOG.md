@@ -1,3 +1,5 @@
+## [2.3.0-release.8](https://github.com/djh00t/klingon_tools/compare/v2.3.0-release.7...v2.3.0-release.8) (2024-08-27)
+
 ## [2.3.0-release.7](https://github.com/djh00t/klingon_tools/compare/v2.3.0-release.6...v2.3.0-release.7) (2024-08-27)
 
 
