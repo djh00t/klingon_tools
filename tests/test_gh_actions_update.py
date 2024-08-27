@@ -23,6 +23,16 @@ from klingon_tools.gh_actions_update import (
 
 def get_workflow_files(directory: str = ".github/workflows/") -> list[str]:
     """
+    Test the find_github_actions function to ensure it correctly identifies all
+    workflow files.
+
+    This test compares the files found by find_github_actions against a manual
+    search of the .github/workflows/ directory.
+
+    Assertions:
+        - Asserts that all workflow files are found by find_github_actions.
+        - Asserts that there are no extra files in the actions dictionary that
+          don't exist.
     Retrieve all GitHub Actions workflow files from a specified directory.
 
     Args:
@@ -106,7 +116,17 @@ def test_find_github_actions(mock_args: argparse.Namespace):
 
 @patch("requests.get")
 def test_get_latest_version(mock_get):
-    """Test the get_latest_version function."""
+    """
+    Test the get_latest_version function.
+
+    This test verifies that the get_latest_version function correctly retrieves
+    the latest version tag from a GitHub repository.
+
+    Assertions:
+        - Asserts that the function returns the correct version tag when the
+          request is successful.
+        - Asserts that the function returns None when the request fails.
+    """
     mock_response = mock_get.return_value
     mock_response.status_code = 200
     mock_response.json.return_value = {"tag_name": "v1.2.3"}
@@ -125,7 +145,17 @@ def test_get_latest_version(mock_get):
 @patch("klingon_tools.gh_actions_update.YAML")
 @patch("klingon_tools.gh_actions_update.log_message")
 def test_update_action_version(mock_log_message, mock_yaml, mock_file):
-    """Test the update_action_version function."""
+    """
+    Test the update_action_version function.
+
+    This test verifies that the update_action_version function correctly
+    updates the version of a GitHub Action in a workflow file.
+
+    Assertions:
+        - Asserts that the YAML dump method is called once.
+        - Asserts that the action version is updated in the workflow file.
+        - Asserts that the log message is called with the correct information.
+    """
     mock_yaml_instance = mock_yaml.return_value
     mock_yaml_instance.load.return_value = {
         "jobs": {"build": {"steps": [{"uses": "actions/checkout@v2"}]}}
@@ -142,7 +172,20 @@ def test_update_action_version(mock_log_message, mock_yaml, mock_file):
 
 
 def test_can_display_emojis(mock_args):
-    """Test the can_display_emojis function."""
+    """
+    Test the can_display_emojis function.
+
+    This test verifies that the can_display_emojis function correctly
+    determines whether emojis can be displayed based on the environment and
+    arguments.
+
+    Assertions:
+        - Asserts that emojis can be displayed when LANG is set to
+          "en_US.UTF-8".
+        - Asserts that emojis cannot be displayed when LANG is set to "C".
+        - Asserts that emojis cannot be displayed when the no_emojis flag is
+          True.
+    """
     with patch.dict(os.environ, {"LANG": "en_US.UTF-8"}):
         assert can_display_emojis(False, mock_args) is True
 
@@ -153,13 +196,31 @@ def test_can_display_emojis(mock_args):
 
 
 def test_remove_emojis():
-    """Test the remove_emojis function."""
+    """
+    Test the remove_emojis function.
+
+    This test verifies that the remove_emojis function correctly removes all
+    emojis from a given text.
+
+    Assertions:
+        - Asserts that emojis are removed from the text.
+        - Asserts that text without emojis remains unchanged.
+    """
     assert remove_emojis("Hello 👋 World 🌍") == "Hello  World "
     assert remove_emojis("No emojis here") == "No emojis here"
 
 
 def test_build_action_dict():
-    """Test the build_action_dict function."""
+    """
+    Test the build_action_dict function.
+
+    This test verifies that the build_action_dict function correctly constructs
+    a dictionary with the expected keys and values.
+
+    Assertions:
+        - Asserts that the resulting dictionary contains the correct keys and
+          values.
+    """
     result = build_action_dict(
         "workflow.yml", "actions/checkout", "v2", "Checkout 📦", "Build"
     )
