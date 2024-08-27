@@ -34,6 +34,7 @@ from klingon_tools.git_validate_commit import (
     is_conventional_commit,
     validate_commit_messages,
 )
+from klingon_tools.git_unstage import git_unstage_files
 from klingon_tools.log_msg import log_message
 from klingon_tools.litellm_tools import LiteLLMTools
 
@@ -208,6 +209,7 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
 
     Args:
         repo: An instance of the git.Repo object representing the repository.
+        deleted_files: A list of deleted files to be committed.
 
     Returns:
         None
@@ -233,10 +235,12 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
             message=f"Deleted files: {all_deleted_files}", status="🐞"
         )
 
+        successfully_staged = []
         # Stage the deleted files for commit
         for file in all_deleted_files:
             if os.path.exists(file):
                 repo.index.remove([file], working_tree=True)
+                successfully_staged.append(file)
             else:
                 log_message.info(
                     message=(
@@ -246,7 +250,15 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
                     status="⚠️",
                 )
                 try:
-                    repo.index.remove([file], working_tree=True)
+                    if file in repo.index.entries:
+                        repo.index.remove([file], working_tree=True)
+                        successfully_staged.append(file)
+                    else:
+                        log_message.warning(
+                            message=f"File {file} not found in the index, "
+                            "skipping",
+                            status="⚠️",
+                        )
                 except git_exc.GitCommandError as e:
                     log_message.error(
                         message=f"Failed to stage deleted file {file}",
@@ -255,8 +267,10 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
                     log_message.exception(message=f"{e}")
                     continue
 
+        if successfully_staged:
             # Generate the commit message with scope
-            commit_message = f"chore({file}): Committing deleted file"
+            commit_message = f"chore: Delete {len(successfully_staged)} "
+            "file(s)"
 
             # Ensure the commit message is signed off
             if not is_commit_message_signed_off(commit_message):
@@ -264,7 +278,7 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
                 signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
                 commit_message += signoff
 
-            # Commit the deleted file with the generated commit message
+            # Commit the deleted files with the generated commit message
             try:
                 repo.git.commit("-S", "-m", commit_message)
             except GitCommandError as e:
@@ -280,43 +294,56 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
                         repo.git.commit("-m", commit_message)
                     except GitCommandError as inner_e:
                         log_message.error(
-                            message="Failed to commit deleted file",
+                            message="Failed to commit deleted files",
                             status="❌",
                         )
                         log_message.exception(message=f"{inner_e}")
                         raise
                 else:
                     log_message.error(
-                        message="Failed to commit deleted file", status="❌"
+                        message="Failed to commit deleted files", status="❌"
                     )
                     log_message.exception(message=f"{e}")
                     raise
 
             # Log the successful commit
             log_message.info(
-                message=f"Committed deleted file: {file}", status="✅"
+                message=f"Committed {len(successfully_staged)} deleted "
+                "file(s)",
+                status="✅"
             )
 
-        # Push the commit to the remote repository
-        git_push(repo)
+            # Push the commit to the remote repository
+            git_push(repo)
+        else:
+            log_message.info(message="No deleted files to commit", status="ℹ️")
 
 
 def git_stage_diff(file_name: str, repo: Repo, modified_files: list) -> str:
     """Stages a file, generates a diff, and returns the diff.
 
-    This function stages the specified file in the repository, generates a diff
+    This function checks if any files are already staged, unstages them if
+    necessary, stages the specified file in the repository, generates a diff
     for the staged file, and returns the diff as a string. It logs the status
     of the staging and diff generation processes.
 
     Args:
         file_name: The name of the file to be staged and diffed. repo: An
         instance of the git.Repo object representing the repository.
+        modified_files: A list of modified files in the repository.
 
     Returns:
         A string containing the diff of the staged file.
     """
-    log_message.info(message="Staging file", status=f"{file_name}")
+    log_message.info(message="Preparing to stage file", status=f"{file_name}")
     process_pre_commit_config(repo, modified_files)
+
+    # Check if any files are already staged
+    if repo.git.diff("--cached", "--name-only"):
+        log_message.info(
+            message="Unstaging previously staged files", status="🔄"
+            )
+        git_unstage_files(repo)
 
     def stage_file(repo: Repo, file_name: str):
         """Helper function to stage a file."""
@@ -516,54 +543,111 @@ def git_pre_commit(
 
 def git_commit_file(
     file_name: str, repo: Repo, commit_message: Optional[str] = None
-) -> None:
-    """Commits a file with a generated commit message.
+) -> bool:
+    """Commits a file with a generated or provided commit message.
 
-    This function stages the specified file, generates a commit message using
-    the diff of the file, and commits the file to the repository. It logs the
-    status of each step and handles exceptions that may occur during the
-    process.
+    This function stages the specified file, generates a commit message if not
+    provided, and commits the file to the repository. It logs the status of
+    each step and handles exceptions that may occur during the process.
 
     Args:
-        file_name: The name of the file to be committed. repo: An instance of
-        the git.Repo object representing the repository. commit_message: The
-        commit message to use. If None, a new commit message will be generated.
+        file_name (str): The name of the file to be committed. repo (Repo): An
+        instance of the git.Repo object representing the repository.
+        commit_message (Optional[str]): The commit message to use. If None, a
+        new commit message will be generated.
 
     Returns:
-        None
+        bool: True if the commit was successful, False otherwise.
     """
-    repo.index.add([file_name])
-
     try:
+        # Stage the file
+        repo.index.add([file_name])
+        log_message.info(message=f"File staged: {file_name}", status="✅")
+
+        # Generate commit message if not provided
         if commit_message is None:
-            # Generate the diff for the staged file
             diff = repo.git.diff("HEAD", file_name)
             litellm_tools = LiteLLMTools()
-            commit_message = None
-            while not commit_message or not is_conventional_commit(
-                commit_message
-            ):
-                commit_message = litellm_tools.generate_commit_message(diff)
+            commit_message = generate_valid_commit_message(diff, litellm_tools)
 
-        # Commit the file with the generated commit message
-        if commit_message:
-            repo.index.commit(commit_message.strip())
+        # Ensure commit message is not None or empty
+        if not commit_message:
+            raise ValueError("Commit message cannot be empty")
+
+        # Commit the file
+        repo.index.commit(commit_message.strip())
+        log_message.info(message=f"File committed: {file_name}", status="✅")
+
+        # Validate the commit message
+        if validate_commit_messages(repo):
+            log_message.info(
+                message="Commit message validated successfully",
+                status="✅"
+                )
         else:
-            raise ValueError("Commit message cannot be None")
-        # Log the successful commit
-        log_message.info(message="File committed", status="✅")
+            log_message.warning(
+                message="Commit message validation failed",
+                status="⚠️"
+                )
 
-        # Example call to validate_commit_messages
-        litellm_tools = LiteLLMTools()
-        validate_commit_messages(repo, litellm_tools)
+        return True
+
     except ValueError as ve:
-        # Log an error message if the commit message format is invalid
-        log_message.error(message="Commit message format error", status="❌")
-        log_message.exception(message=f"{ve}")
+        log_message.error(message=f"Commit message error: {ve}", status="❌")
+    except GitCommandError as ge:
+        log_message.error(message=f"Git command error: {ge}", status="❌")
     except Exception as e:
-        # Log an error message if the commit fails
-        log_message.error(message="Failed to commit file", status="❌")
-        log_message.exception(message=f"{e}")
+        log_message.error(
+            message=f"Unexpected error during commit: {e}", status="❌"
+            )
+
+    return False
+
+
+def generate_valid_commit_message(
+        diff: str,
+        litellm_tools: LiteLLMTools,
+        max_attempts: int = 3
+        ) -> Optional[str]:
+    """Generates a valid commit message using LiteLLMTools.
+
+    Args:
+        diff (str): The diff of the file to be committed.
+        litellm_tools (LiteLLMTools): An instance of LiteLLMTools for
+        generating commit messages.
+        max_attempts (int): Maximum number of attempts to generate a valid
+        commit message.
+
+    Returns:
+        Optional[str]: A valid commit message or None if unable to generate
+        one.
+    """
+    for attempt in range(max_attempts):
+        commit_message = litellm_tools.generate_commit_message(diff)
+
+        # Split the commit message into lines
+        lines = commit_message.strip().split('\n')
+
+        # Ensure the header is a single line and not too long
+        header = lines[0][:100]  # Truncate to 100 characters if longer
+
+        # Reconstruct the commit message with proper formatting
+        formatted_message = header + '\n\n' + '\n'.join(lines[1:])
+
+        if is_conventional_commit(formatted_message):
+            return formatted_message
+
+        log_message.warning(
+            "Generated commit message not in conventional format. Attempt "
+            f"{attempt + 1}/{max_attempts}"
+        )
+
+    log_message.error(
+        f"Failed to generate a valid commit message after {max_attempts} "
+        "attempts",
+        status="❌"
+    )
+    return None
 
 
 def log_git_stats(
