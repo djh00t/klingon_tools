@@ -32,6 +32,45 @@ warnings.filterwarnings(
 @patch("klingon_tools.kstart.subprocess.run")
 def test_check_git_config(mock_subprocess_run, mock_input):
     """
+    Test the entrypoint of the kstart module.
+
+    This test verifies that the main function of the kstart module is called
+    when the module is executed.
+
+    Assertions:
+        - Asserts that the main function is called once.
+    Test the main function with an invalid issue type input.
+
+    This test verifies that the main function correctly handles an invalid
+    issue type input by using the default issue type and proceeds with branch
+    creation and pushing.
+
+    Assertions:
+        - Asserts that the output contains "Invalid choice. Using default:
+          'feature'."
+        - Asserts that the output contains "Pushed branch:".
+        - Asserts that the input function is called four times.
+    Test the main function of kstart.
+
+    This test verifies that the main function correctly handles user input,
+    creates a new branch, and pushes it to the remote repository.
+
+    Assertions:
+        - Asserts that the output contains "Pushed branch:".
+        - Asserts that the input function is called four times.
+    Test the check_git_config function.
+
+    This test verifies that the check_git_config function correctly checks and
+    sets the Git configuration for user.name and user.email.
+
+    Assertions:
+        - Asserts that subprocess.run is called three times.
+        - Asserts that subprocess.run is called with the correct arguments to
+          check user.name.
+        - Asserts that subprocess.run is called with the correct arguments to
+          check user.email.
+        - Asserts that subprocess.run is called with the correct arguments to
+          set user.name.
     Test the check_git_config function.
 
     Args:
@@ -66,7 +105,18 @@ def test_check_git_config(mock_subprocess_run, mock_input):
 
 
 def test_prompt_with_default():
-    """Test the prompt_with_default function."""
+    """
+    Test the prompt_with_default function.
+
+    This test verifies that the prompt_with_default function correctly returns
+    the default value when no input is provided and returns the user input when
+    provided.
+
+    Assertions:
+        - Asserts that the function returns the default value when no input is
+          provided.
+        - Asserts that the function returns the user input when provided.
+    """
     with patch("builtins.input", return_value=""):
         result = kstart.prompt_with_default("Test prompt", "default_value")
         assert result == "default_value"
