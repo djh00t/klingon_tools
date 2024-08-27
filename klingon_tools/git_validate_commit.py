@@ -38,22 +38,32 @@ def is_conventional_commit(commit_message: str) -> bool:
         standard, False otherwise.
     """
     # Split the message into lines
-    lines = commit_message.strip().split("\n")
+    lines = commit_message.strip().split('\n')
 
-    # Check the first line (header)
+    # Combine all lines into one to handle multi-line commit message headers
+    combined_message = ' '.join(lines).strip()
+
+    # Updated pattern: Allow for optional emoji at the start and make type
+    # matching case-insensitive
     conventional_commit_pattern = (
-        r"^(?:.{2})?"  # Optionally ignore first two characters
-        r"(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert|wip)"
-        r"\([\w\/-]+\): "  # Make the scope mandatory
-        r".{10,}"  # Match at least 10 characters after the colon
+        r"^[\u2600-\u26FF\u2700-\u27BF\U0001F300-\U0001F5FF"
+        r"\U0001F600-\U0001F64F\U0001F680-\U0001F6FF"
+        r"\U0001F900-\U0001F9FF]?\s*"  # Optional emoji with space after
+        r"(?i:feat|fix|chore|docs|style|refactor|perf|test|build|ci|"
+        r"revert|wip)"  # Commit types
+        r"\([\w\/-]+\):\s"  # Scope with word chars, slashes, hyphens
+        r".{10,}"  # At least 10 characters after the colon
     )
 
-    if not re.match(conventional_commit_pattern, lines[0], re.UNICODE):
+    # Check the combined message with case-insensitive matching
+    if not re.match(conventional_commit_pattern, combined_message, re.UNICODE):
         return False
 
-    # Check for the presence of a sign-off line
+    # Check for the presence of a sign-off line, if present anywhere in the
+    # message
     sign_off_pattern = r"^Signed-off-by: .+ <.+@.+>$"
-    if not any(re.match(sign_off_pattern, line.strip()) for line in lines):
+    if not any(re.match(sign_off_pattern, line.strip(), re.IGNORECASE)
+               for line in lines):
         return False
 
     return True
