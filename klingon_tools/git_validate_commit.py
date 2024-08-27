@@ -1,3 +1,4 @@
+# klingon_tools/git_validate_commit.py
 """Module for validating Git commit messages.
 
 This module provides functions to validate Git commit messages to ensure they
@@ -10,9 +11,7 @@ Typical usage example:
 """
 
 import re
-
 from git import Repo
-from klingon_tools.litellm_tools import LiteLLMTools
 
 
 def is_commit_message_signed_off(commit_message: str) -> bool:
@@ -38,15 +37,29 @@ def is_conventional_commit(commit_message: str) -> bool:
         bool: True if the commit message follows the Conventional Commits
         standard, False otherwise.
     """
-    # Define the regex pattern for Conventional Commits
+    # Split the message into lines
+    lines = commit_message.strip().split("\n")
+
+    # Check the first line (header)
     conventional_commit_pattern = (
-        r"^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert|wip)"
-        r"(\(\w+\))?: .+"
+        r"^(?:.{2})?"  # Optionally ignore first two characters
+        r"(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert|wip)"
+        r"\([\w\/-]+\): "  # Make the scope mandatory
+        r".{10,}"  # Match at least 10 characters after the colon
     )
-    return re.match(conventional_commit_pattern, commit_message) is not None
+
+    if not re.match(conventional_commit_pattern, lines[0], re.UNICODE):
+        return False
+
+    # Check for the presence of a sign-off line
+    sign_off_pattern = r"^Signed-off-by: .+ <.+@.+>$"
+    if not any(re.match(sign_off_pattern, line.strip()) for line in lines):
+        return False
+
+    return True
 
 
-def validate_commit_messages(repo: Repo, litellm_tools: LiteLLMTools) -> bool:
+def validate_commit_messages(repo: Repo) -> bool:
     """Validate all commit messages to ensure they are signed off and follow
     the Conventional Commits standard.
 
@@ -56,11 +69,22 @@ def validate_commit_messages(repo: Repo, litellm_tools: LiteLLMTools) -> bool:
     Returns:
         bool: True if all commit messages are valid, False otherwise.
     """
-    # Iterate over all commits in the repository
     for commit in repo.iter_commits("HEAD"):
-        commit_message = commit.message
-        if not is_commit_message_signed_off(commit_message):
-            return False
-        if not is_conventional_commit(commit_message):
+        if not validate_single_commit_message(commit.message):
             return False
     return True
+
+
+def validate_single_commit_message(commit_message: str) -> bool:
+    """Validate a single commit message.
+
+    Args:
+        commit_message (str): The commit message to validate.
+
+    Returns:
+        bool: True if the commit message is valid, False otherwise.
+    """
+    return is_commit_message_signed_off(
+        commit_message
+        ) and is_conventional_commit(
+            commit_message)
