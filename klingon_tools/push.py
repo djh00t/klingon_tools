@@ -602,14 +602,31 @@ def generate_and_validate_commit_message(
             commit_message = litellm_tools.generate_commit_message(diff)
             # Remove any leading 'plaintext' or '```' markers
             commit_message = re.sub(
-                r'^(plaintext| plaintext|```)\s*', '', commit_message.strip()
+                r'^(plaintext| plaintext|```)\s*',
+                '',
+                commit_message.strip()
             )
             # Ensure there's a space after the emoji if present
-            commit_message = re.sub(
+            emoji_pattern = (
                 r'^([\u2600-\u26FF\u2700-\u27BF\U0001F300-\U0001F5FF'
                 r'\U0001F600-\U0001F64F\U0001F680-\U0001F6FF'
-                r'\U0001F900-\U0001F9FF])(\S)',
-                r'\1 \2', commit_message
+                r'\U0001F900-\U0001F9FF])'
+            )
+            commit_message = re.sub(
+                fr'{emoji_pattern}(\S)',
+                r'\1 \2',
+                commit_message
+            )
+            # Add space between emoji and commit type if missing
+            commit_types = (
+                r'(feat|fix|chore|docs|style|refactor|perf|test|build|ci|'
+                r'revert|wip)'
+            )
+            commit_message = re.sub(
+                f'{emoji_pattern}{commit_types}',
+                r'\1 \2',
+                commit_message,
+                flags=re.IGNORECASE
             )
 
             # Handle dependency update commits
