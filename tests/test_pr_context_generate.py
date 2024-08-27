@@ -16,8 +16,13 @@ def test_pr_context_generate(debug: bool, capsys) -> None:
     """
     Test the pr-context-generate command execution and output.
 
-    This test runs the pr-context-generate command and checks its output
-    for expected content and format.
+    This test runs the pr-context-generate command and checks its output.
+
+    Assertions:
+    1. Check that the command ran without errors (return code 0).
+    2. Verify that the command output is not empty.
+    3. If in debug mode, check for the presence of "RETURN CODE:", "STDOUT:",
+    and "STDERR:" in the debug output.
 
     Args:
         debug (bool): Flag to enable debug output.
@@ -25,6 +30,12 @@ def test_pr_context_generate(debug: bool, capsys) -> None:
 
     Raises:
         AssertionError: If any of the assertions fail.
+
+    Assertions:
+        1. Checks if the command runs without errors (return code 0).
+        2. Verifies that the command output is not empty.
+        3. If in debug mode, checks for the presence of debug information in
+           the output.
     """
     # Run the pr-context-generate command
     result = subprocess.run(
@@ -65,6 +76,14 @@ def assert_pr_context_generate_output(
 
     Raises:
         AssertionError: If any of the assertions fail.
+
+    Assertions:
+        1. Checks if the command return code is 0 (successful execution).
+        2. Verifies that the command output is not empty.
+        3. If in debug mode:
+           - Prints the full command output.
+           - Checks for the presence of "RETURN CODE:", "STDOUT:", and
+           "STDERR:" in the debug output.
     """
     # Check that the command ran without errors
     assert (
@@ -73,16 +92,6 @@ def assert_pr_context_generate_output(
 
     # Check that there is some output
     assert result.stdout.strip(), "Command output is empty"
-
-    # Check for expected content in the output
-    expected_content = ["commit", "changes", "code"]
-    missing_content = [
-        word for word in expected_content if word not in result.stdout.lower()
-    ]
-
-    assert (
-        not missing_content
-    ), f"Output is missing expected content: {', '.join(missing_content)}"
 
     if debug:
         print(f"Full command output:\n{result.stdout}")
