@@ -41,15 +41,15 @@ def is_conventional_commit(commit_message: str) -> bool:
     combined_message = ' '.join(commit_message.strip().splitlines())
 
     # Updated regex pattern to handle optional emoji, valid commit types,
-    # and scope with periods, slashes, hyphens, and word characters
+    # and mandatory scope with any characters allowed inside round brackets
     conventional_commit_pattern = (
         r"(?i)"  # Case-insensitive flag at the start of the expression
         r"^[\u2600-\u26FF\u2700-\u27BF\U0001F300-\U0001F5FF"  # Optional emoji
         r"\U0001F600-\U0001F64F\U0001F680-\U0001F6FF\U0001F900-\U0001F9FF]?\s*"
         # Commit types
         r"(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert|wip)"
-        # Scope allowing word chars, slashes, periods, hyphens
-        r"\([\w\/.-]+\):\s"
+        # Mandatory scope allowing any characters inside round brackets
+        r"\(.+\):\s"
         r".{10,}"  # At least 10 characters after the colon
     )
 
@@ -57,7 +57,7 @@ def is_conventional_commit(commit_message: str) -> bool:
     if not re.match(conventional_commit_pattern, combined_message, re.UNICODE):
         return False
 
-    # Check for the presence of a sign-off line
+    # Check for the presence of a sign-off line if required
     sign_off_pattern = r"^Signed-off-by: .+ <.+@.+>$"
     if not any(re.match(sign_off_pattern, line.strip(), re.IGNORECASE)
                for line in commit_message.splitlines()):
