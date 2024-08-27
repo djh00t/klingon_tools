@@ -1,112 +1,165 @@
-import unittest
-from unittest.mock import patch, MagicMock
-from git import Repo
-from klingon_tools.openai_tools import OpenAITools
+# tests/test_openai_tools.py
+"""Tests for the OpenAITools class and its methods.
+
+This module contains pytest-style unit tests for the OpenAITools class from the
+klingon_tools package. It covers initialization, PR summary generation, title
+generation, and message formatting.
+"""
+
 import logging
+from unittest.mock import patch, MagicMock
+
+import pytest
+from git import Repo
+
+from klingon_tools.openai_tools import OpenAITools
 
 
-class TestOpenAITools(unittest.TestCase):
+@pytest.fixture(scope="module", autouse=True)
+def disable_logging():
+    """Disable logging for all tests in this module."""
+    logging.disable(logging.CRITICAL)
+    yield
+    logging.disable(logging.NOTSET)
 
-    @classmethod
-    def setUpClass(cls):
-        # Suppress logging output during tests
-        logging.disable(logging.CRITICAL)
 
-    @classmethod
-    def tearDownClass(cls):
-        # Re-enable logging after tests
-        logging.disable(logging.NOTSET)
+@pytest.fixture
+def openai_tools():
+    """Fixture to create an instance of OpenAITools."""
+    return OpenAITools(debug=True)
 
-    @patch("klingon_tools.openai_tools.get_commit_log")
-    def test_generate_pull_request_summary(self, mock_get_commit_log):
-        # Mock the return value of get_commit_log
-        mock_get_commit_log.return_value.stdout = "commit log content"
 
-        # Create an instance of OpenAITools
-        openai_tools = OpenAITools()
+@patch("klingon_tools.openai_tools.get_commit_log")
+def test_generate_pull_request_summary(mock_get_commit_log, openai_tools):
+    """Test the generate_pull_request_summary method.
 
-        # Mock the generate_content method
-        openai_tools.generate_content = MagicMock(
-            return_value="Generated PR Summary"
-        )
+    Assertions:
+    1. Check that generate_content is called once with "pull_request_summary"
+    and "commit log content".
+    2. Verify that the summary is "Generated PR Summary".
+    """
+    mock_get_commit_log.return_value.stdout = "commit log content"
+    openai_tools.generate_content = MagicMock(
+        return_value="Generated PR Summary"
+    )
 
-        # Call the method to test
-        summary = openai_tools.generate_pull_request_summary(
-            Repo(), "diff content"
-        )
+    summary = openai_tools.generate_pull_request_summary(
+        Repo(), "diff content"
+    )
 
-        # Assertions
-        openai_tools.generate_content.assert_called_once_with(
-            "pull_request_summary", "commit log content"
-        )
-        self.assertEqual(summary, "Generated PR Summary")
+    openai_tools.generate_content.assert_called_once_with(
+        "pull_request_summary", "commit log content"
+    )
+    assert summary == "Generated PR Summary"
 
-    def test_init_with_valid_api_key(self):
-        openai_tools = OpenAITools(debug=True)
-        self.assertTrue(openai_tools.debug)
-        self.assertIsNotNone(openai_tools.client)
 
-    @patch("openai.ChatCompletion.create")
-    def test_generate_pull_request_title(self, mock_create):
-        mock_create.return_value = MagicMock(
-            choices=[
-                MagicMock(message=MagicMock(content="Generated PR title"))
-            ]
-        )
-        openai_tools = OpenAITools()
-        diff = "Some diff content"
-        title = openai_tools.generate_pull_request_title(diff)
-        self.assertIsInstance(title, str)
-        self.assertLessEqual(len(title), 72)
+def test_init_with_valid_api_key(openai_tools):
+    """Test initialization of OpenAITools with a valid API key.
 
-        # Log the result returned by the LLM
-        print(f"LLM generated title: {title}")
+    Assertions:
+    1. Verify that debug is set to True.
+    2. Ensure that client is not None.
+    """
+    assert openai_tools.debug is True
+    assert openai_tools.client is not None
 
-    def test_format_message_with_valid_input(self):
-        openai_tools = OpenAITools()
-        message = "feat(klingon): add new feature"
-        formatted_message = openai_tools.format_message(message)
-        self.assertEqual(
-            formatted_message, "✨ feat(klingon): add new feature"
-        )
 
-    def test_format_message_with_invalid_input(self):
-        openai_tools = OpenAITools()
-        message = "invalid message"
-        with self.assertRaises(ValueError):
+@patch("openai.ChatCompletion.create")
+def test_generate_pull_request_title(mock_create, openai_tools):
+    """Test the generate_pull_request_title method.
+
+    Assertions:
+    1. Verify that the title is a string.
+    2. Ensure that the length of the title is less than or equal to 72
+    characters.
+    """
+    mock_create.return_value = MagicMock(
+        choices=[MagicMock(message=MagicMock(content="Generated PR title"))]
+    )
+    diff = "Some diff content"
+    title = openai_tools.generate_pull_request_title(diff)
+
+    assert isinstance(title, str)
+    assert len(title) <= 72
+
+    # Print the generated title
+    print(f"LLM generated title: {title}")
+
+
+@pytest.mark.parametrize(
+    "message, expected, should_raise",
+    [
+        (
+            "feat(klingon): add new feature",
+            "✨ feat(klingon): add new feature",
+            False,
+        ),
+        ("invalid message", None, True),
+        (
+            "feat: minimal valid message",
+            None,
+            True,
+        ),  # This is now expected to raise an error
+        (
+            "feat(core): minimal valid message",
+            "✨ feat(core): minimal valid message",
+            False,
+        ),  # New valid edge case
+        (
+            "fix(bug): fix critical issue",
+            "🐛 fix(bug): fix critical issue",
+            False,
+        ),  # Additional valid case
+    ],
+)
+def test_format_message(openai_tools, message, expected, should_raise):
+    """Test the format_message method with valid, invalid, and edge case
+    inputs.
+
+    Assertions:
+    1. If should_raise is True, verify that a ValueError is raised.
+    2. If should_raise is False, check that the formatted message matches the
+    expected value.
+    """
+    if should_raise:
+        with pytest.raises(ValueError):
             openai_tools.format_message(message)
+    else:
+        formatted_message = openai_tools.format_message(message)
+        assert formatted_message == expected
 
-    def test_format_pr_title_with_short_title(self):
-        openai_tools = OpenAITools()
-        title = "Short title"
-        formatted_title = openai_tools.format_pr_title(title)
-        self.assertEqual(formatted_title, "Short title")
+    # Print the result for debugging
+    print(f"Input: {message}")
+    print(f"Expected: {expected}")
+    print(f"Should raise: {should_raise}")
+    if not should_raise:
+        print(f"Actual output: {openai_tools.format_message(message)}")
+    print("---")
 
-    def test_format_pr_title_with_long_title(self):
-        openai_tools = OpenAITools()
-        title = (
+
+@pytest.mark.parametrize(
+    "title, expected",
+    [
+        ("Short title", "Short title"),
+        (
             "This is a very long title that exceeds the maximum character "
-            "limit maybe, or does it? I don't know, but it's long."
-        )
-        formatted_title = openai_tools.format_pr_title(title)
-        self.assertEqual(
-            formatted_title,
+            "limit maybe, or does it? I don't know, but it's long.",
             "This is a very long title that exceeds the maximum character "
             "limit maybe...",
-        )
+        ),
+        ("Title   with   multiple   spaces", "Title with multiple spaces"),
+        ("Title\nwith\nnewlines", "Title with newlines"),
+    ],
+)
+def test_format_pr_title(openai_tools, title, expected):
+    """Test the format_pr_title method with various inputs.
 
-    def test_format_pr_title_with_multiple_spaces(self):
-        openai_tools = OpenAITools()
-        title = "Title   with   multiple   spaces"
-        formatted_title = openai_tools.format_pr_title(title)
-        self.assertEqual(formatted_title, "Title with multiple spaces")
-
-    def test_format_pr_title_with_newlines(self):
-        openai_tools = OpenAITools()
-        title = "Title\nwith\nnewlines"
-        formatted_title = openai_tools.format_pr_title(title)
-        self.assertEqual(formatted_title, "Title with newlines")
+    Assertions:
+    1. Verify that the formatted title matches the expected value.
+    """
+    formatted_title = openai_tools.format_pr_title(title)
+    assert formatted_title == expected
 
 
 if __name__ == "__main__":
-    unittest.main()
+    pytest.main(["-v"])
