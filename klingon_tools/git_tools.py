@@ -16,6 +16,7 @@ Typical usage example:
 import os
 import subprocess
 import sys
+import re
 from typing import Optional, Tuple
 import psutil
 
@@ -604,6 +605,40 @@ def git_commit_file(
     return False
 
 
+def clean_commit_message(message: str) -> str:
+    """Cleans up artifacts from the commit message."""
+    # Remove any leading artifacts like 'git', 'commit', or code block markers
+    message = re.sub(
+        r'^(git|commit|plaintext|```)\s*', '', message, flags=re.MULTILINE
+    )
+    # Remove any trailing code block markers
+    message = re.sub(r'\s*```\s*$', '', message, flags=re.MULTILINE)
+    # Ensure there's a blank line after the header
+    message = re.sub(r'^(.+)\n(?!\n)', r'\1\n\n', message)
+    # Remove any extra newlines
+    message = re.sub(r'\n{3,}', '\n\n', message)
+    # Ensure the message starts with the conventional commit format
+    # (including optional emoji)
+    lines = message.strip().split('\n')
+    if lines:
+        first_line = lines[0]
+        if not re.match(
+            r'^[\u2600-\u26FF\u2700-\u27BF\U0001F300-\U0001F5FF'
+            r'\U0001F600-\U0001F64F\U0001F680-\U0001F6FF'
+            r'\U0001F900-\U0001F9FF]?\s*(?i:feat|fix|chore|docs|style|'
+            r'refactor|perf|test|build|ci|revert|wip)\(',
+            first_line
+        ):
+            # If it doesn't match, remove any leading words until it does
+            first_line = re.sub(
+                r'^.*?((?i:feat|fix|chore|docs|style|refactor|perf|test|'
+                r'build|ci|revert|wip)\()', r'\1', first_line
+            )
+        lines[0] = first_line
+        message = '\n'.join(lines)
+    return message.strip()
+
+
 def generate_valid_commit_message(
         diff: str,
         litellm_tools: LiteLLMTools,
@@ -623,10 +658,16 @@ def generate_valid_commit_message(
         one.
     """
     for attempt in range(max_attempts):
-        commit_message = litellm_tools.generate_commit_message(diff)
+        raw_commit_message = litellm_tools.generate_commit_message(diff)
+        log_message.debug(
+            "Raw commit message (attempt "
+            f"{attempt + 1}):\n{raw_commit_message}"
+        )
+
+        commit_message = clean_commit_message(raw_commit_message)
 
         # Split the commit message into lines
-        lines = commit_message.strip().split('\n')
+        lines = commit_message.split('\n')
 
         # Ensure the header is a single line and not too long
         header = lines[0][:100]  # Truncate to 100 characters if longer
