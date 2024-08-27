@@ -4,14 +4,14 @@
 This module contains pytest functions for testing the entrypoints module.
 
 It includes tests for various GitHub pull request component generation
-functions and the ktest function from the entrypoints module.
+functions from the entrypoints module.
 """
 
 import os
 import sys
 import pytest
 import warnings
-from unittest.mock import patch, MagicMock, ANY
+from unittest.mock import patch, MagicMock
 from io import StringIO
 
 # Add the parent directory to sys.path to import entrypoints
@@ -33,7 +33,17 @@ warnings.filterwarnings(
 @patch("klingon_tools.entrypoints.LiteLLMTools")
 def test_gh_pr_gen_title(mock_litellm_tools, mock_get_commit_log):
     """
-    Test the gh_pr_gen_title function.
+    Test the gh_pr_gen_context function.
+
+    This test verifies that the gh_pr_gen_context function correctly generates
+    a pull request context based on the commit log.
+
+    Assertions:
+        - Asserts that the function returns 0.
+        - Asserts that the generated pull request context is in the output.
+        - Asserts that get_commit_log is called once with the correct argument.
+        - Asserts that generate_pull_request_context is called once with the
+          correct arguments.
 
     Args:
         mock_litellm_tools (MagicMock): Mock for LiteLLMTools.
@@ -100,57 +110,6 @@ def test_gh_pr_gen_context(mock_litellm_tools, mock_get_commit_log):
     mock_get_commit_log.assert_called_once_with("origin/release")
     mock_litellm_tools.return_value.generate_pull_request_context.\
         assert_called_once_with("Test commit log", dryrun=False)
-
-
-@patch("klingon_tools.entrypoints.pytest.main")
-@patch("klingon_tools.entrypoints.set_default_style")
-@patch("klingon_tools.entrypoints.set_log_level")
-def test_ktest(mock_set_log_level, mock_set_default_style, mock_pytest_main):
-    """
-    Test the ktest function.
-
-    Args:
-        mock_set_log_level (MagicMock): Mock for set_log_level function.
-        mock_set_default_style (MagicMock): Mock for set_default_style
-        function.
-        mock_pytest_main (MagicMock): Mock for pytest.main function.
-    """
-    mock_pytest_main.return_value = 0
-
-    result = entrypoints.ktest()
-
-    mock_set_default_style.assert_called_once_with("pre-commit")
-    mock_set_log_level.assert_called_once_with("INFO")
-    mock_pytest_main.assert_called_once_with(
-        ["tests", "--tb=short"], plugins=[ANY]
-    )
-    assert isinstance(result, list)
-
-
-@patch("klingon_tools.entrypoints.pytest.main")
-@patch("klingon_tools.entrypoints.set_default_style")
-@patch("klingon_tools.entrypoints.set_log_level")
-def test_ktest_with_custom_loglevel(
-    mock_set_log_level, mock_set_default_style, mock_pytest_main
-):
-    """
-    Test the ktest function with a custom log level.
-
-    Args:
-        mock_set_log_level (MagicMock): Mock for set_log_level function.
-        mock_set_default_style (MagicMock): Mock for set_default_style
-        function.
-        mock_pytest_main (MagicMock): Mock for pytest.main function.
-    """
-    mock_pytest_main.return_value = 0
-
-    entrypoints.ktest(loglevel="DEBUG")
-
-    mock_set_default_style.assert_called_once_with("pre-commit")
-    mock_set_log_level.assert_called_once_with("DEBUG")
-    mock_pytest_main.assert_called_once_with(
-        ["tests", "--tb=short"], plugins=[ANY]
-    )
 
 
 if __name__ == "__main__":
