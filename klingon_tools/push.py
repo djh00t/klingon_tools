@@ -435,7 +435,8 @@ def process_files(
             # Check if the file is already committed
             if file in committed_not_pushed:
                 log_message.info(
-                    message=f"File already committed: {file}", status="⏭️"
+                    message="File already committed",
+                    status=f"{file}"
                 )
                 continue
 
@@ -599,15 +600,36 @@ def generate_and_validate_commit_message(
     for attempt in range(3):
         try:
             commit_message = litellm_tools.generate_commit_message(diff)
+            # Remove any leading 'plaintext' or '```' markers
+            commit_message = re.sub(
+                r'^(plaintext|```)\s*', '', commit_message.strip()
+            )
+            # Ensure there's a space after the emoji if present
+            commit_message = re.sub(
+                r'^([\u2600-\u26FF\u2700-\u27BF\U0001F300-\U0001F5FF'
+                r'\U0001F600-\U0001F64F\U0001F680-\U0001F6FF'
+                r'\U0001F900-\U0001F9FF])(\S)',
+                r'\1 \2', commit_message
+            )
+
+            # Handle dependency update commits
+            if 'dependencies' in diff.lower() or 'deps' in diff.lower():
+                commit_message = re.sub(
+                    r'^(feat|fix|chore):', 'build:', commit_message
+                )
+
             if is_conventional_commit(commit_message):
                 return commit_message
+
             log_message.warning(
                 "Generated commit message not in conventional format. "
-                f"Attempt {attempt + 1}/3")
+                f"Attempt {attempt + 1}/3"
+            )
         except Exception as e:
             log_message.error(
                 f"Failed to generate commit message: {str(e)}",
-                status="❌")
+                status="❌"
+            )
     return None
 
 
