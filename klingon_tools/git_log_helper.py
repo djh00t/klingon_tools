@@ -1,5 +1,5 @@
 import subprocess
-from klingon_tools.logger import logger
+from klingon_tools.log_msg import log_message
 
 
 def branch_exists(branch_name: str) -> bool:
@@ -29,7 +29,7 @@ def get_commit_log(branch_name: str) -> subprocess.CompletedProcess:
             check=True,
         )
     else:
-        logger.warning(f"The branch '{branch_name}' does not exist.")
+        log_message.warning(f"The branch '{branch_name}' does not exist.")
         commit_result = subprocess.CompletedProcess(
             args=[], returncode=0, stdout=""
         )
