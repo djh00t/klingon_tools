@@ -37,33 +37,27 @@ def is_conventional_commit(commit_message: str) -> bool:
         bool: True if the commit message follows the Conventional Commits
         standard, False otherwise.
     """
-    # Split the message into lines
-    lines = commit_message.strip().split('\n')
-
     # Combine all lines into one to handle multi-line commit message headers
-    combined_message = ' '.join(lines).strip()
+    combined_message = ' '.join(commit_message.strip().splitlines())
 
-    # Updated pattern: Allow for optional emoji at the start and make type
-    # matching case-insensitive
+    # Regex pattern for conventional commit with optional emoji at the start
     conventional_commit_pattern = (
+        r"(?i)"  # Case-insensitive flag at the start of the expression
         r"^[\u2600-\u26FF\u2700-\u27BF\U0001F300-\U0001F5FF"
-        r"\U0001F600-\U0001F64F\U0001F680-\U0001F6FF"
-        r"\U0001F900-\U0001F9FF]?\s*"  # Optional emoji with space after
-        r"(?i:feat|fix|chore|docs|style|refactor|perf|test|build|ci|"
-        r"revert|wip)"  # Commit types
-        r"\([\w\/-]+\):\s"  # Scope with word chars, slashes, hyphens
+        r"\U0001F600-\U0001F64F\U0001F680-\U0001F6FF\U0001F900-\U0001F9FF]?\s*"
+        r"(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert|wip)"
+        r"\([\w\/-]+\):\s"
         r".{10,}"  # At least 10 characters after the colon
     )
 
-    # Check the combined message with case-insensitive matching
+    # Check if the commit message matches the conventional commit pattern
     if not re.match(conventional_commit_pattern, combined_message, re.UNICODE):
         return False
 
-    # Check for the presence of a sign-off line, if present anywhere in the
-    # message
+    # Check for the presence of a sign-off line
     sign_off_pattern = r"^Signed-off-by: .+ <.+@.+>$"
     if not any(re.match(sign_off_pattern, line.strip(), re.IGNORECASE)
-               for line in lines):
+               for line in commit_message.splitlines()):
         return False
 
     return True
