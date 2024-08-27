@@ -32,6 +32,7 @@ from klingon_tools.git_log_helper import get_commit_log
 from klingon_tools.litellm_tools import LiteLLMTools
 import traceback
 
+
 # Filter out specific warnings
 warnings.filterwarnings(
     "ignore", category=DeprecationWarning, module="pydantic"
