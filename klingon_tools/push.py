@@ -70,7 +70,8 @@ import os
 import subprocess
 import sys
 import requests
-import datetime
+import re
+import glob
 from git import Repo
 from typing import Any, List, Tuple, Optional
 from klingon_tools.git_tools import (
@@ -84,12 +85,12 @@ from klingon_tools.git_tools import (
     log_git_stats,
     process_pre_commit_config,
     push_changes_if_needed,
+    git_stage_diff,
 )
-
+from klingon_tools.git_validate_commit import is_conventional_commit
 from klingon_tools.log_msg import log_message, set_log_level
 from klingon_tools.litellm_tools import LiteLLMTools
-from klingon_tools.git_unstage import git_unstage_files
-from klingon_tools.ktest import ktest
+
 
 # Initialize variables
 deleted_files = []
@@ -130,9 +131,13 @@ def validate_commit_message(commit_message: str) -> bool:
     Returns:
         bool: True if the commit message is valid, False otherwise.
     """
-    # Example validation: Check if the commit message is not empty and has a
-    # minimum length
-    return bool(commit_message and len(commit_message) > 10)
+    # Example validation: Check if the commit message is not empty, has a
+    # minimum length, and includes a scope in the format "type(scope): message"
+    if not commit_message or len(commit_message) <= 10:
+        return False
+    if not re.match(r"^[a-z]+(\([a-z]+\))?: .+", commit_message):
+        return False
+    return True
 
 
 def check_software_requirements(repo_path: str, log_message: Any) -> None:
@@ -314,35 +319,66 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def run_tests(log_message: Any = None, quiet: bool = False) -> bool:
+def run_tests(log_message: Any = None) -> bool:
     """
-    Run tests using the ktest function and log the results using LogTools.
+    Run tests using ktest CLI command and log the results.
 
-    This function runs the tests using the ktest function. If tests fail, it
-    logs detailed debug information and returns False.
+    This function runs the tests using the ktest command via subprocess,
+    printing the output to the screen in real-time.
 
     Args:
         log_message (Any): The logging function to use for output.
-        quiet (bool): Flag to run ktest in quiet mode. Defaults to False.
 
     Returns:
         bool: True if tests pass, False otherwise.
     """
     if log_message:
-        # Log the start of the test execution
-        log_message.info("Running tests using ktest", status="🔍")
-    try:
-        # Execute the ktest function to run the tests
+        log_message.info("Running tests", status="🔍")
 
-        results = ktest()
-        # Return True if all tests passed, False otherwise
-        log_message.info(80 * "-", status="", style="none")
-        return all(test["outcome"] == "passed" for test in results)
+    import subprocess
+    import sys
+
+    try:
+        # Run ktest as a subprocess
+        process = subprocess.Popen(
+            [sys.executable, "-m", "klingon_tools.ktest"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
+            bufsize=1
+        )
+
+        # Print output in real-time
+        for line in process.stdout:
+            print(line, end='')
+
+        # Wait for the process to complete
+        return_code = process.wait()
+
+        # Determine if tests passed based on the return code
+        tests_passed = return_code == 0
+
+        if tests_passed:
+            if log_message:
+                log_message.info("All tests passed successfully.", status="✅")
+        else:
+            if log_message:
+                log_message.error("Some tests failed.", status="❌")
+
+        return tests_passed
+
     except Exception as e:
-        # Log the error message and return False
-        log_message.error("ERROR DEBUG:", status="❌")
-        log_message.error(str(e), status="", style="none")
-        log_message.info(80 * "-", status="", style="none")
+        import traceback
+        if log_message:
+            log_message.error(
+                message=f"""An error occurred while running tests:
+{str(e)}
+
+Traceback:
+{traceback.format_exc()}""",
+                status="❌",
+                style=None
+            )
         return False
 
 
@@ -483,6 +519,8 @@ def workflow_process_file(
         current_repo (Repo): The git repository object.
         current_args (argparse.Namespace): Command-line arguments.
         log_message (Any): The logging function to use for output.
+        litellm_tools (LiteLLMTools): The LiteLLM tools object.
+        file_counter (int): The current file counter.
 
     Raises:
         SystemExit: If pre-commit hooks fail.
@@ -495,97 +533,52 @@ def workflow_process_file(
 
     log_message.debug(
         message="Processing file",
-        status="workflow_process_file ✅",
-    )
+        status="workflow_process_file ✅"
+        )
 
-    # Check if the file is already committed
     if file_name in committed_not_pushed:
         log_message.info(f"File already committed: {file_name}", status="⏭️")
         return
 
-    # Run pre-commit hooks on the file
-    success, diff = git_pre_commit(
-        file_name, current_repo, current_modified_files
-    )
+    # Stage the file and get the diff
+    diff = git_stage_diff(file_name, current_repo, current_modified_files)
 
-    # Get the root directory of the repository
-    repo_root = current_repo.working_dir
-
-    # Save diff only for every 5th file processed
-    if file_counter % 5 == 0:
-        # Get current date and time in YYYYMMDDHHMMSS format
-        now = datetime.datetime.now()
-        date_time = now.strftime("%Y%m%d%H%M%S")
-
-        # Log diff to
-        # {repo_root}/benchmarking/diff-corpus/YYYYMMDDHHMMSS_git_benchmark.diff
-        import textwrap
-
-        with open(
-            f"{repo_root}/benchmarking/diff-corpus/"
-            f"{date_time}_git_benchmark.diff",
-            "w",
-        ) as f:
-            wrapped_diff = textwrap.fill(
-                diff, width=79, subsequent_indent=" " * 12
+    # Generate and validate commit message
+    commit_message = generate_and_validate_commit_message(
+        diff,
+        litellm_tools,
+        log_message
+        )
+    if not commit_message:
+        log_message.error(
+            f"Failed to generate valid commit message for {file_name}",
+            status="❌"
             )
-            f.write(wrapped_diff)
+        return
+
+    # Run pre-commit hooks on the file
+    success, _ = git_pre_commit(
+        file_name, current_repo, current_modified_files)
 
     if success:
         if current_args.dryrun:
-            # Log dry run mode and skip commit and push
             log_message.info(
-                message="Dry run mode enabled. Skipping commit and push.",
-                status="🚫",
-            )
-            return
+                "Dry run mode enabled. Skipping commit and push.",
+                status="🚫")
         else:
-            # Generate commit message and commit the file
-            for attempt in range(3):
-                try:
-                    commit_message = litellm_tools.generate_commit_message(
-                        diff
-                    )
-                    # Assuming validate_commit_message is a function to
-                    # validate the commit message format
-                    if validate_commit_message(commit_message):
-                        git_commit_file(
-                            file_name, current_repo, commit_message
-                        )
-                        break
-                    else:
-                        log_message.error(
-                            f"\n{commit_message}\n", status="", style="none"
-                        )
-                        diff += "\nCommit message format error"
-                        litellm_tools.update_prompt(
-                            "Commit message format error"
-                        )
-                except Exception as e:
-                    log_message.error(
-                        f"Failed to generate commit message for {file_name}: "
-                        f"{e}",
-                        status="❌",
-                    )
-                    return
-            else:
-                log_message.error(
-                    f"Failed to generate valid commit message for {file_name}"
-                    "after 3 attempts",
-                    status="❌",
-                )
-                return
+            git_commit_file(file_name, current_repo, commit_message)
     else:
         log_message.error(
-            message="Pre-commit hooks failed. Exiting script.",
-            status="❌",
-        )
+            "Pre-commit hooks failed. Exiting script.",
+            status="❌"
+            )
         sys.exit(1)
 
-    log_message.info(f"Finished processing file: {file_name}", status="✅")
+    log_message.info(
+        f"Finished processing file: {file_name}",
+        status="✅"
+        )
     if current_args.debug:
-        # Enable debug mode
-        # Log debug mode and git status
         log_message.info(message="Debug mode enabled", status="🐞")
         git_get_status(current_repo)
         log_git_stats(*git_get_status(current_repo))
@@ -594,8 +587,28 @@ def workflow_process_file(
     modified_files, repo, args = (
         current_modified_files,
         current_repo,
-        current_args,
+        current_args
     )
+
+
+def generate_and_validate_commit_message(
+        diff: str,
+        litellm_tools: LiteLLMTools,
+        log_message: Any
+        ) -> Optional[str]:
+    for attempt in range(3):
+        try:
+            commit_message = litellm_tools.generate_commit_message(diff)
+            if is_conventional_commit(commit_message):
+                return commit_message
+            log_message.warning(
+                "Generated commit message not in conventional format. "
+                f"Attempt {attempt + 1}/3")
+        except Exception as e:
+            log_message.error(
+                f"Failed to generate commit message: {str(e)}",
+                status="❌")
+    return None
 
 
 def startup_tasks(args: argparse.Namespace) -> Tuple[Repo, str, str]:
@@ -718,48 +731,24 @@ def main():
 
     # Initialize LiteLLMTools
     litellm_tools = LiteLLMTools(
-        debug=args.debug,  # Set to True for debug mode
-        # Excellent
-        # model_primary="gpt-4o-mini",
-        # Large allowances for unpaid users
-        model_primary="groq/llama-3.1-70b-versatile",
-        # model_primary="ollama_chat/deepseek-coder-v2",
-        # model_primary="groq/mixtral-8x7b-32768",
-        # model_primary="groq/gemma-7b-it",
-        # model_primary="claude-3-haiku-20240307",
-        # model_secondary="claude-3-haiku-20240307"
-        model_secondary="gpt-4o-mini",
+        debug=args.debug,
+        model_primary="gpt-4o-mini",
+        model_secondary="claude-3-haiku-20240307"
     )
 
-    # Set default logging level to INFO
-    set_log_level("INFO")
-
-    # Override logging level to DEBUG if debug mode is enabled
-    if args.debug:
-        set_log_level("DEBUG")
+    # Set logging level
+    set_log_level("DEBUG" if args.debug else "INFO")
 
     # Expand wildcards and check if the files specified by --file-name exist
-    # before running push-prep
-    file_name_list = []
-    if args.file_name:
-        import glob
+    file_name_list = expand_and_check_files(args.file_name)
 
-        for pattern in args.file_name:
-            file_name_list.extend(glob.glob(pattern))
-        for file_name in file_name_list:
-            if not os.path.exists(file_name):
-                log_message.error(
-                    message=f"File does not exist: {file_name}", status="❌"
-                )
-                return 1
-
-    # Run startup tasks to ini`ti`alize the script and get repo
+    # Run startup tasks to initialize the script and get repo
     repo, user_name, user_email = startup_tasks(args)
 
     if repo is None:
         log_message.error(
-            "Failed to initialize git repository. Exiting.", status="❌"
-        )
+            "Failed to initialize git repository. Exiting.",
+            status="❌")
         return 1
 
     # Get git status and update global variables
@@ -772,12 +761,14 @@ def main():
     ) = git_get_status(repo)
 
     # Check if there are any files to process initially
-    if not (
-        deleted_files
-        or untracked_files
-        or modified_files
-        or staged_files
-        or committed_not_pushed
+    if not any(
+        [
+            deleted_files,
+            untracked_files,
+            modified_files,
+            staged_files,
+            committed_not_pushed
+        ]
     ):
         log_message.info("No files processed, nothing to do", status="🚫")
         return 0
@@ -787,71 +778,105 @@ def main():
         untracked_files,
         modified_files,
         staged_files,
-        committed_not_pushed,
+        committed_not_pushed
     )
 
-    # If --file-name is used, filter the lists to only include files in
-    # file_name_list
+    # Filter files if --file-name is used
     if file_name_list:
-        deleted_files = [f for f in deleted_files if f in file_name_list]
-        untracked_files = [f for f in untracked_files if f in file_name_list]
-        modified_files = [f for f in modified_files if f in file_name_list]
-        staged_files = [f for f in staged_files if f in file_name_list]
-        committed_not_pushed = [
-            f for f in committed_not_pushed if f in file_name_list
-        ]
+        filter_files(file_name_list)
 
     # Run tests before processing any files unless --skip-tests is specified
     if not args.skip_tests:
-        log_message.info("Running tests before processing files", status="🔍")
-        if not run_tests(log_message):
-            log_message.error("Exiting due to failing tests", status="❌")
+        if not run_tests_and_confirm(log_message):
             return 1
+
+    changes_made = process_changes(repo, args, litellm_tools)
+
+    # Push changes if needed and changes were made
+    if changes_made:
+        push_changes_if_needed(repo, args)
     else:
-        log_message.info(
-            "Skipping tests as per --skip-tests argument", status="🚫"
-        )
-
-    # Unstage all staged files if there are any
-    if staged_files:
-        git_unstage_files(repo, staged_files)
-
-    # If there are deleted files, commit them
-    if deleted_files:
-        git_commit_deletes(repo, deleted_files)
-
-    # If .pre-commit-config.yaml is modified, stage and commit it first
-    process_pre_commit_config(repo, modified_files)
-
-    if args.oneshot:
-        # One-shot mode: Process only the first file in files_to_process
-        log_message.info("One-shot mode enabled", status="🎯")
-        files_to_process = untracked_files + modified_files
-        if files_to_process:
-            process_files(
-                [files_to_process[0]], repo, args, log_message, litellm_tools
-            )
-        else:
-            log_message.info("No files to process.", status="🚫")
-    else:
-        # Batch mode: Process all untracked and modified files
-        log_message.info("Batch mode enabled", status="📦")
-        files_to_process = untracked_files + modified_files
-        if files_to_process:
-            process_files(
-                files_to_process, repo, args, log_message, litellm_tools
-            )
-        else:
-            log_message.info("No files to process.", status="🚫")
-
-    # Push changes if needed
-    push_changes_if_needed(repo, args)
+        log_message.info("No changes to push.", status="ℹ️")
 
     # Log script completion
     log_message.info("All files processed successfully", status="🚀")
     log_message.info("=" * 80, status="", style="none")
 
     return 0
+
+
+def expand_and_check_files(file_patterns):
+    if not file_patterns:
+        return []
+    file_name_list = []
+    for pattern in file_patterns:
+        file_name_list.extend(glob.glob(pattern))
+    for file_name in file_name_list:
+        if not os.path.exists(file_name):
+            log_message.error(f"File does not exist: {file_name}", status="❌")
+            sys.exit(1)
+    return file_name_list
+
+
+def filter_files(file_name_list):
+    global deleted_files, untracked_files, modified_files, staged_files
+    global committed_not_pushed
+    deleted_files = [f for f in deleted_files if f in file_name_list]
+    untracked_files = [f for f in untracked_files if f in file_name_list]
+    modified_files = [f for f in modified_files if f in file_name_list]
+    staged_files = [f for f in staged_files if f in file_name_list]
+    committed_not_pushed = [
+        f for f in committed_not_pushed if f in file_name_list
+    ]
+
+
+def run_tests_and_confirm(log_message):
+    log_message.debug("Running tests before processing files", status="🔍")
+    tests_passed = run_tests(log_message)
+    if not tests_passed:
+        log_message.error(
+            "Tests failed. Do you want to continue anyway? (y/n)", status="⚠️")
+        user_input = input().strip().lower()
+        if user_input != 'y':
+            log_message.error("Exiting due to failing tests", status="❌")
+            return False
+        log_message.warning("Continuing despite test failures", status="⚠️")
+    return True
+
+
+def process_changes(repo, args, litellm_tools):
+    changes_made = False
+
+    # If there are deleted files, commit them
+    if deleted_files:
+        git_commit_deletes(repo, deleted_files)
+        changes_made = True
+
+    # If .pre-commit-config.yaml is modified, stage and commit it first
+    if process_pre_commit_config(repo, modified_files):
+        changes_made = True
+
+    # Process files
+    files_to_process = untracked_files + modified_files
+    if files_to_process:
+        if args.oneshot:
+            log_message.info("One-shot mode enabled", status="🎯")
+            process_files(
+                [files_to_process[0]], repo, args, log_message, litellm_tools)
+        else:
+            log_message.info("Batch mode enabled", status="📦")
+            process_files(
+                files_to_process,
+                repo,
+                args,
+                log_message,
+                litellm_tools
+                )
+        changes_made = True
+    else:
+        log_message.info("No files to process.", status="🚫")
+
+    return changes_made
 
 
 if __name__ == "__main__":
