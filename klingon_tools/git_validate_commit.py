@@ -40,13 +40,15 @@ def is_conventional_commit(commit_message: str) -> bool:
     # Combine all lines into one to handle multi-line commit message headers
     combined_message = ' '.join(commit_message.strip().splitlines())
 
-    # Regex pattern for conventional commit with optional emoji at the start
+    # Updated regex pattern to handle optional emoji, valid commit types,
+    # and scope with periods, slashes, hyphens, and word characters
     conventional_commit_pattern = (
         r"(?i)"  # Case-insensitive flag at the start of the expression
-        r"^[\u2600-\u26FF\u2700-\u27BF\U0001F300-\U0001F5FF"
+        r"^[\u2600-\u26FF\u2700-\u27BF\U0001F300-\U0001F5FF"  # Optional emoji
         r"\U0001F600-\U0001F64F\U0001F680-\U0001F6FF\U0001F900-\U0001F9FF]?\s*"
+        # Commit types
         r"(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert|wip)"
-        # Allow word characters, slashes, periods, and hyphens in scope
+        # Scope allowing word chars, slashes, periods, hyphens
         r"\([\w\/.-]+\):\s"
         r".{10,}"  # At least 10 characters after the colon
     )
