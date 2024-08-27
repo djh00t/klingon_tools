@@ -7,13 +7,17 @@ style and provides a logger instance for logging messages.
 
 Attributes:
     log_tools (LogTools): An instance of the LogTools class for managing
-    logging. logger (LogTools.LogMessage): A logger instance for logging
-    messages.
+    logging.
+    log_message (LogTools.LogMessage): A logger instance for logging messages.
 """
 
 from klingon_tools import LogTools
 
 # Initialize logging
 log_tools = LogTools()
-logger = log_tools.log_message
-log_tools.set_default_style("pre-commit")
+log_message = log_tools.log_message
+set_log_level = log_tools.set_log_level
+set_default_style = log_tools.set_default_style
+
+# Set default logging style
+set_default_style("pre-commit")

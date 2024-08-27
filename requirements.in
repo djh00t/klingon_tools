@@ -3,6 +3,7 @@ gitpython
 httpx
 iniconfig
 jinja2
+litellm
 openai
 pip-tools
 pre-commit

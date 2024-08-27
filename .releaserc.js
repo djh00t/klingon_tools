@@ -10,7 +10,7 @@ module.exports = {
     "@semantic-release/changelog",
     "@semantic-release/github",
     ["@semantic-release/git", {
-      "assets": ["pyproject.toml", "CHANGELOG.md"],
+      "assets": ["README.md", "pyproject.toml", "CHANGELOG.md"],
       "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
     }],
   ],

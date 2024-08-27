@@ -18,10 +18,8 @@ Usage Example:
 import os
 import subprocess
 from typing import Tuple
-
 from git import GitCommandError
-
-from klingon_tools.logger import logger
+from klingon_tools.log_msg import log_message
 
 
 def get_git_user_info() -> Tuple[str, str]:
@@ -45,7 +43,7 @@ def get_git_user_info() -> Tuple[str, str]:
             command, capture_output=True, text=True, shell=True, check=True
         )
         if result.returncode != 0:
-            logger.error(
+            log_message.error(
                 "Failed to get git config value for command: " f"{command}"
             )
             raise GitCommandError(command, result.returncode, result.stderr)
@@ -62,14 +60,14 @@ def get_git_user_info() -> Tuple[str, str]:
 
             # Check if user name or email are set to default values
             if not user_name or user_name == "Your Name":
-                logger.error(
+                log_message.error(
                     "Git user name is not set or is set to default " "value."
                 )
                 raise ValueError(
                     "Git user name is not set or is set to default value."
                 )
             if not user_email or user_email == "your.email@example.com":
-                logger.error(
+                log_message.error(
                     "Git user email is not set or is set to default value."
                 )
                 raise ValueError(
@@ -78,8 +76,8 @@ def get_git_user_info() -> Tuple[str, str]:
 
         return user_name, user_email
     except GitCommandError as e:
-        logger.error(f"Error retrieving git user info: {e}")
+        log_message.error(f"Error retrieving git user info: {e}")
         raise
     except ValueError as e:
-        logger.error(f"Error: {e}")
+        log_message.error(f"Error: {e}")
         raise

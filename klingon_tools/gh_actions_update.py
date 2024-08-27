@@ -19,8 +19,7 @@ import requests
 from git import Repo
 from ruamel.yaml import YAML
 from tabulate import tabulate
-
-logger = logging.getLogger(__name__)
+from klingon_tools.log_msg import log_message
 
 
 def can_display_emojis(no_emojis_flag: bool, args: argparse.Namespace) -> bool:
@@ -39,18 +38,20 @@ def can_display_emojis(no_emojis_flag: bool, args: argparse.Namespace) -> bool:
     # Check if emojis are disabled by the --no-emojis flag
     if no_emojis_flag:
         if not args.quiet:
-            logger.debug("Emojis are disabled by the --no-emojis flag.")
+            log_message.debug("Emojis are disabled by the --no-emojis flag.")
         return False
 
     # Check the LANG environment variable for UTF-8 support
     lang = os.getenv("LANG", "")
     if "UTF-8" in lang:
-        logger.debug("Terminal supports emojis based on LANG: %s 😎", lang)
+        log_message.debug(
+            "Terminal supports emojis based on LANG: %s 😎", lang
+        )
         return True
 
     # Log a warning if emojis may not be supported
     if not args.quiet:
-        logger.warning(
+        log_message.warning(
             "Terminal may not support emojis based on LANG: %s", lang
         )
 
@@ -89,7 +90,7 @@ def get_latest_version(repo_name: str) -> str:
 
     # Construct the URL for the GitHub API request
     url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
-    logger.debug(
+    log_message.debug(
         "Fetching latest version for repo: %s using URL: %s", repo_name, url
     )
 
@@ -105,18 +106,18 @@ def get_latest_version(repo_name: str) -> str:
 
     # Make the API request to fetch the latest release
     response = requests.get(url, headers=headers)
-    logger.debug(f"Response status code: {response.status_code}")
+    log_message.debug(f"Response status code: {response.status_code}")
 
     # Check if the request was successful
     if response.status_code == 200:
-        logger.debug(
+        log_message.debug(
             f"Latest version for {repo_name}: "
             f"{response.json()['tag_name']}"
         )
         return response.json()["tag_name"]
 
     # Log an error if the request failed
-    logger.error(
+    log_message.error(
         f"Failed to fetch latest version for {repo_name}, "
         f"status code: {response.status_code}"
     )
@@ -242,10 +243,10 @@ def find_github_actions(args: argparse.Namespace) -> dict:
                 if file.endswith(".yml") or file.endswith(".yaml"):
                     file_path = os.path.join(root, file)
                     yaml_files.append(file_path)
-                    logger.debug(f"Found YAML file: {file_path}")
+                    log_message.debug(f"Found YAML file: {file_path}")
 
-    logger.debug(f"YAML files to process: {yaml_files}")
-    logger.debug(f"Arguments received: {args}")
+    log_message.debug(f"YAML files to process: {yaml_files}")
+    log_message.debug(f"Arguments received: {args}")
 
     # Process each YAML file to find GitHub Actions
     for file_path in yaml_files:
@@ -253,24 +254,24 @@ def find_github_actions(args: argparse.Namespace) -> dict:
         yaml.preserve_quotes = True
         with open(file_path, "r") as f:
             workflow_data = yaml.load(f)
-            logger.debug(f"Processing file: {file_path}")
-            logger.debug(f"Workflow data: {workflow_data}")
+            log_message.debug(f"Processing file: {file_path}")
+            log_message.debug(f"Workflow data: {workflow_data}")
 
             if "jobs" in workflow_data:
-                logger.debug(f"Found jobs in {file_path}")
+                log_message.debug(f"Found jobs in {file_path}")
                 for job_name, job in workflow_data["jobs"].items():
                     if "steps" in job:
                         for step in job["steps"]:
                             if "uses" in step:
-                                logger.debug(
+                                log_message.debug(
                                     f"Found action: {step['uses']} in job: "
                                     f"{job_name}"
                                 )
                                 action_name, current_version = step[
                                     "uses"
                                 ].split("@")
-                                logger.debug(f"Step data: {step}")
-                                logger.debug(
+                                log_message.debug(f"Step data: {step}")
+                                log_message.debug(
                                     f"Action name: {action_name}, "
                                     f"Current version: {current_version}"
                                 )
@@ -344,7 +345,7 @@ def find_github_actions(args: argparse.Namespace) -> dict:
                                     )
                                     actions[key] = action_dict
 
-    logger.debug(f"YAML files found: {yaml_files}")
+    log_message.debug(f"YAML files found: {yaml_files}")
     return actions
 
 
@@ -365,7 +366,7 @@ def update_action_version(
     Returns:
         None
     """
-    logger.debug(
+    log_message.debug(
         "Updating action %s in file %s to version %s",
         action_name,
         file_path,
@@ -384,7 +385,7 @@ def update_action_version(
     for job_name, job in content.get("jobs", {}).items():
         for step in job.get("steps", []):
             if "uses" in step and step["uses"].startswith(action_name):
-                logger.debug(
+                log_message.debug(
                     "Found action %s in job %s", action_name, job_name
                 )
                 step["uses"] = f"{action_name}@{latest_version}"
@@ -392,7 +393,7 @@ def update_action_version(
 
     # Write the updated content back to the file if any updates were made
     if updated:
-        logger.info(
+        log_message.info(
             "Action %s updated to version %s in file %s",
             action_name,
             latest_version,
@@ -401,11 +402,11 @@ def update_action_version(
         with open(file_path, "w") as file:
             yaml.dump(content, file)
     else:
-        logger.warning(
+        log_message.warning(
             "No updates made for action %s in file %s", action_name, file_path
         )
 
-    logger.debug(
+    log_message.debug(
         "Updated %s to %s in %s", action_name, latest_version, file_path
     )
 
@@ -464,22 +465,24 @@ def setup_logging(args: argparse.Namespace) -> None:
     # Retrieve the GitHub token from the environment
     token = get_github_token()
 
-    logger.debug("GitHub Actions Updater is starting.")
+    log_message.debug("GitHub Actions Updater is starting.")
 
     # Check if a GitHub token is available
     if token:
-        logger.debug("Using GitHub token for authentication.")
+        log_message.debug("Using GitHub token for authentication.")
     else:
-        logger.warning("No GitHub token found. Requests may be rate-limited.")
+        log_message.warning(
+            "No GitHub token found. Requests may be rate-limited."
+        )
 
     # Set up logging based on the --debug flag
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
-        logger.setLevel(logging.DEBUG)
-        logger.debug("Debug logging enabled.")
+        log_message.setLevel(logging.DEBUG)
+        log_message.debug("Debug logging enabled.")
     else:
         logging.basicConfig(level=logging.INFO)
-        logger.setLevel(logging.INFO)
+        log_message.setLevel(logging.INFO)
 
 
 def present_state_data(actions: dict, args: argparse.Namespace) -> None:
@@ -621,30 +624,34 @@ def main() -> None:
         args.no_emojis = args.no_emojis
 
     # Collect file data
-    logger.debug("Collecting file data...")
+    log_message.debug("Collecting file data...")
     actions = find_github_actions(args)
-    logger.debug(f"Actions data:\n{actions}")
+    log_message.debug(f"Actions data:\n{actions}")
 
     # Collect API data (latest versions)
-    logger.debug("Collecting API data...")
+    log_message.debug("Collecting API data...")
     actions = collect_api_data(actions)
-    logger.debug(f"API data: {actions}")
+    log_message.debug(f"API data: {actions}")
 
     if not args.update:
         # Present data if not updating
         present_state_data(actions, args)
     else:
         # Update file data for filtered files to the latest version
-        logger.debug("Updating file data to latest version...")
+        log_message.debug("Updating file data to latest version...")
         for key, data in actions.items():
-            logger.debug(f"Checking action: {key}")
-            logger.debug(f"Current Version: {data['action_version_current']}")
-            logger.debug(f"Latest Version: {data['action_latest_version']}")
-            logger.debug(f"Data: {data}")
+            log_message.debug(f"Checking action: {key}")
+            log_message.debug(
+                f"Current Version: {data['action_version_current']}"
+            )
+            log_message.debug(
+                f"Latest Version: {data['action_latest_version']}"
+            )
+            log_message.debug(f"Data: {data}")
 
             # Update action if needed
             if data["action_version_current"] != data["action_latest_version"]:
-                logger.info(
+                log_message.info(
                     "Updating action: %s/%s from version %s to %s",
                     data["action_owner"],
                     data["action_repo"],
@@ -657,24 +664,24 @@ def main() -> None:
                     data["action_latest_version"],
                 )
             else:
-                logger.info(
+                log_message.info(
                     "No update needed for action: %s/%s",
                     data["action_owner"],
                     data["action_repo"],
                 )
 
         # Collect file data after update
-        logger.debug("Collecting file data after update...")
+        log_message.debug("Collecting file data after update...")
         actions_after = find_github_actions(args)
-        logger.debug(f"Actions after update: {actions_after}")
+        log_message.debug(f"Actions after update: {actions_after}")
 
         # Collect API data again for updated file data
-        logger.debug("Collecting API data after update...")
+        log_message.debug("Collecting API data after update...")
         actions_after = collect_api_data(actions_after)
-        logger.debug(f"API data after update: {actions_after}")
+        log_message.debug(f"API data after update: {actions_after}")
 
         # Present updated data
-        logger.debug("Presenting updated data...")
+        log_message.debug("Presenting updated data...")
         present_state_data(actions_after, args)
 
 

@@ -35,3 +35,8 @@ build-backend = "setuptools.build_meta"
 
 [tool.semantic_release]
 version = "2.1.1"
+
+[tool.pytest.ini_options]
+addopts = "-ra -q"
+testpaths = ["tests"]
+minversion = "8.3.1 "
