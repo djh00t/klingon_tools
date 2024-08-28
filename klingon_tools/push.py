@@ -88,6 +88,7 @@ from klingon_tools.git_tools import (
     git_stage_diff,
 )
 from klingon_tools.git_validate_commit import is_conventional_commit
+from klingon_tools.litellm_model_cache import get_supported_models
 from klingon_tools.log_msg import log_message, set_log_level
 from klingon_tools.litellm_tools import LiteLLMTools
 
@@ -285,30 +286,65 @@ def parse_arguments() -> argparse.Namespace:
     )
 
     # Define command-line arguments
+    parser.add_argument(
+        "--model",
+        type=str,
+        default=os.getenv("MODEL_PRIMARY", "gpt-4o-mini"),
+        help=(
+            "Specify the model to use [env var: MODEL_PRIMARY] "
+            "(default: gpt-4o-mini)"
+        )
+    )
+    parser.add_argument(
+        "--model-secondary",
+        type=str,
+        default=os.getenv("MODEL_SECONDARY", "claude-3-haiku-20240307"),
+        help=(
+            "Specify the fallback/secondary model to use "
+            "[env var: MODEL_SECONDARY] (default: claude-3-haiku-20240307)"
+        )
+    )
+    parser.add_argument(
+        "--models-list",
+        action="store_true",
+        help="List supported models. [env var: KLINGON_MODELS]"
+    )
+    parser.add_argument(
+        "--output-json",
+        action="store_true",
+        help="Output the models list in JSON format",
+        dest="output_json"
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Alias for --output-json",
+        dest="output_json"
+    )
     # Define the --repo-path argument with a default value of the current
     # directory
-    # Define the --debug argument to enable debug mode
-    # Define the --file-name argument to specify a single file to process
-    # Define the --oneshot argument to process only one file and exit
-    # Define the --dryrun argument to run the script without committing or
-    # pushing changes
     parser.add_argument(
         "--repo-path", type=str, default=".", help="Path to git repository"
     )
+    # Define the --debug argument to enable debug mode
     parser.add_argument(
         "--debug", action="store_true", help="Enable debug mode"
     )
+    # Define the --file-name argument to specify a single file to process
     parser.add_argument(
         "--file-name",
         type=str,
         nargs="*",
         help="File name(s) to stage and commit",
     )
+    # Define the --oneshot argument to process only one file and exit
     parser.add_argument(
         "--oneshot",
         action="store_true",
         help="Process and commit only one file then exit",
     )
+    # Define the --dryrun argument to run the script without committing or
+    # pushing changes
     parser.add_argument(
         "--dryrun",
         action="store_true",
@@ -608,15 +644,6 @@ def generate_and_validate_commit_message(
     Returns:
         Optional[str]: A valid commit message or None if validation fails.
     """
-    emoji_pattern = (
-        r'^([\u2600-\u26FF\u2700-\u27BF\U0001F300-\U0001F5FF'
-        r'\U0001F600-\U0001F64F\U0001F680-\U0001F6FF'
-        r'\U0001F900-\U0001F9FF])'
-    )
-    commit_types = (
-        r'(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert|wip)'
-    )
-
     for attempt in range(3):
         try:
             commit_message = litellm_tools.generate_commit_message(diff)
@@ -626,15 +653,11 @@ def generate_and_validate_commit_message(
                 r'^(plaintext|```)\s*', '', commit_message.strip()
             )
 
-            # Ensure there's a space between the emoji and the first non-space
-            # character, or between emoji and commit type
-            commit_message = re.sub(
-                fr'{emoji_pattern}(\S)', r'\1 \2', commit_message
-            )
-            commit_message = re.sub(
-                fr'{emoji_pattern}{commit_types}', r'\1 \2', commit_message,
-                flags=re.IGNORECASE
-            )
+            # Check if the second character is a space (i.e., the first char
+            # might be an emoji)
+            if len(commit_message) > 1 and commit_message[1] == ' ':
+                # Ignore the first two characters (emoji + space)
+                commit_message = commit_message[2:]
 
             # Handle dependency update commits by converting type to 'build'
             if 'dependencies' in diff.lower() or 'deps' in diff.lower():
@@ -777,11 +800,31 @@ def main():
     # Parse command-line arguments
     args = parse_arguments()
 
+    # List supported models if --models-list is specified
+    if args.models_list:
+        # Get the supported models based on global filtering settings
+        models = get_supported_models()
+
+        # Sort the model names alphabetically and create a list of sorted names
+        model_names_only = sorted(models.keys())
+
+        # Pretty print the sorted dictionary of model names
+        if args.output_json:
+            import json
+            print(json.dumps(model_names_only, indent=4))
+        else:
+            log_message.info(
+                message=model_names_only,
+                status="",
+                style=None
+            )
+        return 0
+
     # Initialize LiteLLMTools
     litellm_tools = LiteLLMTools(
         debug=args.debug,
-        model_primary="gpt-4o-mini",
-        model_secondary="claude-3-haiku-20240307"
+        model_primary=args.model,
+        model_secondary=args.model_secondary
     )
 
     # Set logging level

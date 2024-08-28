@@ -37,8 +37,14 @@ def is_conventional_commit(commit_message: str) -> bool:
         bool: True if the commit message follows the Conventional Commits
         standard, False otherwise.
     """
-    # Combine all lines into one to handle multi-line commit message headers
-    combined_message = ' '.join(commit_message.strip().splitlines())
+    # Split commit message into header (first line) and body (remaining lines)
+    commit_lines = commit_message.strip().splitlines()
+    if len(commit_lines) == 0:
+        return False
+
+    # Only check the first line (header) against the Conventional Commit
+    # pattern
+    header = commit_lines[0].strip()
 
     # Updated regex pattern to handle optional emoji, valid commit types,
     # and mandatory scope with any characters allowed inside round brackets
@@ -46,21 +52,22 @@ def is_conventional_commit(commit_message: str) -> bool:
         r"(?i)"  # Case-insensitive flag at the start of the expression
         r"^[\u2600-\u26FF\u2700-\u27BF\U0001F300-\U0001F5FF"  # Optional emoji
         r"\U0001F600-\U0001F64F\U0001F680-\U0001F6FF\U0001F900-\U0001F9FF]?\s*"
-        # Commit types
+        # Commit types including refactor
         r"(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert|wip)"
-        # Mandatory scope allowing any characters inside round brackets
-        r"\(.+\):\s"
+        # Mandatory scope allowing any characters inside round brackets, even
+        # multiple words or special characters
+        r"\([^\)]+\):\s"
         r".{10,}"  # At least 10 characters after the colon
     )
 
-    # Check if the commit message matches the conventional commit pattern
-    if not re.match(conventional_commit_pattern, combined_message, re.UNICODE):
+    # Check if the first line (header) matches the conventional commit pattern
+    if not re.match(conventional_commit_pattern, header, re.UNICODE):
         return False
 
     # Check for the presence of a sign-off line if required
     sign_off_pattern = r"^Signed-off-by: .+ <.+@.+>$"
     if not any(re.match(sign_off_pattern, line.strip(), re.IGNORECASE)
-               for line in commit_message.splitlines()):
+               for line in commit_lines):
         return False
 
     return True
