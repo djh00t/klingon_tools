@@ -8,9 +8,9 @@ configuration in package.json and pyproject.toml files.
 
 import os
 import json
+import toml
 from typing import Dict, Any
 import pytest
-import toml
 
 
 def test_package_json_exists() -> None:
@@ -45,13 +45,11 @@ def test_package_json_version() -> None:
 
     assert "version" in data, "version key not found in package.json"
     assert isinstance(
-        data["version"], str
-    ), "version in package.json is not a string"
+        data["version"], str), "version in package.json is not a string"
 
     version_parts = data["version"].split(".")
-    assert (
-        len(version_parts) == 3
-    ), "version in package.json should have 3 parts"
+    assert len(
+        version_parts) == 3, "version in package.json should have 3 parts"
     assert all(
         part.isdigit() for part in version_parts
     ), "version parts should be numeric"
@@ -108,8 +106,7 @@ def assert_version_variable(data: Dict[str, Any]) -> None:
     """
     version_variable = data["tool"]["semantic_release"]["version_variable"]
     assert isinstance(
-        version_variable, list
-    ), "version_variable should be a list"
+        version_variable, list), "version_variable should be a list"
     assert len(version_variable) > 0, "version_variable list is empty"
 
     version_spec = version_variable[0]
