@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# klingon_tools/push.py
 """
 This module provides a script for automating git operations.
 
@@ -87,7 +88,8 @@ from klingon_tools.git_tools import (
     push_changes_if_needed,
     git_stage_diff,
 )
-from klingon_tools.git_validate_commit import is_conventional_commit
+from klingon_tools.git_commit_validate import validate_single_commit_message
+from klingon_tools.git_commit_validate import is_conventional_commit
 from klingon_tools.litellm_model_cache import get_supported_models
 from klingon_tools.log_msg import log_message, set_log_level
 from klingon_tools.litellm_tools import LiteLLMTools
@@ -582,16 +584,11 @@ def workflow_process_file(
 
     # Generate and validate commit message
     commit_message = generate_and_validate_commit_message(
-        diff,
-        litellm_tools,
-        log_message
-        )
-    if not commit_message:
-        log_message.error(
-            f"Failed to generate valid commit message for {file_name}",
-            status="❌"
-            )
-        return
+        diff, litellm_tools, log_message)
+
+    # Validate the commit message and log if invalid
+    if not validate_single_commit_message(commit_message, log_message):
+        return  # Exit if the commit message is invalid
 
     # Run pre-commit hooks on the file
     success, _ = git_pre_commit(
