@@ -1,3 +1,4 @@
+# klingon_tools/litellm_tools.py
 """
 This module provides tools for generating content using LiteLLM models.
 
@@ -161,10 +162,10 @@ class LiteLLMTools:
 
             [optional footer(s)]
 
-            The first line of a conventional commit must not exceed 79
+            The first line of a conventional commit must not exceed 72
             characters and must be followed by a blank line. The body and
             footer are both optional but must be separated by a blank line if
-            present.
+            present and also must not exceed 72 characters.
 
             Consider the following options when selecting commit types:
             - build: updates to build system & external dependencies
@@ -192,8 +193,8 @@ class LiteLLMTools:
             "Co-authored-by" or other footers unless explicitly requested.
 
             Ensure the commit message is accurate, relevant, and concise.
-            **REMEMBER: No more than 79 characters on the first line, followed
-            by a blank line.**
+            **REMEMBER: No more than 72 characters wide on any line of
+            content.**
             """,
             "pull_request_title": """
             Generate a pull request title (72 characters or less) summarizing
