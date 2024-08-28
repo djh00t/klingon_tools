@@ -1,4 +1,4 @@
-# klingon_tools/git_validate_commit.py
+# klingon_tools/git_commit_validate.py
 """Module for validating Git commit messages.
 
 This module provides functions to validate Git commit messages to ensure they
@@ -10,9 +10,8 @@ Typical usage example:
     = Repo('/path/to/repo') is_valid = validate_commit_messages(repo)
 """
 
-import re
-from git import Repo
 from typing import Any
+import re
 from klingon_tools.git_commit_fix import fix_commit_message
 
 
@@ -25,151 +24,131 @@ def is_commit_message_signed_off(commit_message: str) -> bool:
     Returns:
         bool: True if the commit message is signed off, False otherwise.
     """
-    # Check for the "Signed-off-by:" string in the commit message
-    return "Signed-off-by:" in commit_message.strip()
+    return "Signed-off-by:" in commit_message
 
 
-def is_conventional_commit(commit_message: str) -> bool:
-    """Check if the commit message follows the custom Conventional Commits
-    standard.
-
-    Args:
-        commit_message (str): The commit message to check.
-
-    Returns:
-        bool: True if the commit message follows the Conventional Commits
-        standard, False otherwise.
-    """
-
-    # Split the commit message into header (first line) and body (remaining
-    # lines)
-    commit_lines = commit_message.strip().splitlines()
-    if len(commit_lines) == 0:
-        return False, "Commit message cannot be empty."
-
-    # Step 1: Check for optional 2-character prefix
-    header = commit_lines[0].strip()
-    if len(header) > 2 and header[1] == " ":
-        header = header[2:].strip()
-
-    # Step 2: Validate the type
-    type_scope_desc_match = re.match(
-        r"^(feat|fix|chore|doc|docs|style|refactor|"
-        r"perf|test|build|ci|revert|wip)"
-        r"\(([^)]+)\): (.+)",
-        header,
-    )
-    if not type_scope_desc_match:
-        return False, (
-            "Invalid commit message format. Expected format: <type>(<scope>): "
-            "<description>."
-        )
-
-    commit_type, scope, description = type_scope_desc_match.groups()
-
-    # Step 3: Ensure type, scope, and description do not exceed 72 characters
-    if len(commit_type) + len(scope) + len(description) + 4 > 72:
-        return (
-            False,
-            "The first line of the commit message should not exceed 72 "
-            "characters.",
-        )
-
-    # Step 4: Check for optional body (must be separated by a blank line)
-    if len(commit_lines) > 1 and commit_lines[1].strip() != "":
-        return (
-            False,
-            "The body of the commit message must be separated from the"
-            " header by a blank line.",
-        )
-
-    # Check body width if present
-    for line in commit_lines[2:]:
-        if len(line) > 72:
-            return (
-                False,
-                "Commit message body lines should not exceed "
-                "72 characters.",
-            )
-
-    # Step 5: Check for the footer, including breaking changes
-    if any(
-        line.startswith("BREAKING CHANGE:") and len(line) > 72
-        for line in commit_lines[2:]
-    ):
-        return (
-            False,
-            "Footer lines (including BREAKING CHANGE:) "
-            "should not exceed 72 characters.",
-        )
-
-    # Everything checks out
-    return True, "Commit message is valid."
+def check_prefix(commit_message: str, log_message: Any) -> str:
+    """Check for optional 2-character prefix and remove if present."""
+    if len(commit_message) > 2 and commit_message[1] == " ":
+        log_message.info("Detected optional prefix, removing it.", status="")
+        return commit_message[2:].strip()
+    return commit_message
 
 
-def validate_commit_messages(repo: Repo) -> bool:
-    """Validate all commit messages to ensure they are signed off and follow
-    the Conventional Commits standard.
-
-    Args:
-        repo (Repo): The Git repository to validate commit messages for.
-
-    Returns:
-        bool: True if all commit messages are valid, False otherwise.
-    """
-    for commit in repo.iter_commits("HEAD"):
-        if not validate_single_commit_message(commit.message):
-            return False
+def check_type(commit_message: str, log_message: Any) -> bool:
+    """Check if the commit type is valid."""
+    valid_types = [
+        "feat", "fix", "chore", "doc", "docs", "style", "refactor",
+        "perf", "test", "build", "ci", "revert", "wip"
+    ]
+    match = re.match(r"^(\w+)\(", commit_message)
+    if not match:
+        log_message.error("Invalid commit type. Type must be one of: "
+                          f"{', '.join(valid_types)}.", status="")
+        return False
+    commit_type = match.group(1)
+    if commit_type not in valid_types:
+        log_message.error(f"Invalid commit type: {commit_type}.", status="")
+        return False
+    log_message.info(f"Commit type '{commit_type}' is valid.", status="")
     return True
 
 
-def validate_single_commit_message(
-        commit_message: str, log_message: Any) -> bool:
-    """Validate a single commit message.
+def check_scope(commit_message: str, log_message: Any) -> bool:
+    """Check if the scope is present and valid."""
+    match = re.match(r"^\w+\(([^)]+)\):", commit_message)
+    if not match:
+        log_message.error("Commit message must include a valid scope in "
+                          "the format (scope).", status="")
+        return False
+    scope = match.group(1)
+    log_message.info(f"Commit scope '{scope}' is valid.", status="")
+    return True
 
-    Args:
-        commit_message (str): The commit message to validate.
-        log_message (Any): Logger instance to capture messages.
 
-    Returns:
-        bool: True if the commit message is valid, False otherwise.
-    """
-    is_valid, error_message = is_conventional_commit(commit_message)
+def check_description(commit_message: str, log_message: Any) -> bool:
+    """Check if the description is present and valid."""
+    match = re.match(r"^\w+\([^)]+\):\s+(.+)", commit_message)
+    if not match:
+        log_message.error("Commit message must include a description "
+                          "after the scope.", status="")
+        return False
+    description = match.group(1)
+    log_message.info(
+        f"Commit description '{description}' is valid.",
+        status="")
+    return True
 
-    if not is_valid:
-        # Log the invalid commit message and the error
-        log_message.info("=" * 80, status="", style=None)
-        log_message.info(
-            f"Invalid commit message: {error_message}\n{commit_message}",
-            status="",
-            style=None
-        )
-        log_message.info("-" * 80, status="", style=None)
 
-        # Announce attempt to auto-fix the commit message
-        log_message.info(
-            "Attempting to auto-fix the commit message...",
-            status="",
-            style=None
-        )
-        # Attempt to auto-fix the commit message if possible
+def check_line_length(commit_message: str, log_message: Any) -> bool:
+    """Check if the first line of the commit message exceeds 72 characters."""
+    if len(commit_message) > 72:
+        log_message.error(
+            "First line of the commit message exceeds 72 characters.",
+            status="")
         fixed_message = fix_commit_message(commit_message)
-        log_message.info(
-            f"Auto-fixed commit message:\n{fixed_message}",
-            status="",
-            style=None
-        )
-        log_message.info("-" * 80, status="", style=None)
+        log_message.info(f"Auto-fixed message: {fixed_message}", status="")
+        return False
+    log_message.info("First line length is within the limit.", status="")
+    return True
 
-        # Return validation result of the fixed message if needed
-        is_valid_fixed, _ = is_conventional_commit(fixed_message)
 
-        if not is_valid_fixed:
+def check_body(commit_message_lines: list, log_message: Any) -> bool:
+    """Check if the body (if present) is separated by a blank line and
+    formatted correctly."""
+    if len(commit_message_lines) > 1 and commit_message_lines[1].strip():
+        log_message.error(
+            "Body must be separated from the header by a blank line.",
+            status="")
+        return False
+    log_message.info("Body separation is valid (if present).", status="")
+    return True
+
+
+def check_footer(commit_message_lines: list, log_message: Any) -> bool:
+    """Check for breaking changes in the footer."""
+    for line in commit_message_lines[2:]:
+        if line.startswith("BREAKING CHANGE:") and len(line) > 72:
             log_message.error(
-                "Auto-fix could not resolve the issue.",
-                status="",
-            )
+                "BREAKING CHANGE footer exceeds 72 characters.",
+                status="")
             return False
+    log_message.info("Footer (if present) is valid.", status="")
+    return True
 
-        log_message.info("=" * 80, status="", style=None)
-    return is_valid
+
+def validate_commit_message(commit_message: str, log_message: Any) -> bool:
+    """Perform step-by-step validation of a commit message."""
+
+    commit_lines = commit_message.splitlines()
+    header = commit_lines[0].strip()
+
+    # Step 1: Check for optional prefix
+    header = check_prefix(header, log_message)
+
+    # Step 2: Check commit type
+    if not check_type(header, log_message):
+        return False
+
+    # Step 3: Check scope
+    if not check_scope(header, log_message):
+        return False
+
+    # Step 4: Check description
+    if not check_description(header, log_message):
+        return False
+
+    # Step 5: Check first line length
+    if not check_line_length(header, log_message):
+        return False
+
+    # Step 6: Check body
+    if not check_body(commit_lines, log_message):
+        return False
+
+    # Step 7: Check footer (Breaking changes)
+    if not check_footer(commit_lines, log_message):
+        return False
+
+    log_message.info("Commit message passed all validation checks.", status="")
+    return True
