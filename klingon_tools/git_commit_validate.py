@@ -144,29 +144,32 @@ def validate_single_commit_message(
             status="",
             style=None
         )
-        log_message.info("=" * 80, status="", style=None)
+        log_message.info("-" * 80, status="", style=None)
 
+        # Announce attempt to auto-fix the commit message
+        log_message.info(
+            "Attempting to auto-fix the commit message...",
+            status="",
+            style=None
+        )
         # Attempt to auto-fix the commit message if possible
         fixed_message = fix_commit_message(commit_message)
-        log_message.info("=" * 80, status="", style=None)
         log_message.info(
             f"Auto-fixed commit message:\n{fixed_message}",
             status="",
             style=None
         )
-        log_message.info("=" * 80, status="", style=None)
+        log_message.info("-" * 80, status="", style=None)
 
         # Return validation result of the fixed message if needed
         is_valid_fixed, _ = is_conventional_commit(fixed_message)
 
         if not is_valid_fixed:
-            log_message.info("=" * 80, status="", style=None)
-            log_message.info(
+            log_message.error(
                 "Auto-fix could not resolve the issue.",
                 status="",
-                style=None
             )
-            log_message.info("=" * 80, status="", style=None)
             return False
 
+        log_message.info("=" * 80, status="", style=None)
     return is_valid
