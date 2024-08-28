@@ -27,6 +27,7 @@ from klingon_tools.git_user_info import get_git_user_info
 from klingon_tools.log_msg import log_message
 from klingon_tools.git_unstage import git_unstage_files
 from klingon_tools.git_log_helper import get_commit_log
+from klingon_tools.git_tools import git_stage_diff
 
 
 class OpenAITools:
@@ -340,14 +341,22 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
         signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
         return f"{message}{signoff}"
 
-    def generate_commit_message(self, diff: str, dryrun: bool = False) -> str:
+    def generate_commit_message(
+            self,
+            file_name: str,
+            repo: Repo,
+            modified_files: list,
+            dryrun: bool = False) -> str:
         """
-        Generates a commit message based on the provided diff.
+        Generates a commit message based on the provided file.
 
         This function handles both regular changes and file deletions.
 
         Args:
-            diff (str): The diff to include in the generated commit message.
+            file_name (str): The name of the file to generate a commit message
+            for.
+            repo (Repo): The Git repository object.
+            modified_files (list): List of modified files.
             dryrun (bool): If True, unstages all files after generating the
             message.
 
@@ -358,64 +367,12 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
             ValueError: If the commit message format is incorrect.
             subprocess.CalledProcessError: If a Git command fails.
         """
-        deleted_files = subprocess.run(
-            ["git", "ls-files", "--deleted"],
-            capture_output=True,
-            text=True,
-            check=True,
-        ).stdout.splitlines()
+        diff = git_stage_diff(file_name, repo, modified_files)
 
-        if deleted_files:
-            for file in deleted_files:
-                try:
-                    file_diff = subprocess.run(
-                        ["git", "diff", file],
-                        capture_output=True,
-                        text=True,
-                        check=True,
-                    ).stdout
-                except subprocess.CalledProcessError as e:
-                    log_message.error(f"Failed to get diff for {file}: {e}")
-                    continue
-
-                generated_message = self.generate_content(
-                    "commit_message_user", file_diff
-                )
-
-                try:
-                    formatted_message = self.format_message(generated_message)
-                    formatted_message = self.signoff_message(formatted_message)
-                except ValueError as e:
-                    log_message.error(f"Error formatting commit message: {e}")
-                    if "must include a scope" in str(e):
-                        commit_type, commit_description = (
-                            generated_message.split(":", 1)
-                        )
-                        commit_scope = "specific-scope"
-                        generated_message = f"{commit_type}({commit_scope}): \
-                            {commit_description.strip()}"
-                        formatted_message = self.format_message(
-                            generated_message
-                        )
-                        formatted_message = self.signoff_message(
-                            formatted_message
-                        )
-                        log_message.error(
-                            "Scope was missing. Please provide a more "
-                            "specific scope."
-                        )
-
-                log_message.info(message="=" * 80, status="", style="none")
-                log_message.info(
-                    f"Generated commit message for {file}:\n\n"
-                    f"{formatted_message}\n"
-                )
-                log_message.info(message="=" * 80, status="", style="none")
-
-                subprocess.run(
-                    ["git", "commit", "-m", formatted_message, file],
-                    check=True,
-                )
+        if diff is None:
+            log_message.error(
+                f"Failed to get diff for {file_name}", status="❌")
+            return None
 
         try:
             generated_message = self.generate_content(
@@ -429,7 +386,8 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                 textwrap.wrap(formatted_message, width=79)
             )
             log_message.info(
-                message=f"Generated commit message:\n\n{wrapped_message}\n",
+                message="Generated commit message for "
+                f"{file_name}:\n\n{wrapped_message}\n",
                 status="",
             )
             log_message.info(message="=" * 80, status="", style="none")
@@ -443,8 +401,8 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                     ":", 1
                 )
                 commit_scope = "specific-scope"  # Placeholder
-                generated_message = f"{commit_type}({commit_scope}): \
-                    {commit_description.strip()}"
+                generated_message = f"{commit_type}({commit_scope}):"
+                f"{commit_description.strip()}"
                 formatted_message = self.format_message(generated_message)
                 formatted_message = self.signoff_message(formatted_message)
                 log_message.error(
@@ -456,7 +414,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                     textwrap.wrap(formatted_message, width=79)
                 )
                 log_message.info(
-                    message="Generated commit message:"
+                    message=f"Generated commit message for {file_name}:"
                     f"\n\n{wrapped_message}\n",
                     status="",
                     style="none",
