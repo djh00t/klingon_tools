@@ -71,7 +71,6 @@ import os
 import subprocess
 import sys
 import requests
-import re
 import glob
 from git import Repo
 from typing import Any, List, Tuple, Optional
@@ -88,8 +87,7 @@ from klingon_tools.git_tools import (
     push_changes_if_needed,
     git_stage_diff,
 )
-from klingon_tools.git_commit_validate import validate_single_commit_message
-from klingon_tools.git_commit_validate import is_conventional_commit
+from klingon_tools.git_commit_validate import validate_commit_message
 from klingon_tools.litellm_model_cache import get_supported_models
 from klingon_tools.log_msg import log_message, set_log_level
 from klingon_tools.litellm_tools import LiteLLMTools
@@ -122,25 +120,6 @@ def find_git_root(start_path: str) -> Optional[str]:
             return os.path.abspath(current_path)
         current_path = os.path.dirname(current_path)
     return None
-
-
-def validate_commit_message(commit_message: str) -> bool:
-    """
-    Validate the commit message format.
-
-    Args:
-        commit_message (str): The commit message to validate.
-
-    Returns:
-        bool: True if the commit message is valid, False otherwise.
-    """
-    # Example validation: Check if the commit message is not empty, has a
-    # minimum length, and includes a scope in the format "type(scope): message"
-    if not commit_message or len(commit_message) <= 10:
-        return False
-    if not re.match(r"^[a-z]+(\([a-z]+\))?: .+", commit_message):
-        return False
-    return True
 
 
 def check_software_requirements(repo_path: str, log_message: Any) -> None:
@@ -286,6 +265,11 @@ def parse_arguments() -> argparse.Namespace:
         action="store_true",
         help="Skip running tests",
     )
+    parser.add_argument(
+        "--no-llm",
+        action="store_true",
+        help="Run tests without using LLM",
+    )
 
     # Define command-line arguments
     parser.add_argument(
@@ -357,7 +341,7 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def run_tests(log_message: Any = None) -> bool:
+def run_tests(log_message: Any = None, no_llm: bool = False) -> bool:
     """
     Run tests using ktest CLI command and log the results.
 
@@ -366,6 +350,7 @@ def run_tests(log_message: Any = None) -> bool:
 
     Args:
         log_message (Any): The logging function to use for output.
+        no_llm (bool): Whether to run tests without using LLM.
 
     Returns:
         bool: True if tests pass, False otherwise.
@@ -377,9 +362,14 @@ def run_tests(log_message: Any = None) -> bool:
     import sys
 
     try:
+        # Prepare the command
+        command = [sys.executable, "-m", "klingon_tools.ktest"]
+        if no_llm:
+            command.append("--no-llm")
+
         # Run ktest as a subprocess
         process = subprocess.Popen(
-            [sys.executable, "-m", "klingon_tools.ktest"],
+            command,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             universal_newlines=True,
@@ -563,17 +553,13 @@ def workflow_process_file(
 
     Raises:
         SystemExit: If pre-commit hooks fail.
-
-    Note:
-        This function modifies global variables: modified_files, repo, and
-        args.
     """
     global modified_files, repo, args
 
     log_message.debug(
         message="Processing file",
         status="workflow_process_file ✅"
-        )
+    )
 
     if file_name in committed_not_pushed:
         log_message.info(f"File already committed: {file_name}", status="⏭️")
@@ -582,13 +568,21 @@ def workflow_process_file(
     # Stage the file and get the diff
     diff = git_stage_diff(file_name, current_repo, current_modified_files)
 
-    # Generate and validate commit message
-    commit_message = generate_and_validate_commit_message(
-        diff, litellm_tools, log_message)
+    # Check if diff is empty
+    if not diff:
+        log_message.info(
+            f"No changes detected in file: {file_name}",
+            status="🚫"
+        )
+        return
 
-    # Validate the commit message and log if invalid
-    if not validate_single_commit_message(commit_message, log_message):
-        return  # Exit if the commit message is invalid
+    # Generate commit message
+    commit_message = litellm_tools.generate_commit_message(
+        file_name, repo, modified_files)
+
+    # Validate the commit message step-by-step
+    if not validate_commit_message(commit_message, log_message):
+        return  # Exit if validation fails
 
     # Run pre-commit hooks on the file
     success, _ = git_pre_commit(
@@ -605,13 +599,13 @@ def workflow_process_file(
         log_message.error(
             "Pre-commit hooks failed. Exiting script.",
             status="❌"
-            )
+        )
         sys.exit(1)
 
     log_message.info(
         f"Finished processing file: {file_name}",
         status="✅"
-        )
+    )
     if current_args.debug:
         log_message.info(message="Debug mode enabled", status="🐞")
         git_get_status(current_repo)
@@ -623,60 +617,6 @@ def workflow_process_file(
         current_repo,
         current_args
     )
-
-
-def generate_and_validate_commit_message(
-        diff: str,
-        litellm_tools: LiteLLMTools,
-        log_message: Any
-        ) -> Optional[str]:
-    """Generate and validate a conventional commit message using LiteLLMTools.
-
-    Args:
-        diff (str): The diff of the file to be committed.
-        litellm_tools (LiteLLMTools): Tool instance to generate the commit
-            message.
-        log_message (Any): Logger instance to capture warnings and errors.
-
-    Returns:
-        Optional[str]: A valid commit message or None if validation fails.
-    """
-    for attempt in range(3):
-        try:
-            commit_message = litellm_tools.generate_commit_message(diff)
-
-            # Remove any leading 'plaintext' or '```' markers
-            commit_message = re.sub(
-                r'^(plaintext|```)\s*', '', commit_message.strip()
-            )
-
-            # Check if the second character is a space (i.e., the first char
-            # might be an emoji)
-            if len(commit_message) > 1 and commit_message[1] == ' ':
-                # Ignore the first two characters (emoji + space)
-                commit_message = commit_message[2:]
-
-            # Handle dependency update commits by converting type to 'build'
-            if 'dependencies' in diff.lower() or 'deps' in diff.lower():
-                commit_message = re.sub(
-                    r'^(feat|fix|chore):', 'build:', commit_message,
-                    flags=re.IGNORECASE
-                )
-
-            # Validate the commit message against conventional commit standards
-            if is_conventional_commit(commit_message):
-                return commit_message
-
-            log_message.warning(
-                "Generated commit message not in conventional format. "
-                f"Attempt {attempt + 1}/3"
-            )
-        except Exception as e:
-            log_message.error(
-                f"Failed to generate commit message: {str(e)}",
-                status="❌"
-            )
-    return None
 
 
 def startup_tasks(args: argparse.Namespace) -> Tuple[Repo, str, str]:
@@ -875,7 +815,7 @@ def main():
 
     # Run tests before processing any files unless --skip-tests is specified
     if not args.skip_tests:
-        if not run_tests_and_confirm(log_message):
+        if not run_tests_and_confirm(log_message, args.no_llm):
             return 1
 
     changes_made = process_changes(repo, args, litellm_tools)
@@ -918,9 +858,9 @@ def filter_files(file_name_list):
     ]
 
 
-def run_tests_and_confirm(log_message):
+def run_tests_and_confirm(log_message, no_llm):
     log_message.debug("Running tests before processing files", status="🔍")
-    tests_passed = run_tests(log_message)
+    tests_passed = run_tests(log_message, no_llm)
     if not tests_passed:
         log_message.error(
             "Tests failed. Do you want to continue anyway? (y/n)", status="⚠️")
