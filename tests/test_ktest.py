@@ -5,6 +5,7 @@ import pytest
 from unittest.mock import patch, ANY
 import klingon_tools.ktest as ktest
 import io
+import argparse
 
 
 @pytest.fixture
@@ -55,7 +56,15 @@ def test_ktest_default(
     mock_set_default_style.assert_called_once_with("pre-commit")
     mock_set_log_level.assert_called_once_with("INFO")
     mock_pytest_main.assert_called_once_with(
-        ["tests", "--tb=short", "--import-mode=importlib", "-v"], plugins=[ANY]
+        [
+            "tests",
+            "--tb=short",
+            "--import-mode=importlib",
+            "-v",
+            "-q",
+            "--disable-warnings"
+        ],
+        plugins=[ANY]
     )
     assert isinstance(result, list)
 
@@ -83,7 +92,15 @@ def test_ktest_custom_loglevel(
     mock_set_default_style.assert_called_once_with("pre-commit")
     mock_set_log_level.assert_called_once_with("DEBUG")
     mock_pytest_main.assert_called_once_with(
-        ["tests", "--tb=short", "--import-mode=importlib", "-v"], plugins=[ANY]
+        [
+            "tests",
+            "--tb=short",
+            "--import-mode=importlib",
+            "-v",
+            "-q",
+            "--disable-warnings"
+        ],
+        plugins=[ANY]
     )
 
 
@@ -108,7 +125,15 @@ def test_ktest_as_entrypoint(
 
     assert isinstance(result, int)
     mock_pytest_main.assert_called_once_with(
-        ["tests", "--tb=short", "--import-mode=importlib", "-v"], plugins=[ANY]
+        [
+            "tests",
+            "--tb=short",
+            "--import-mode=importlib",
+            "-v",
+            "-q",
+            "--disable-warnings"
+        ],
+        plugins=[ANY]
     )
 
 
@@ -142,7 +167,15 @@ def test_ktest_suppress_output(
     assert mock_stdout.getvalue() == ""
     assert mock_stderr.getvalue() == ""
     mock_pytest_main.assert_called_once_with(
-        ["tests", "--tb=short", "--import-mode=importlib", "-v"], plugins=[ANY]
+        [
+            "tests",
+            "--tb=short",
+            "--import-mode=importlib",
+            "-v",
+            "-q",
+            "--disable-warnings"
+        ],
+        plugins=[ANY]
     )
 
 
@@ -154,12 +187,48 @@ def test_ktest_entrypoint():
     sys.exit with the result of ktest. It checks the following:
 
     1. sys.exit is called with the result of ktest.
-    2. ktest is called with as_entrypoint=True.
+    2. ktest is called with as_entrypoint=True and the appropriate default
+       args.
     """
     with patch("klingon_tools.ktest.ktest") as mock_ktest, patch(
         "sys.exit"
-    ) as mock_exit:
+    ) as mock_exit, patch(
+        "argparse.ArgumentParser.parse_args"
+    ) as mock_parse_args:
         mock_ktest.return_value = 0
-        ktest.ktest_entrypoint()
-        mock_ktest.assert_called_once_with(as_entrypoint=True)
+        mock_parse_args.return_value = argparse.Namespace(
+            no_llm=False, loglevel="INFO")
+
+        ktest.ktest_entrypoint([])  # Simulate calling with no arguments
+
+        mock_ktest.assert_called_once_with(
+            loglevel="INFO", as_entrypoint=True, no_llm=False
+        )
+
         mock_exit.assert_called_once_with(0)
+
+
+def test_ktest_no_llm(mock_pytest_main):
+    """
+    Test the ktest function with the no_llm argument set to True.
+
+    This test verifies that the --no-llm argument is correctly passed to
+    pytest.
+
+    Args:
+        mock_pytest_main: Mocked pytest.main function.
+    """
+    ktest.ktest(no_llm=True, as_entrypoint=False)
+
+    mock_pytest_main.assert_called_once_with(
+        [
+            "tests",
+            "--tb=short",
+            "--import-mode=importlib",
+            "-v",
+            "-q",
+            "--disable-warnings",
+            "--no-llm"
+        ],
+        plugins=[ANY]
+    )
