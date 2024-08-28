@@ -134,12 +134,7 @@ class LogTools:
             self.parent = parent
             self.default_style = "default"
 
-        def _log(
-            self,
-            level,
-            *args,
-            **kwargs
-        ):
+        def _log(self, level, *args, **kwargs):
             msg = kwargs.get('message') or (args[0] if args else None)
             style = kwargs.get('style', self.default_style)
             status = kwargs.get('status', "OK")
@@ -178,6 +173,11 @@ class LogTools:
                 )
                 else 0
             )
+
+            # Adjust color for SKIPPED status without breaking alignment
+            if status == "SKIPPED":
+                emoji_adjustment += -11
+                status = f"{LogTools.BOLD_YELLOW}{status}{LogTools.RESET}"
 
             total_length = 79
             status_length = len(status) + emoji_adjustment
