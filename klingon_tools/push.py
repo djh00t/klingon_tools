@@ -261,7 +261,7 @@ def parse_arguments() -> argparse.Namespace:
         description="Git repository status checker and committer."
     )
     parser.add_argument(
-        "--skip-tests",
+        "--no-tests",
         action="store_true",
         help="Skip running tests",
     )
@@ -813,8 +813,8 @@ def main():
     if file_name_list:
         filter_files(file_name_list)
 
-    # Run tests before processing any files unless --skip-tests is specified
-    if not args.skip_tests:
+    # Run tests before processing any files unless --no-tests is specified
+    if not args.no_tests:
         if not run_tests_and_confirm(log_message, args.no_llm):
             return 1
 
