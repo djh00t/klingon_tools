@@ -16,6 +16,14 @@ import json
 OLLAMA_URL = "http://localhost:11434"
 
 
+@pytest.fixture
+def no_llm(pytestconfig):
+    """
+    Fixture to access the --no-llm flag.
+    """
+    return pytestconfig.getoption("--no-llm")
+
+
 def is_ollama_installed() -> bool:
     """
     Check if Ollama is installed and accessible in the system PATH.
@@ -125,7 +133,7 @@ def test_models_available():
 
 @pytest.mark.dependency(depends=["test_models_available"])
 @pytest.mark.optional
-def test_model_functionality():
+def test_model_functionality(no_llm):
     """Test the functionality of an available model on the Ollama server.
 
     This test depends on the successful completion of test_models_available. It
@@ -143,6 +151,10 @@ def test_model_functionality():
         pytest.fail: If there's a request exception, JSON decoding error, or
         any other assertion error.
     """
+    # Skip the test if the --no-llm flag is set
+    if no_llm:
+        pytest.skip("Skipping LLM tests due to --no-llm flag")
+
     try:
         # Retrieve the list of available models
         response = requests.get(f"{OLLAMA_URL}/api/tags")
