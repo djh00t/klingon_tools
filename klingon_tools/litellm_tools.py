@@ -30,17 +30,23 @@ from typing import Tuple, Optional
 
 import litellm
 from litellm.exceptions import (
-    BadRequestError, AuthenticationError, PermissionDeniedError,
-    NotFoundError, UnprocessableEntityError, RateLimitError,
-    InternalServerError, ContextWindowExceededError,
-    ContentPolicyViolationError, APIConnectionError
+    BadRequestError,
+    AuthenticationError,
+    PermissionDeniedError,
+    NotFoundError,
+    UnprocessableEntityError,
+    RateLimitError,
+    InternalServerError,
+    ContextWindowExceededError,
+    ContentPolicyViolationError,
+    APIConnectionError,
 )
 from git import Repo
 
 from klingon_tools.git_user_info import get_git_user_info
 from klingon_tools.log_msg import log_message
 from klingon_tools.git_log_helper import get_commit_log
-from klingon_tools.git_tools import git_stage_diff
+from klingon_tools.git_stage import git_stage_diff
 
 
 class LiteLLMTools:
@@ -59,7 +65,7 @@ class LiteLLMTools:
             model_primary: Name of the primary model to use.
             model_secondary: Name of the secondary model to use.
         """
-        os.environ['LITELLM_LOG'] = 'DEBUG'
+        os.environ["LITELLM_LOG"] = "DEBUG"
 
         logging.getLogger("LiteLLM").setLevel(logging.WARNING)
         logging.getLogger("litellm.retry").setLevel(logging.ERROR)
@@ -279,16 +285,24 @@ class LiteLLMTools:
                 )
                 generated_content = response.choices[0].message.content.strip()
                 return generated_content.replace("```", "").strip(), model
-            except (AuthenticationError, PermissionDeniedError,
-                    ContentPolicyViolationError) as e:
+            except (
+                AuthenticationError,
+                PermissionDeniedError,
+                ContentPolicyViolationError,
+            ) as e:
                 log_message.error(f"Critical error: {e}")
                 raise
             except RateLimitError as e:
                 log_message.warning(f"Rate limit exceeded: {e}")
                 time.sleep(5)  # Wait longer for rate limit errors
-            except (BadRequestError, NotFoundError, UnprocessableEntityError,
-                    InternalServerError, ContextWindowExceededError,
-                    APIConnectionError) as e:
+            except (
+                BadRequestError,
+                NotFoundError,
+                UnprocessableEntityError,
+                InternalServerError,
+                ContextWindowExceededError,
+                APIConnectionError,
+            ) as e:
                 log_message.warning(f"API error: {e}")
 
             if attempt == retries - 1:
@@ -316,13 +330,18 @@ class LiteLLMTools:
             ValueError: If the commit message format is incorrect.
         """
         commit_message = "\n".join(
-            "\n".join(
-                textwrap.wrap(
-                    line,
-                    width=79,
-                    subsequent_indent=" " * (len(line) - len(line.lstrip())),
+            (
+                "\n".join(
+                    textwrap.wrap(
+                        line,
+                        width=79,
+                        subsequent_indent=" " * (
+                            len(line) - len(line.lstrip())),
+                    )
                 )
-            ) if len(line) > 79 else line
+                if len(line) > 79
+                else line
+            )
             for line in message.split("\n")
         )
 
@@ -346,9 +365,18 @@ class LiteLLMTools:
                 )
 
             emoticon_prefix = {
-                "build": "🛠️", "chore": "🔧", "ci": "⚙️", "docs": "📚",
-                "feat": "✨", "fix": "🐛", "perf": "🚀", "refactor": "♻️",
-                "revert": "⏪", "style": "💄", "test": "🚨", "other": "⚠️",
+                "build": "🛠️",
+                "chore": "🔧",
+                "ci": "⚙️",
+                "docs": "📚",
+                "feat": "✨",
+                "fix": "🐛",
+                "perf": "🚀",
+                "refactor": "♻️",
+                "revert": "⏪",
+                "style": "💄",
+                "test": "🚨",
+                "other": "⚠️",
             }.get(commit_type, "")
 
             formatted_message = (
@@ -408,12 +436,14 @@ class LiteLLMTools:
             Optional[str]: The generated commit message, or None if an error
             occurred.
         """
-        diff = git_stage_diff(file_name, repo)
+        modified_files = []  # Initialize an empty list for modified_files
+        diff = git_stage_diff(file_name, repo, modified_files)
 
         if diff is None:
             log_message.error(
-                f"Failed to get diff for {file_name}",
-                status="❌")
+                    message=f"Failed to get diff for {file_name}",
+                    status="❌"
+                )
             return None
 
         try:
@@ -425,14 +455,19 @@ class LiteLLMTools:
 
             log_message.info(message="=" * 79, status="", style="none")
             wrapped_message = "\n".join(
-                "\n".join(
-                    textwrap.wrap(
-                        line,
-                        width=79,
-                        subsequent_indent=" "
-                        * (len(line) - len(line.lstrip())),
+                (
+                    "\n".join(
+                        textwrap.wrap(
+                            line,
+                            width=79,
+                            subsequent_indent=" " * (
+                                len(line) - len(line.lstrip())
+                                ),
+                        )
                     )
-                ) if len(line) > 79 else line
+                    if len(line) > 79
+                    else line
+                )
                 for line in formatted_message.split("\n")
             )
             log_message.info(
@@ -450,7 +485,7 @@ class LiteLLMTools:
             if "must include a scope" in str(e):
                 commit_type, commit_description = generated_message.split(
                     ":", 1
-                )
+                    )
                 commit_scope = "specific-scope"  # Placeholder
                 generated_message = (
                     f"{commit_type}({commit_scope}): "
@@ -479,7 +514,6 @@ class LiteLLMTools:
 
         return None
 
-
     def generate_pull_request_title(self, diff: str) -> str:
         """Generate a pull request title based on the given diff.
 
@@ -493,12 +527,11 @@ class LiteLLMTools:
             generated_title, _ = self.generate_content(
                 "pull_request_title",
                 diff
-            )
+                )
             return self.format_pr_title(generated_title)
         except ValueError as e:
             log_message.error(f"Error generating pull request title: {e}")
             return "Pull Request Title Generation Failed"
-
 
     def generate_pull_request_summary(self) -> Optional[str]:
         """Generate a summary for a pull request.
@@ -523,7 +556,6 @@ class LiteLLMTools:
             log_message.error(f"Error generating PR summary: {e}")
         return None
 
-
     def generate_pull_request_context(self) -> Optional[str]:
         """Generate context for a pull request.
 
@@ -547,12 +579,7 @@ class LiteLLMTools:
             log_message.error(f"Error generating PR context: {e}")
         return None
 
-
-    def generate_release_body(
-            self,
-            diff: str,
-            dryrun: bool = False
-            ) -> str:
+    def generate_release_body(self, diff: str, dryrun: bool = False) -> str:
         """Generate a release body based on the given diff.
 
         Args:
@@ -583,6 +610,7 @@ class LiteLLMTools:
         except ValueError as e:
             log_message.error(f"Error generating release body: {e}")
             return "Release Body Generation Failed"
+
 
 # Initialize tools
 tools = LiteLLMTools(debug=True)
