@@ -36,6 +36,8 @@ pytest-mock = "^3.14.0"
 poetry = "^1.8.3"
 pytest = "^8.3.2"
 pytest-dependency = "^0.6.0"
+autopep8 = "^2.3.1"
+docformatter = "^1.7.5"
 
 [tool.poetry.scripts]
 push = "klingon_tools.push:main"
