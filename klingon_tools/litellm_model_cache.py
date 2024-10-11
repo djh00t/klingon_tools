@@ -29,7 +29,6 @@ Example:
 
 import os
 import json
-import hashlib
 import re
 from typing import List, Dict
 import requests
@@ -62,8 +61,8 @@ IGNORED_REGEXES = [
 def fetch_model_data() -> Dict[str, dict]:
     """Fetches and caches the model list from a remote JSON file.
 
-    If a cached version exists, it is returned. If not, it fetches from the remote URL
-    and caches the result.
+    If a cached version exists, it is returned. If not, it fetches from the
+    remote URL and caches the result.
 
     Returns:
         A dictionary where keys are model names and values are model details.
@@ -109,7 +108,7 @@ def filter_models(
         patterns.
 
     Example:
-        >>> all_models = {'gpt-4': {...}, 'gpt-4o': {...}, 'sample_spec': {...}}  # pylint: disable=line-too-long
+        >>> all_models = {'gpt-4': {...}, 'gpt-4o': {...}, 'sample_spec': {...}}  # pylint: disable=line-too-long # noqa: E501
         >>> allowed = {'openai': 'gpt-4.*'}
         >>> ignored = ['sample_spec']
         >>> filter_models(all_models, allowed, ignored)
