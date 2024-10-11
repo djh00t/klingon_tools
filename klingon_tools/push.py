@@ -38,7 +38,6 @@ from klingon_tools.git_tools import (
 from klingon_tools.pre_commit import git_pre_commit
 from klingon_tools.git_user_info import get_git_user_info
 from klingon_tools.git_commit_validate import validate_commit_message
-from klingon_tools.git_commit_validate import check_prefix
 from klingon_tools.litellm_model_cache import get_supported_models
 from klingon_tools.log_msg import log_message, set_log_level
 from klingon_tools.litellm_tools import LiteLLMTools
@@ -429,9 +428,9 @@ def run_push_prep(log_message: Any) -> None:
                 log_message.info("Running push-prep", status="✅")
                 try:
                     subprocess.run(["make", "push-prep"], check=True)
-                except subprocess.CalledProcessError as e:
+                except subprocess.CalledProcessError:
                     log_message.error(
-                        f"Failed to run push-prep: {e}",
+                        "Failed to run push-prep.",
                         status="❌",
                     )
                     sys.exit(1)
@@ -494,7 +493,7 @@ def workflow_process_file(
         file_name=file_name, repo=current_repo)
 
     # Check for emoji prefix and store it
-    _, emoji_prefix, _ = check_prefix(commit_message, log_message)
+    # _, emoji_prefix, _ = check_prefix(commit_message, log_message)
 
     # Validate the commit message
     if not validate_commit_message(commit_message, log_message):
@@ -502,8 +501,8 @@ def workflow_process_file(
         return
 
     # Add the emoji prefix back to the commit message if it was present
-    if emoji_prefix:
-        commit_message = f"{emoji_prefix} {commit_message}"
+    # if emoji_prefix:
+    #     commit_message = f"{emoji_prefix} {commit_message}"
 
     # Run pre-commit hooks
     success, _ = git_pre_commit(
@@ -680,7 +679,7 @@ def process_changes(
         log_message.info("Staged and committed all changes", status="✅")
 
     if deleted_files:
-        git_commit_deletes(repo, deleted_files)
+        git_commit_deletes(repo, deleted_files, litellm_tools)
         changes_made = True
 
     if files_to_process:
