@@ -9,6 +9,7 @@ command-line tool. It verifies the command's execution and output.
 import subprocess
 import pytest
 
+
 @pytest.fixture
 def no_llm(pytestconfig):
     """
@@ -46,7 +47,7 @@ def test_pr_context_generate(no_llm, debug: bool, capsys) -> None:
     # Skip the test if the --no-llm flag is set
     if no_llm:
         pytest.skip("Skipping LLM tests due to --no-llm flag")
-        
+
     # Run the pr-context-generate command
     result = subprocess.run(
         ["pr-context-generate"],
@@ -67,13 +68,15 @@ def test_pr_context_generate(no_llm, debug: bool, capsys) -> None:
     captured = capsys.readouterr()
 
     # Assertions
-    assert_pr_context_generate_output(
-        no_llm, result, captured.out if debug else "", debug
-    )
+    assert_pr_context_generate_output(no_llm, result,
+                                      captured.out if debug else "", debug)
 
 
 def assert_pr_context_generate_output(
-    no_llm: bool, result: subprocess.CompletedProcess, debug_output: str, debug: bool
+    no_llm: bool,
+    result: subprocess.CompletedProcess,
+    debug_output: str,
+    debug: bool
 ) -> None:
     """
     Assert the output of pr-context-generate command.
@@ -98,11 +101,10 @@ def assert_pr_context_generate_output(
     # Skip the test if the --no-llm flag is set
     if no_llm:
         pytest.skip("Skipping LLM tests due to --no-llm flag")
-        
+
     # Check that the command ran without errors
-    assert (
-        result.returncode == 0
-    ), f"Command failed with return code {result.returncode}"
+    assert result.returncode == 0, \
+        f"Command failed with return code {result.returncode}"
 
     # Check that there is some output
     assert result.stdout.strip(), "Command output is empty"
