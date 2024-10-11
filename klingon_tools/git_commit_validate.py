@@ -19,6 +19,7 @@ import re
 import textwrap
 from klingon_tools.git_commit_fix import fix_commit_message
 
+
 def is_commit_message_signed_off(commit_message: str) -> bool:
     """
     Check if the commit message is signed off.
@@ -55,10 +56,18 @@ def check_prefix(
         prefix = match.group(1)
         if any(emoji.is_emoji(char) for char in prefix):
             # Log the emoji prefix
-            log_message.info(message="Emoji prefix found", status="✅")
-            log_message.info(message="Emoji prefix found", status=f"{prefix.strip()}")
+            log_message.info(
+                message="Emoji prefix found",
+                status="✅"
+                )
+            log_message.info(
+                message="Emoji prefix found",
+                status=f"{prefix.strip()}"
+                )
             # Remove the prefix and any immediately following space
-            return commit_message[len(prefix):].lstrip(), prefix.strip(), commit_message
+            return commit_message[
+                len(prefix):
+                    ].lstrip(), prefix.strip(), commit_message
 
     log_message.info(message="Emoji prefix not present", status="ℹ️")
     return commit_message, None, commit_message
@@ -91,7 +100,7 @@ def check_type(commit_message: str, log_message: Any) -> bool:
     if commit_type not in valid_types:
         log_message.error(f"Invalid commit type: {commit_type}.", status="❌")
         return False
-    #log_message.info(message="Commit type found", status="✅")
+
     log_message.info(message="Commit type found", status=f"{commit_type}")
     return True
 
@@ -359,7 +368,9 @@ def validate_commit_message(commit_message: str, log_message: Any) -> bool:
         return False
 
     # Check for optional prefix
-    commit_message_without_prefix, prefix, original_commit_message = check_prefix(commit_message, log_message)
+    commit_message_without_prefix, _, _ = check_prefix(
+        commit_message, log_message
+    )
 
     # Split the commit message into lines
     commit_lines = commit_message_without_prefix.splitlines()
