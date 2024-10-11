@@ -1,6 +1,5 @@
 """Tests for the LogTools class and its methods."""
 
-import logging
 from io import StringIO
 from typing import Tuple
 
@@ -76,7 +75,11 @@ def test_method_state_decorator(mock_stdout, log_tools):
     """Test the method_state decorator of LogTools."""
     lt, log_capture = log_tools
 
-    @lt.log_message.method_state(message="Test method", style="default", status="OK")
+    @lt.log_message.method_state(
+        message="Test method",
+        style="default",
+        status="OK"
+        )
     def test_method():
         print("Inside test_method")
         return True
