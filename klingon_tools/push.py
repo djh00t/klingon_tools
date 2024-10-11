@@ -25,6 +25,7 @@ import re
 import requests
 import subprocess
 import sys
+import logging
 
 from klingon_tools.git_tools import (
     cleanup_lock_file,
@@ -48,6 +49,17 @@ untracked_files: List[str] = []
 modified_files: List[str] = []
 staged_files: List[str] = []
 committed_not_pushed: List[str] = []
+
+# Suppress logs for common HTTP libraries
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("litellm").setLevel(logging.WARNING)
+
+# Configure logging with a simpler format
+logging.basicConfig(
+    level=logging.WARNING,
+    format='%(message)s'
+)
 
 
 def is_valid_semver(version: str) -> bool:
