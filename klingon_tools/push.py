@@ -25,7 +25,6 @@ import re
 import requests
 import subprocess
 import sys
-import yaml
 
 from klingon_tools.git_tools import (
     cleanup_lock_file,
@@ -33,12 +32,13 @@ from klingon_tools.git_tools import (
     git_commit_file,
     git_get_status,
     git_get_toplevel,
-    git_pre_commit,
     log_git_stats,
     push_changes_if_needed,
 )
+from klingon_tools.pre_commit import git_pre_commit
 from klingon_tools.git_user_info import get_git_user_info
-from klingon_tools.git_commit_validate import validate_commit_message, check_prefix
+from klingon_tools.git_commit_validate import validate_commit_message
+from klingon_tools.git_commit_validate import check_prefix
 from klingon_tools.litellm_model_cache import get_supported_models
 from klingon_tools.log_msg import log_message, set_log_level
 from klingon_tools.litellm_tools import LiteLLMTools
@@ -53,15 +53,21 @@ committed_not_pushed: List[str] = []
 
 def is_valid_semver(version: str) -> bool:
     """
-    Validate if a given version string follows semver guidelines, including pre-release versions.
-    
+    Validate if a given version string follows semver guidelines, including
+    pre-release versions.
+
     Args:
         version (str): The version string to validate.
-    
+
     Returns:
         bool: True if the version is valid, False otherwise.
     """
-    pattern = r'^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$'
+    pattern = (
+        r'^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)'
+        r'(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*'
+        r')(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?'
+        r'(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$'
+    )
     match = re.match(pattern, version)
     is_valid = bool(match)
     print(f"Validating version: {version}")
@@ -185,48 +191,6 @@ def ensure_pre_commit_config(repo_path: str, log_message: Any) -> None:
             sys.exit(1)
 
 
-def check_age_files_and_update_config(repo_path: str) -> None:
-    """
-    Check for age.pub and age.agekey files and update .pre-commit-config.yaml if they don't exist.
-    
-    Args:
-        repo_path: The path to the git repository.
-    """
-    age_pub_path = os.path.join(repo_path, 'age.pub')
-    age_agekey_path = os.path.join(repo_path, 'age.agekey')
-    
-    if not os.path.exists(age_pub_path):
-        log_message.warning(f"age.pub file not found at {age_pub_path}", status="⚠️")
-    if not os.path.exists(age_agekey_path):
-        log_message.warning(f"age.agekey file not found at {age_agekey_path}", status="⚠️")
-    
-    if not (os.path.exists(age_pub_path) and os.path.exists(age_agekey_path)):
-        pre_commit_config_path = os.path.join(repo_path, '.pre-commit-config.yaml')
-        
-        if os.path.exists(pre_commit_config_path):
-            with open(pre_commit_config_path, 'r') as file:
-                config = yaml.safe_load(file)
-            
-            updated = False
-            for repo in config['repos']:
-                if repo['repo'] == 'https://github.com/djh00t/sops-pre-commit':
-                    for hook in repo['hooks']:
-                        if 'forbid_secrets' in hook['id']:
-                            hook['args'] = ['--disable']
-                            updated = True
-            
-            if updated:
-                with open(pre_commit_config_path, 'w') as file:
-                    yaml.dump(config, file)
-                log_message.info("Updated .pre-commit-config.yaml to disable forbid_secrets", status="✅")
-            else:
-                log_message.info("No changes needed in .pre-commit-config.yaml", status="ℹ️")
-        else:
-            log_message.warning(f".pre-commit-config.yaml not found at {pre_commit_config_path}", status="⚠️")
-    else:
-        log_message.info("Both age.pub and age.agekey files found, no changes needed", status="✅")
-
-
 def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments for the script.
 
@@ -239,7 +203,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--no-tests",
         action="store_true",
-        help="Skip running tests",
+        help="Skip running unit tests",
     )
     parser.add_argument(
         "--no-llm",
@@ -298,10 +262,10 @@ def parse_arguments() -> argparse.Namespace:
 def expand_file_patterns(patterns: List[str]) -> List[str]:
     """
     Expand file patterns into a list of matching file names.
-    
+
     Args:
         patterns: List of file names or glob patterns.
-    
+
     Returns:
         List of matching file names.
     """
@@ -314,15 +278,16 @@ def expand_file_patterns(patterns: List[str]) -> List[str]:
 
     return list(set(expanded_files))  # Remove duplicates
 
+
 def filter_git_files(
-    all_files: List[str], filter_files: List[str]) -> List[str]:
+        all_files: List[str], filter_files: List[str]) -> List[str]:
     """
     Filter a list of files based on the provided filter list.
-    
+
     Args:
         all_files: List of all files to filter.
         filter_files: List of files to keep.
-    
+
     Returns:
         Filtered list of files.
     """
@@ -340,7 +305,10 @@ def run_tests(log_message: Any = None, no_llm: bool = False) -> bool:
         True if tests pass, False otherwise.
     """
     if log_message:
-        log_message.info("Running tests", status="🔍")
+        log_message.info(
+            message="Running unit tests",
+            status="🔍"
+        )
 
     try:
         command = [sys.executable, "-m", "klingon_tools.ktest"]
@@ -406,7 +374,7 @@ def process_files(
         bool: True if any changes were made, False otherwise.
     """
     changes_made = False
-    files_to_process = files
+    # files_to_process = files
     file_counter = 0
 
     for file in files:
@@ -539,7 +507,7 @@ def workflow_process_file(
 
     # Run pre-commit hooks
     success, _ = git_pre_commit(
-        file_name, current_repo)
+        file_name, current_repo, modified_files)
 
     # Commit the file if pre-commit hooks pass
     if success:
@@ -609,11 +577,12 @@ def filter_files(file_name_list: List[str]) -> None:
     committed_not_pushed = [
         f for f in committed_not_pushed if f in file_name_list]
 
+
 def check_for_tests(args):
     """
-    Checks for the presence of test files in the repository.
-    This function determines if there are any test files in the 'tests' directory
-    of the given repository path. It logs appropriate messages based on the presence
+    Checks for the presence of test files in the repository. This function
+    determines if there are any test files in the 'tests' directory of the
+    given repository path. It logs appropriate messages based on the presence
     or absence of the 'tests' directory and test files.
     Args:
         args: An object containing the repository path attribute `repo_path`.
@@ -622,19 +591,28 @@ def check_for_tests(args):
     """
     repo_path = find_git_root(args.repo_path)
     tests_dir = os.path.join(repo_path, 'tests')
-    
+
     if not os.path.isdir(tests_dir):
-        log_message.info(message=f"{tests_dir} does not exist. Write some tests for this code!", status="⏭️")
+        log_message.info(
+            message=f"{tests_dir} does not exist."
+            "Write some tests for this code!",
+            status="⏭️"
+            )
         return False  # Skip running tests
-    
+
     # Look for pytest tests in the tests directory
     test_patterns = ['test_*.py', '*_test.py']
     test_files = []
     for pattern in test_patterns:
-        test_files.extend(glob.glob(os.path.join(tests_dir, '**', pattern), recursive=True))
-    
+        test_files.extend(glob.glob(os.path.join(
+            tests_dir, '**', pattern), recursive=True))
+
     if not test_files:
-        log_message.info(message=f"{tests_dir} exists but there are no tests. Write some tests for this code!", status="⏭️")
+        log_message.info(
+            message=f"{tests_dir} exists but there are no tests. Write some"
+            "tests for this code!",
+            status="⏭️"
+            )
         return False  # Skip running tests
     else:
         log_message.debug("Found tests", status="✅")
@@ -665,7 +643,10 @@ def run_tests_and_confirm(log_message: Any, no_llm: bool) -> bool:
 
 
 def process_changes(
-    repo: Repo, args: argparse.Namespace, litellm_tools: LiteLLMTools) -> bool:
+        repo: Repo,
+        args: argparse.Namespace,
+        litellm_tools: LiteLLMTools
+) -> bool:
     """
     Process changes made to the repository.
     Args:
@@ -679,7 +660,8 @@ def process_changes(
     files_to_process = untracked_files + modified_files
 
     if ".pre-commit-config.yaml" in files_to_process:
-        log_message.info("Processing .pre-commit-config.yaml separately", status="🔍")
+        log_message.info(
+            "Processing .pre-commit-config.yaml separately", status="🔍")
         workflow_process_file(
             ".pre-commit-config.yaml",
             [".pre-commit-config.yaml"],
@@ -691,7 +673,7 @@ def process_changes(
         )
         files_to_process.remove(".pre-commit-config.yaml")
         changes_made = True
-        
+
         # Stage and commit all changes
         repo.git.add(A=True)
         repo.git.commit("-m", "Update .pre-commit-config.yaml", "--no-verify")
@@ -708,37 +690,9 @@ def process_changes(
         else:
             changes_made |= process_files(
                 files_to_process, repo, args, log_message, litellm_tools)
-    
+
     return changes_made
 
-
-def check_age_files_and_update_config(repo_path: str) -> None:
-    """
-    Check for age.pub and age.agekey files and update .pre-commit-config.yaml if they don't exist.
-    
-    Args:
-        repo_path: The path to the git repository.
-    """
-    age_pub_path = os.path.join(repo_path, 'age.pub')
-    age_agekey_path = os.path.join(repo_path, 'age.agekey')
-    
-    if not (os.path.exists(age_pub_path) and os.path.exists(age_agekey_path)):
-        pre_commit_config_path = os.path.join(repo_path, '.pre-commit-config.yaml')
-        
-        if os.path.exists(pre_commit_config_path):
-            with open(pre_commit_config_path, 'r') as file:
-                config = yaml.safe_load(file)
-            
-            for repo in config['repos']:
-                if repo['repo'] == 'https://github.com/djh00t/sops-pre-commit':
-                    for hook in repo['hooks']:
-                        if 'forbid_secrets' in hook['id']:
-                            hook['args'] = ['--disable']
-            
-            with open(pre_commit_config_path, 'w') as file:
-                yaml.dump(config, file)
-            
-            log_message.info("Updated .pre-commit-config.yaml to disable forbid_secrets", status="✅")
 
 def startup_tasks(args: argparse.Namespace) -> Tuple[Repo, str, str]:
     """Run startup maintenance tasks.
@@ -786,9 +740,6 @@ def startup_tasks(args: argparse.Namespace) -> Tuple[Repo, str, str]:
     # Run push-prep target in Makefile if it exists
     run_push_prep(log_message)
 
-    # Check for age files and update .pre-commit-config.yaml if needed
-    check_age_files_and_update_config(repo_path)
-
     # Check for software requirements
     check_software_requirements(repo_path, log_message)
 
@@ -807,6 +758,7 @@ def startup_tasks(args: argparse.Namespace) -> Tuple[Repo, str, str]:
         sys.exit(1)
 
     return repo, user_name, user_email
+
 
 def main() -> int:
     """Run the push script.
@@ -878,9 +830,18 @@ def main() -> int:
         untracked_files = filter_git_files(untracked_files, filter_files)
         modified_files = filter_git_files(modified_files, filter_files)
         staged_files = filter_git_files(staged_files, filter_files)
-        committed_not_pushed = filter_git_files(committed_not_pushed, filter_files)
+        committed_not_pushed = filter_git_files(
+            committed_not_pushed, filter_files)
 
-    if not any([deleted_files, untracked_files, modified_files, staged_files, committed_not_pushed]):
+    if not any(
+        [
+            deleted_files,
+            untracked_files,
+            modified_files,
+            staged_files,
+            committed_not_pushed
+        ]
+    ):
         log_message.info("No files to process, nothing to do", status="🚫")
         return 0
 
@@ -922,9 +883,11 @@ def main() -> int:
 
     # Run tests and confirm continuation
     if not args.no_tests:
-        # Check to make sure tests/ directory exists and it contains pytest tests using check_for_tests
+        # Check to make sure tests/ directory exists and it contains pytest
+        # tests using check_for_tests
         if check_for_tests(args):
-            # If check_for_tests returns True then run run_tests_and_confirm otherwise just skip it.
+            # If check_for_tests returns True then run run_tests_and_confirm
+            # otherwise just skip it.
             if not run_tests_and_confirm(log_message, args.no_llm):
                 return 1
         else:
@@ -946,4 +909,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-import yaml
