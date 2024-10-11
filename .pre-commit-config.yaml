@@ -1,91 +1,53 @@
 fail_fast: true
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
-    hooks:
-      - id: check-added-large-files
-      - id: check-case-conflict
-      - id: check-ast
-      - id: check-json
-      - id: check-toml
-      - id: check-merge-conflict
-      - id: check-docstring-first
-      - id: check-executables-have-shebangs
-      - id: check-yaml
-      - id: end-of-file-fixer
-        exclude: |
-          (?x)^(
-            .*.terraform/.*|
-            tmpl\/.*.sops\.ya?ml
-            )$
-      - id: mixed-line-ending
-      - id: trailing-whitespace
-        args:
-          - --markdown-linebreak-ext=md
-
-  - repo: https://github.com/hhatto/autopep8
-    rev: v2.3.1
-    hooks:
-      - id: autopep8
-        args:
-          - --aggressive
-          - --aggressive
-          - --aggressive
-          - --in-place
-          - --list-fixes
-          - --max-line-length=79
-          - --pep8-passes=5
-
-#   - repo: https://github.com/psf/black
-#     rev: 24.8.0
-#     hooks:
-#       - id: black
-#         language_version: python3
-#         args:
-#           - --line-length=79
-#           - --target-version=py36
-#           - --target-version=py37
-#           - --target-version=py38
-#           - --target-version=py39
-#           - --target-version=py310
-#           - --target-version=py311
-#           - --target-version=py312
-#           - --include=\\.pyi?$
-#           - --exclude=\\.eggs|\\.git|\\.hg|\\.mypy_cache|\\.tox|\\.venv|_build|buck-out|build|dist|tests/test_entrypoints.py
-
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.1.1
-    hooks:
-      - id: flake8
-        args: ['--config=pyproject.toml']
-
-  - repo: https://github.com/djh00t/sops-pre-commit
-    rev: v0.0.2f
-    hooks:
-      - id: kubernetes-secret
-        exclude: (tmpl\/.*.sops\.ya?ml|knative\-operator\.ya?ml)
-      - id: aws-access-key-id
-      - id: aws-secret-access-key
-      - id: rsa-private-key
-      - id: ssh-private-key
-      - id: github-access-token
-      - id: generic-api-key
-      - id: gcp-api-key
-      - id: jwt
-      - id: slack-webhook-url
-      - id: google-oauth-client-secret
-
-###     - repo: https://github.com/PyCQA/isort
-###       rev: 5.13.2  # Use the latest stable release
-###       hooks:
-###         - id: isort
-###           name: isort (python)  # Optional, customize hook name
-###           args: ['--profile', 'black']  # Example of passing arguments to isort
-###           language_version: python3  # Specify the Python version
-###
-###     - repo: https://github.com/pylint-dev/pylint
-###       rev: v3.2.5  # Use the latest stable release
-###       hooks:
-###         - id: pylint
-###           args: ['--disable=R,C']  # Example of disabling specific pylint
-###           categories
+- hooks:
+  - id: check-added-large-files
+  - id: check-case-conflict
+  - id: check-ast
+  - id: check-json
+  - id: check-toml
+  - id: check-merge-conflict
+  - id: check-docstring-first
+  - id: check-executables-have-shebangs
+  - id: check-yaml
+  - exclude: "(?x)^(\n  .*.terraform/.*|\n  tmpl\\/.*.sops\\.ya?ml\n  )$\n"
+    id: end-of-file-fixer
+  - id: mixed-line-ending
+  - args:
+    - --markdown-linebreak-ext=md
+    id: trailing-whitespace
+  repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.6.0
+- hooks:
+  - args:
+    - --aggressive
+    - --aggressive
+    - --aggressive
+    - --in-place
+    - --list-fixes
+    - --max-line-length=79
+    - --pep8-passes=5
+    id: autopep8
+  repo: https://github.com/hhatto/autopep8
+  rev: v2.3.1
+- hooks:
+  - args:
+    - --config=pyproject.toml
+    id: flake8
+  repo: https://github.com/pycqa/flake8
+  rev: 7.1.1
+- hooks:
+  - exclude: (tmpl\/.*.sops\.ya?ml|knative\-operator\.ya?ml)
+    id: kubernetes-secret
+  - id: aws-access-key-id
+  - id: aws-secret-access-key
+  - id: rsa-private-key
+  - id: ssh-private-key
+  - id: github-access-token
+  - id: generic-api-key
+  - id: gcp-api-key
+  - id: jwt
+  - id: slack-webhook-url
+  - id: google-oauth-client-secret
+  repo: https://github.com/djh00t/sops-pre-commit
+  rev: v0.0.2f
