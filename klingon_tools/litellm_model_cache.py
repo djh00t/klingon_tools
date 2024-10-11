@@ -32,11 +32,13 @@ import json
 import re
 from typing import List, Dict
 import requests
+import logging
 
 MODEL_URL = (
     "https://raw.githubusercontent.com/BerriAI/litellm/main/"
     "model_prices_and_context_window.json"
 )
+
 CACHE_FILE = "/tmp/klingon_models_cache.json"
 
 ALLOWED_REGEXES = {
@@ -57,6 +59,11 @@ IGNORED_REGEXES = [
     r'whisper', r'tts', r'babbage', r'davinci', r'embed-'
 ]
 
+# Suppress logs for common HTTP libraries
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("litellm").setLevel(logging.WARNING)
+
 
 def fetch_model_data() -> Dict[str, dict]:
     """Fetches and caches the model list from a remote JSON file.
@@ -65,27 +72,29 @@ def fetch_model_data() -> Dict[str, dict]:
     remote URL and caches the result.
 
     Returns:
-        A dictionary where keys are model names and values are model details.
+        A dictionary where keys are model names and values are empty
+        dictionaries.
 
     Raises:
         requests.exceptions.RequestException: If the HTTP request fails.
-
-    Example:
-        >>> fetch_model_data()
-        {'gpt-4': {...}, 'gpt-4o': {...}, 'sample_spec': {...}}
     """
     if os.path.exists(CACHE_FILE):
         with open(CACHE_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            return {model: {} for model in json.load(f).keys()}
 
-    response = requests.get(MODEL_URL, timeout=30)  # 30 seconds timeout
-    response.raise_for_status()
+    # Suppress only specific warnings for 'requests' HTTP handling
+    session = requests.Session()
+    adapter = requests.adapters.HTTPAdapter(max_retries=3)
+    session.mount('https://', adapter)
+
+    response = session.get(MODEL_URL, timeout=30)  # 30 seconds timeout
+    response.raise_for_status()  # Raises an exception for failed requests
     new_data = response.json()
 
     with open(CACHE_FILE, 'w', encoding='utf-8') as f:
         json.dump(new_data, f)
 
-    return new_data
+    return {model: {} for model in new_data.keys()}
 
 
 def filter_models(
