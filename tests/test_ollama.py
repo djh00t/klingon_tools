@@ -90,7 +90,8 @@ def test_ollama_cli_version(ollama_info):
         "Ollama CLI version not found"
     )
     assert re.match(r'\d+\.\d+\.\d+', ollama_info['ollama_cli_version']), (
-        f"Invalid Ollama CLI version format: {ollama_info['ollama_cli_version']}"
+        f"Invalid Ollama CLI version format: {
+            ollama_info['ollama_cli_version']}"
     )
     print(f"ollama_cli_version: {ollama_info['ollama_cli_version']}")
 
