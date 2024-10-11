@@ -155,7 +155,7 @@ def test_update_action_version(mock_log_message, mock_yaml, mock_file):
     mock_yaml_instance.dump.assert_called_once()
     assert "actions/checkout@v3" in str(mock_yaml_instance.dump.call_args)
     mock_log_message.info.assert_called_once_with(
-        f"Action actions/checkout updated to version v3 in file workflow.yml"
+        "Action actions/checkout updated to version v3 in file workflow.yml"
     )
 
 
