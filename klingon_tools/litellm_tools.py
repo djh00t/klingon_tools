@@ -67,7 +67,7 @@ class LiteLLMTools:
             model_secondary: Name of the secondary model to use.
             log_http_requests: Whether to log HTTP requests.
         """
-        os.environ["LITELLM_LOG"] = "DEBUG"
+        os.environ["LITELLM_LOG"] = "DEBUG" if debug else "INFO"
 
         logging.getLogger("LiteLLM").setLevel(logging.WARNING)
         logging.getLogger("litellm.retry").setLevel(logging.ERROR)
