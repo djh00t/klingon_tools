@@ -58,18 +58,18 @@ ktest = "klingon_tools.ktest:ktest_entrypoint"
 # exclude = "\\.eggs|\\.git|\\.hg|\\.mypy_cache|\\.tox|\\.venv|_build|buck-out|build|dist|tests/*.py"
 
 [tool.flake8]
-max-line-length = 79
+max-line-length = 80
 verbose = 3
 
 [tool.pylint."MESSAGES CONTROL"]
 disable = ["import-error"]
 
-[tool.pylint.FORMAT]
-max-line-length = 79
+[tool.pylint.format]
+max-line-length = 80
 
 [tool.yapf]
 based_on_style = "google"
-column_limit = 79
+column_limit = 80
 dedent_closing_brackets = true
 coalesce_brackets = true
 spaces_before_comment = 4
@@ -87,8 +87,6 @@ testpaths = ["tests"]
 minversion = "8.3.1"
 filterwarnings = ["error", "ignore::DeprecationWarning", 'ignore:open_text is deprecated. Use files() instead.:DeprecationWarning:litellm.utils',]
 markers = ["optional: mark test as optional","dependency: mark test as having dependencies", "ollama_installed: marks tests that require Ollama to be installed", "ollama_server_running: marks tests that require the Ollama server to be running", "depends: marks tests with dependencies on other tests"]
-
-
 
 [tool.semantic_release]
 version_variable = ["pyproject.toml:version"]
