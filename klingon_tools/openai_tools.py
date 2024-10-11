@@ -19,7 +19,7 @@ from klingon_tools.git_user_info import get_git_user_info
 from klingon_tools.log_msg import log_message
 from klingon_tools.git_unstage import git_unstage_files
 from klingon_tools.git_log_helper import get_commit_log
-from klingon_tools.git_tools import git_stage_diff
+from klingon_tools.git_stage import git_stage_diff
 
 
 class OpenAITools:
