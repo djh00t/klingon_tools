@@ -4,10 +4,10 @@ import argparse
 import io
 import sys
 from unittest.mock import MagicMock
-
 import pytest
 
 from klingon_tools.log_msg import log_message, set_default_style, set_log_level
+
 
 # pylint: disable=R0903
 class TestLogPlugin:
@@ -46,7 +46,6 @@ class TestLogPlugin:
         self.logger.info(message=f"{test_name}", status="✅")
         self.results.append((test_name, "passed"))
 
-
     def _log_failed_test(self, test_name, report):
         """Log a failed test."""
         if "optional" in report.keywords:
@@ -59,7 +58,6 @@ class TestLogPlugin:
             self.results.append((test_name, "failed"))
 
         self._log_exception_info(test_name, report)
-
 
     def _log_skipped_test(self, test_name):
         """Log a skipped test."""
