@@ -29,6 +29,7 @@ def mock_response():
 
     return MockResponse({"model1": {}, "model2": {}}, 200)
 
+
 @pytest.fixture
 def mock_file_content():
     """Fixture to provide mock file content."""
@@ -39,7 +40,11 @@ def test_fetch_model_data(mock_response, mock_file_content):
     """Test the fetch_model_data function."""
     with patch("os.path.exists") as mock_exists:
         with patch("requests.get", return_value=mock_response):
-            with patch("builtins.open", mock_open(read_data=mock_file_content)) as mock_file:
+            with patch(
+                "builtins.open", mock_open(
+                    read_data=mock_file_content
+                )
+            ) as mock_file:
                 # Test when cache file exists
                 mock_exists.return_value = True
                 result = fetch_model_data()
