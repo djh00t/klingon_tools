@@ -1,20 +1,10 @@
-"""
-This module provides tools for generating commit messages, pull request titles,
-and release bodies using OpenAI's API.
+"""Tools for generating content using OpenAI's API.
 
-Functions:
-    generate_content(template_key: str, diff: str) -> str:
-        Generates content based on a specific template.
-    format_message(message: str, dryrun: bool = False) -> str:
-        Formats a message with line wrapping and sign-off.
-    unstage_files():
-        Unstages all staged files.
-    generate_commit_message(diff: str, dryrun: bool = False) -> str:
-        Generates a commit message.
-    generate_pull_request_title(diff: str, dryrun: bool = False) -> str:
-        Generates a pull request title.
-    generate_release_body(diff: str, dryrun: bool = False) -> str:
-        Generates a release body.
+This module provides a class for generating commit messages, pull request
+titles, summaries, and release bodies using OpenAI's API.
+
+Classes:
+    OpenAITools: A class that provides methods for content generation.
 """
 
 import os
@@ -29,23 +19,27 @@ from klingon_tools.git_user_info import get_git_user_info
 from klingon_tools.log_msg import log_message
 from klingon_tools.git_unstage import git_unstage_files
 from klingon_tools.git_log_helper import get_commit_log
+from klingon_tools.git_stage import git_stage_diff
 
 
 class OpenAITools:
-    """
-    A class that provides tools for generating content using OpenAI's API.
+    """A class that provides tools for generating content using OpenAI's API.
 
     This class initializes the OpenAI client, stores AI templates, and provides
     methods for generating various types of content such as commit messages,
     pull request titles, and release bodies.
+
+    Attributes:
+        debug (bool): Whether to enable debug logging.
+        client (OpenAI): The OpenAI API client.
+        templates (dict): A dictionary of templates for content generation.
     """
 
-    def __init__(self, debug=False):
-        """
-        Initialize the OpenAITools instance.
+    def __init__(self, debug: bool = False) -> None:
+        """Initialize the OpenAITools instance.
 
-        This method sets up the OpenAI API client and defines the templates
-        used for content generation.
+        Args:
+            debug: Whether to enable debug logging.
 
         Raises:
             ValueError: If the OpenAI API key is not set in the environment.
@@ -201,21 +195,20 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
         }
 
     def generate_content(self, template_key: str, diff: str) -> str:
-        """
-        Generates content based on a specific template using the OpenAI API.
+        """Generate content based on a specific template using the OpenAI API.
 
         Args:
-            template_key (str): The key for the template to use.
-            diff (str): The diff to include in the generated content.
+            template_key: The key for the template to use.
+            diff: The diff to include in the generated content.
 
         Returns:
-            str: The generated content.
+            The generated content.
 
         Raises:
             ValueError: If the template_key is not found in the templates
-            dictionary.
+                dictionary.
             openai.APIConnectionError: If there's an error connecting to the
-            OpenAI API.
+                OpenAI API.
         """
         template = self.templates.get(template_key)
         if not template:
@@ -245,15 +238,13 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
         return generated_content.replace("```", "").strip()
 
     def format_message(self, message: str) -> str:
-        """
-        Formats a message with line wrapping and adds an appropriate emoticon
-        prefix.
+        """Format a message with line wrapping and add an emoticon prefix.
 
         Args:
-            message (str): The message to format.
+            message: The message to format.
 
         Returns:
-            str: The formatted message.
+            The formatted message.
 
         Raises:
             ValueError: If the commit message format is incorrect.
@@ -311,17 +302,15 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
         return formatted_message
 
     def format_pr_title(self, title: str) -> str:
-        """
-        Formats a pull request title.
+        """Format a pull request title.
 
-        This function ensures the title is a single line and does not exceed 72
-        characters.
+        Ensures the title is a single line and does not exceed 72 characters.
 
         Args:
-            title (str): The title to format.
+            title: The title to format.
 
         Returns:
-            str: The formatted title.
+            The formatted title.
         """
         formatted_title = " ".join(title.split())
         if len(formatted_title) > 72:
@@ -329,95 +318,48 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
         return formatted_title
 
     def signoff_message(self, message: str) -> str:
-        """
-        Appends a sign-off to the message with the user's name and email.
+        """Append a sign-off to the message with the user's name and email.
 
         Args:
-            message (str): The message to append the sign-off to.
+            message: The message to append the sign-off to.
 
         Returns:
-            str: The message with the appended sign-off.
+            The message with the appended sign-off.
         """
         user_name, user_email = get_git_user_info()
         signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
         return f"{message}{signoff}"
 
-    def generate_commit_message(self, diff: str, dryrun: bool = False) -> str:
-        """
-        Generates a commit message based on the provided diff.
+    def generate_commit_message(
+            self,
+            file_name: str,
+            repo: Repo) -> str:
+        """Generate a commit message based on the provided file.
 
         This function handles both regular changes and file deletions.
 
         Args:
-            diff (str): The diff to include in the generated commit message.
-            dryrun (bool): If True, unstages all files after generating the
-            message.
+            file_name: The name of the file to generate a commit message for.
+            repo: The Git repository object.
+            modified_files: List of modified files.
+            dryrun: If True, unstages all files after generating the message.
 
         Returns:
-            str: The formatted commit message.
+            The formatted commit message or None if an error occurred.
 
         Raises:
             ValueError: If the commit message format is incorrect.
             subprocess.CalledProcessError: If a Git command fails.
         """
-        deleted_files = subprocess.run(
-            ["git", "ls-files", "--deleted"],
-            capture_output=True,
-            text=True,
-            check=True,
-        ).stdout.splitlines()
-
-        if deleted_files:
-            for file in deleted_files:
-                try:
-                    file_diff = subprocess.run(
-                        ["git", "diff", file],
-                        capture_output=True,
-                        text=True,
-                        check=True,
-                    ).stdout
-                except subprocess.CalledProcessError as e:
-                    log_message.error(f"Failed to get diff for {file}: {e}")
-                    continue
-
-                generated_message = self.generate_content(
-                    "commit_message_user", file_diff
+        diff = git_stage_diff(
+                file_name,
+                repo=repo
                 )
 
-                try:
-                    formatted_message = self.format_message(generated_message)
-                    formatted_message = self.signoff_message(formatted_message)
-                except ValueError as e:
-                    log_message.error(f"Error formatting commit message: {e}")
-                    if "must include a scope" in str(e):
-                        commit_type, commit_description = (
-                            generated_message.split(":", 1)
-                        )
-                        commit_scope = "specific-scope"
-                        generated_message = f"{commit_type}({commit_scope}): \
-                            {commit_description.strip()}"
-                        formatted_message = self.format_message(
-                            generated_message
-                        )
-                        formatted_message = self.signoff_message(
-                            formatted_message
-                        )
-                        log_message.error(
-                            "Scope was missing. Please provide a more "
-                            "specific scope."
-                        )
-
-                log_message.info(message="=" * 80, status="", style="none")
-                log_message.info(
-                    f"Generated commit message for {file}:\n\n"
-                    f"{formatted_message}\n"
-                )
-                log_message.info(message="=" * 80, status="", style="none")
-
-                subprocess.run(
-                    ["git", "commit", "-m", formatted_message, file],
-                    check=True,
-                )
+        if diff is None:
+            log_message.error(
+                f"Failed to get diff for {file_name}", status="❌")
+            return None
 
         try:
             generated_message = self.generate_content(
@@ -431,8 +373,8 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                 textwrap.wrap(formatted_message, width=79)
             )
             log_message.info(
-                message=f"Generated commit message:\n\n{wrapped_message}\n",
-                status="",
+                "Generated commit message for "
+                f"{file_name}:\n\n{wrapped_message}\n"
             )
             log_message.info(message="=" * 80, status="", style="none")
 
@@ -445,8 +387,8 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                     ":", 1
                 )
                 commit_scope = "specific-scope"  # Placeholder
-                generated_message = f"{commit_type}({commit_scope}): \
-                    {commit_description.strip()}"
+                generated_message = f"{commit_type}({commit_scope}): "\
+                                    f"{commit_description.strip()}"
                 formatted_message = self.format_message(generated_message)
                 formatted_message = self.signoff_message(formatted_message)
                 log_message.error(
@@ -458,49 +400,48 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                     textwrap.wrap(formatted_message, width=79)
                 )
                 log_message.info(
-                    message="Generated commit message:"
+                    message=f"Generated commit message for {file_name}:"
                     f"\n\n{wrapped_message}\n",
                     status="",
-                    style="none",
+                    style="none"
                 )
                 log_message.info(message="=" * 80, status="", style="none")
 
                 return formatted_message
+            return None  # Return None for other ValueError cases
 
-        except Exception as e:
-            log_message.error(f"Unexpected error: {e}")
-            raise
+        except openai.APIError as e:
+            log_message.error(f"Error generating commit message: {e}")
+            return None
 
     def generate_pull_request_title(self, diff: str) -> str:
-        """
-        Generates a pull request title from the provided diff.
+        """Generate a pull request title from the provided diff.
 
         Args:
-            diff (str): The diff to include in the generated pull request
-            title.
+            diff: The diff to include in the generated pull request title.
 
         Returns:
-            str: The formatted pull request title.
+            The formatted pull request title.
         """
         generated_title = self.generate_content("pull_request_title", diff)
         formatted_title = self.format_pr_title(generated_title)
         return formatted_title
 
-    def generate_pull_request_summary(
-        self, diff: str, dryrun: bool = False
-    ) -> str:
-        """
-        Generates a pull request summary from the git log differences between
-        current branch and origin/release..HEAD.
+    def generate_pull_request_summary(self) -> str:
+        """Generate a pull request summary from git log differences.
+
+        Generates a summary from the differences between the current branch
+        and origin/release..HEAD.
 
         Args:
-            diff (str): The diff to include in the generated pull request
-            summary.
-            dryrun (bool): If True, unstages all files after generating the
-            summary.
+            diff: The diff to include in the generated pull request summary.
+            dryrun: If True, unstages all files after generating the summary.
 
         Returns:
-            str: The formatted pull request summary.
+            The formatted pull request summary.
+
+        Raises:
+            subprocess.CalledProcessError: If getting the commit log fails.
         """
         try:
             commits = get_commit_log("origin/release").stdout
@@ -512,25 +453,25 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
         except subprocess.CalledProcessError as e:
             log_message.error(f"Error getting commit log: {e}")
             raise
-        except Exception as e:
-            log_message.error(f"Unexpected error generating PR summary: {e}")
-            raise
+        except (ValueError, openai.APIError) as e:
+            log_message.error(f"Error generating PR summary: {e}")
+            return None
 
-    def generate_pull_request_context(
-        self, diff: str, dryrun: bool = False
-    ) -> str:
-        """
-        Generates a pull request context from the git log differences between
-        current branch and origin/release..HEAD.
+    def generate_pull_request_context(self) -> str:
+        """Generate a pull request context from git log differences.
+
+        Generates context from the differences between the current branch
+        and origin/release..HEAD.
 
         Args:
-            diff (str): The diff to include in the generated pull request
-            context.
-            dryrun (bool): If True, unstages all files after generating the
-            context.
+            diff: The diff to include in the generated pull request context.
+            dryrun: If True, unstages all files after generating the context.
 
         Returns:
-            str: The formatted pull request context.
+            The formatted pull request context.
+
+        Raises:
+            subprocess.CalledProcessError: If getting the commit log fails.
         """
         try:
             commits = get_commit_log("origin/release").stdout
@@ -542,19 +483,18 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
         except subprocess.CalledProcessError as e:
             log_message.error(f"Error getting commit log: {e}")
             raise
-        except Exception as e:
-            log_message.error(f"Unexpected error generating PR context: {e}")
-            raise
+        except (ValueError, openai.APIError) as e:
+            log_message.error(f"Error generating PR context: {e}")
+            return None
 
     def generate_pull_request_body(self, diff: str) -> str:
-        """
-        Generates a pull request body from the provided diff.
+        """Generate a pull request body from the provided diff.
 
         Args:
-            diff (str): The diff to include in the generated pull request body.
+            diff: The diff to include in the generated pull request body.
 
         Returns:
-            str: The formatted pull request body.
+            The formatted pull request body.
         """
         generated_body = self.generate_content("pull_request_body", diff)
         return generated_body
@@ -562,30 +502,25 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
     def generate_release_body(
         self, repo: Repo, diff: str, dryrun: bool = False
     ) -> str:
-        """
-        Generates a release body based on the provided diff.
+        """Generate a release body based on the provided diff.
 
         Args:
-            diff (str): The diff to include in the generated release body.
-            dryrun (bool): If True, unstages all files after generating the
-            body.
+            repo: The Git repository object.
+            diff: The diff to include in the generated release body.
+            dryrun: If True, unstages all files after generating the body.
 
         Returns:
-            str: The formatted release body.
+            The formatted release body.
         """
         generated_body = self.generate_content("release_body", diff)
         formatted_body = self.format_message(generated_body)
 
         if dryrun:
             git_unstage_files(
-                repo, repo.git.diff("--cached", "--name-only").splitlines()
-            )
+                repo.git.diff("--cached", "--name-only").splitlines())
 
         log_message.info(message="=" * 80, status="", style="none")
-        log_message.info(
-            message=f"Generated release body:\n\n{formatted_body}\n",
-            status="",
-        )
+        log_message.info(f"Generated release body:\n\n{formatted_body}\n")
         log_message.info(message="=" * 80, status="", style="none")
 
         return formatted_body

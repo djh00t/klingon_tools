@@ -116,9 +116,17 @@ The package provides several entry points for command-line usage:
 
 ### Example Usage of `push`
 
-The `push` entry point automates git operations such as staging, committing, and pushing files. It also integrates with pre-commit hooks and generates commit messages using OpenAI's API.
+The `push` entry point automates git operations such as staging, committing,
+and pushing files. It also integrates with pre-commit hooks and generates
+conventional commit messages using OpenAI's API.
 
 **Usage**
+
+An entrypoint for `push` is installed when klingon_tools is installed so `push`
+can be run from the command line without specifying the module.
+
+If your environment does not support entrypoints, you can run the following
+command:
 
 ```sh
 python -m klingon_tools.push --repo-path /path/to/repo --file-name example.txt
@@ -189,6 +197,13 @@ We require all commit messages to follow the Conventional Commits standard. Belo
 | ci        | ⚙️        | add GitHub Actions workflow                      |
 | chore     | 🔧        | clean up old files                               |
 | revert    | ⏪        | undo previous commit that caused issues          |
+
+### Semver Versioning
+
+Versioning uses the semver standard. The version is stored in pyproject.toml
+under the [poetry.tools] section.
+
+More information on semver can be found here: [Semver](https://semver.org/)
 
 ### Contributing
 

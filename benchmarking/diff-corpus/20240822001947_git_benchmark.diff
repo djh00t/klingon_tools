@@ -1,0 +1,104 @@
+diff --git a/benchmarking/diff-corpus/20240822000623_git_benchmark.diff b/benchmarking/diff-corpus/20240822000623_git_benchmark.diff
+new file mode 100644
+index 0000000..7c9f13b
+--- /dev/null
++++ b/benchmarking/diff-corpus/20240822000623_git_benchmark.diff
+@@ -0,0 +1,98 @@
++diff --git a/benchmarking/diff-corpus/20240822000301_git_benchmark.diff b/benchmarking/diff-corpus/20240822000301_git_benchmark.diff
++new file mode 100644
++index 0000000..1d7b618
++--- /dev/null
+++++ b/benchmarking/diff-corpus/20240822000301_git_benchmark.diff
++@@ -0,0 +1,92 @@
+++diff --git a/benchmarking/diff-corpus/20240822000140_git_benchmark.diff b/benchmarking/diff-corpus/20240822000140_git_benchmark.diff
+++new file mode 100644
+++index 0000000..a27aa1f
+++--- /dev/null
++++++ b/benchmarking/diff-corpus/20240822000140_git_benchmark.diff
+++@@ -0,0 +1,86 @@
++++diff --git a/benchmarking/results/20240821171644_benchmark_results.json b/benchmarking/results/20240821171644_benchmark_results.json
++++new file mode 100644
++++index 0000000..8729b3d
++++--- /dev/null
+++++++ b/benchmarking/results/20240821171644_benchmark_results.json
++++@@ -0,0 +1,80 @@
+++++[
+++++    {
+++++        "model": "groq/llama3-8b-8192",
+++++        "time_taken": 0.7181277275085449,
+++++        "raw_compliance": {
+++++            "format_compliance": 0,
+++++            "type_compliance": 0,
+++++            "scope_compliance": 1,
+++++            "high_level_description": 1,
+++++            "detailed_description": 0,
+++++            "accuracy_compliance": 0,
+++++            "content_compliance": 0
+++++        },
+++++        "cleaned_compliance": {
+++++            "format_compliance": 2,
+++++            "type_compliance": 1,
+++++            "scope_compliance": 1,
+++++            "high_level_description": 1,
+++++            "detailed_description": 0,
+++++            "accuracy_compliance": 0,
+++++            "content_compliance": 2
+++++        },
+++++        "response_quality": 7.0,
+++++        "speed_rank": 1,
+++++        "quality_rank": 1,
+++++        "overall_score": 1.8792935344712094
+++++    },
+++++    {
+++++        "model": "groq/llama3-70b-8192",
+++++        "time_taken": 0.9930500984191895,
+++++        "raw_compliance": {
+++++            "format_compliance": 0,
+++++            "type_compliance": 0,
+++++            "scope_compliance": 1,
+++++            "high_level_description": 1,
+++++            "detailed_description": 0,
+++++            "accuracy_compliance": 0,
+++++            "content_compliance": 2
+++++        },
+++++        "cleaned_compliance": {
+++++            "format_compliance": 2,
+++++            "type_compliance": 1,
+++++            "scope_compliance": 1,
+++++            "high_level_description": 1,
+++++            "detailed_description": 0,
+++++            "accuracy_compliance": 0,
+++++            "content_compliance": 2
+++++        },
+++++        "response_quality": 7.0,
+++++        "speed_rank": 2,
+++++        "quality_rank": 2,
+++++        "overall_score": 2.0483965059885856
+++++    },
+++++    {
+++++        "model": "groq/gemma-7b-it",
+++++        "time_taken": 1.7796039581298828,
+++++        "raw_compliance": {
+++++            "format_compliance": 0,
+++++            "type_compliance": 0,
+++++            "scope_compliance": 1,
+++++            "high_level_description": 0,
+++++            "detailed_description": 0,
+++++            "accuracy_compliance": 0,
+++++            "content_compliance": 0
+++++        },
+++++        "cleaned_compliance": {
+++++            "format_compliance": 2,
+++++            "type_compliance": 1,
+++++            "scope_compliance": 1,
+++++            "high_level_description": 1,
+++++            "detailed_description": 0,
+++++            "accuracy_compliance": 0,
+++++            "content_compliance": 2
+++++        },
+++++        "response_quality": 7.0,
+++++        "speed_rank": 3,
+++++        "quality_rank": 3,
+++++        "overall_score": 1.41
+++++    }
+++++]

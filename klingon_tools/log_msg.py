@@ -13,8 +13,8 @@ Attributes:
 
 from klingon_tools import LogTools
 
-# Initialize logging
-log_tools = LogTools()
+# Initialize LogTools with debug set to False by default
+log_tools = LogTools(debug=False)
 log_message = log_tools.log_message
 set_log_level = log_tools.set_log_level
 set_default_style = log_tools.set_default_style
