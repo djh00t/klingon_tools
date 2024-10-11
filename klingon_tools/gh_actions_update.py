@@ -344,7 +344,6 @@ def action_matches_filter(action_dict: Dict, args: argparse.Namespace) -> bool:
     )
 
 
-
 def update_action_version(
     file_path: str, action_name: str, latest_version: str
 ) -> bool:
@@ -468,7 +467,7 @@ def setup_logging(args: argparse.Namespace) -> None:
     else:
         log_message.warning(
             "No GitHub token found. Requests may be rate-limited."
-                            )
+        )
 
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
@@ -499,7 +498,7 @@ def present_state_data(
             print(
                 "\nNote: Use '--update' to update all outdated actions to the"
                 "latest version."
-                )
+            )
 
 
 def build_table(
@@ -544,7 +543,7 @@ def get_headers() -> List:
 
 
 def get_status(
-    current_version: str, latest_version: str, no_emojis: bool) -> str:
+        current_version: str, latest_version: str, no_emojis: bool) -> str:
     """Determines the status of an action based on its version."""
     if current_version == latest_version or current_version.startswith(
         latest_version.split(".")[0]
