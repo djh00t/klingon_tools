@@ -797,7 +797,8 @@ def main() -> int:
     litellm_tools = LiteLLMTools(
         debug=args.debug,
         model_primary=args.model,
-        model_secondary=args.model_secondary
+        model_secondary=args.model_secondary,
+        log_http_requests=args.debug  # Only log HTTP requests in debug mode
     )
 
     # Expand and check file patterns
