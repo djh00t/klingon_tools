@@ -57,6 +57,7 @@ class LiteLLMTools:
         debug: bool = False,
         model_primary: str = "gpt-4o-mini",
         model_secondary: str = "claude-3-haiku-20240307",
+        log_http_requests: bool = False,
     ):
         """Initialize the LiteLLMTools class.
 
@@ -64,6 +65,7 @@ class LiteLLMTools:
             debug: Whether to enable debug logging.
             model_primary: Name of the primary model to use.
             model_secondary: Name of the secondary model to use.
+            log_http_requests: Whether to log HTTP requests.
         """
         os.environ["LITELLM_LOG"] = "DEBUG"
 
@@ -76,23 +78,12 @@ class LiteLLMTools:
         self.debug = debug
         self.model_primary = model_primary
         self.model_secondary = model_secondary
-        self.model_fallback = "gpt-4o-mini"
-
-        if self.debug:
-            os.environ["LITELLM_LOG"] = "DEBUG"
-
-        openai_api_key = os.getenv("OPENAI_API_KEY")
-        anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
-
-        if openai_api_key:
-            litellm.api_key = openai_api_key
-        if anthropic_api_key:
-            os.environ["ANTHROPIC_API_KEY"] = anthropic_api_key
+        self.log_http_requests = log_http_requests
 
         self.models = [
             self.model_primary,
             self.model_secondary,
-            self.model_fallback,
+            "gpt-4o-mini",  # Default fallback model
         ]
 
         self.templates = {
