@@ -126,8 +126,7 @@ def test_ktest_suppress_output(
 def test_ktest_entrypoint():
     """Test the ktest_entrypoint function."""
     with patch("klingon_tools.ktest.ktest") as mock_ktest, \
-         patch("sys.exit") as mock_exit, \
-         patch("argparse.ArgumentParser.parse_args") as mock_parse_args:
+            patch("argparse.ArgumentParser.parse_args") as mock_parse_args:
         mock_ktest.return_value = 0
         mock_parse_args.return_value = argparse.Namespace(
             no_llm=False, loglevel="INFO")
@@ -137,9 +136,6 @@ def test_ktest_entrypoint():
         mock_ktest.assert_called_once_with(
             loglevel="INFO", as_entrypoint=True, no_llm=False
         )
-
-        # Remove this assertion as sys.exit is not called directly in ktest_entrypoint
-        # mock_exit.assert_called_once_with(0)
 
 
 def test_ktest_no_llm(mock_pytest_main):
@@ -169,7 +165,8 @@ def test_testlogplugin():
     plugin = ktest.TestLogPlugin(mock_log_message, results)
 
     # Test passed test
-    report = MagicMock(when="call", nodeid="test_passed", passed=True, failed=False, skipped=False)
+    report = MagicMock(when="call", nodeid="test_passed",
+                       passed=True, failed=False, skipped=False)
     plugin.pytest_runtest_logreport(report)
     assert results == [("test_passed", "passed")]
 
@@ -180,13 +177,19 @@ def test_testlogplugin():
     assert results == [("test_passed", "passed"), ("test_failed", "failed")]
 
     # Test optional failed test
-    report = MagicMock(when="call", nodeid="test_optional_failed",
-                       passed=False, failed=True, skipped=False, keywords={"optional": True})
+    report = MagicMock(
+        when="call",
+        nodeid="test_optional_failed",
+        passed=False,
+        failed=True,
+        skipped=False,
+        keywords={"optional": True}
+    )
     plugin.pytest_runtest_logreport(report)
     assert results == [
         ("test_passed", "passed"),
         ("test_failed", "failed"),
-        ("test_optional_failed", "optional-failed")
+        ("test_optional_failed", "optional-failed"),
     ]
 
     # Test skipped test
