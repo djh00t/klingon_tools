@@ -50,7 +50,8 @@ def test_get_git_user_info_default_name(mock_subprocess_run):
     mock_subprocess_run.return_value.returncode = 0
     mock_subprocess_run.side_effect = [
         type("obj", (object,), {"returncode": 0, "stdout": "Your Name\n"})(),
-        type("obj", (object,), {"returncode": 0, "stdout": "valid@email.com\n"})(),
+        type("obj", (object,), {"returncode": 0,
+             "stdout": "valid@email.com\n"})(),
     ]
 
     with patch.dict(os.environ, {"GITHUB_ACTIONS": ""}):
@@ -63,7 +64,8 @@ def test_get_git_user_info_default_email(mock_subprocess_run):
     mock_subprocess_run.return_value.returncode = 0
     mock_subprocess_run.side_effect = [
         type("obj", (object,), {"returncode": 0, "stdout": "John Doe\n"})(),
-        type("obj", (object,), {"returncode": 0, "stdout": "your.email@example.com\n"})(),
+        type("obj", (object,), {"returncode": 0,
+             "stdout": "your.email@example.com\n"})(),
     ]
 
     with patch.dict(os.environ, {"GITHUB_ACTIONS": ""}):
