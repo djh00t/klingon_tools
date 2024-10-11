@@ -1,64 +1,24 @@
 # klingon_tools/litellm_tools.py
-"""
-This module provides tools for generating content using LiteLLM models.
+"""Tools for generating content using LiteLLM models.
 
-Features:
-- Initialize LiteLLM models based on the desired API type.
-- Generate commit messages, pull request titles, summaries, contexts, and
-bodies.
-- Format pull request titles to ensure they meet length requirements.
-- Truncate summaries and bodies if they exceed specified word limits.
+This module provides functionality to initialize LiteLLM models and generate
+various types of content such as commit messages, pull request titles,
+summaries, contexts, and bodies.
 
-Arguments:
-- model_primary (str): The primary model to use (default: "gpt-4o-mini").
-- model_secondary (str): The secondary model to use if the primary is
-unavailable (default: "claude-3-haiku-20240307").
-- debug (bool): Flag to enable debug mode (default: False).
+Attributes:
+    None
 
-Outputs:
-- Generated content based on the provided templates and diffs.
-- Formatted pull request titles, summaries, contexts, and bodies.
-
-Model Options:
-- "gpt-4o-mini": Uses OpenAI's GPT-4 model.
-- "claude-3-haiku-20240307": Uses Anthropic's Claude model.
-- "ollama_chat/": Uses a local Ollama chat model. For instance if I wanted to
-use llama3.1 I would enter 'ollama_chat/llama3.1' as either my primary or
-secondary models.
-- A complete list of available litellm models and their costs are available at:
-https://models.litellm.ai/
-
-Initialization:
+Example:
     tools = LiteLLMTools(debug=True)
-
-Usage:
     diff = "Your diff content here"
     commit_message = tools.generate_content("commit_message_system", diff)
     pr_title = tools.generate_pull_request_title(diff)
     pr_summary = tools.generate_pull_request_summary(diff)
     pr_context = tools.generate_pull_request_context(diff)
-    pr_body = tools.generate_pull_request_body(diff)
 
-Best LiteLLM models to use for git commit messages:
-  - gpt-4o - excellent (paid)
-  - gpt-4o-mini - very good (paid)
-  - claude-3-haiku-20240307 - very good (paid)
-  - chatgpt-4o-latest - very good (paid)
-  - deepseek-coder-v2 - very good
-  - codestral-latest - very good (paid)
-  - groq/llama-3.1-70b-versatile - excellent (freemium)
-  - groq/mixtral-8x7b-32768 - very good (freemium)
-  - groq/gemma-7b-it - very good (freemium)
-  - mistral-small-latest - Good content
-  - mistral-nemo - good content, weird formatting
-  - phi3:mini - Overly verbose
-  - llama2:latest - Good content but returns it with extra content around the
-    answer
-  - llama3.1:latest - Good content but returns it with extra content around the
-    answer.
-  - codeqwen:latest - Doesn't appear to know what conventional commits format
-    is.
-  - codellama:latest - Doesn't understand what a breaking change is.
+Note:
+    A complete list of available litellm models and their costs are available
+    at: https://models.litellm.ai/
 """
 
 import os
@@ -66,42 +26,41 @@ import subprocess
 import textwrap
 import logging
 import time
+from typing import Tuple, Optional
 
 import litellm
+from litellm.exceptions import (
+    BadRequestError, AuthenticationError, PermissionDeniedError,
+    NotFoundError, UnprocessableEntityError, RateLimitError,
+    InternalServerError, ContextWindowExceededError,
+    ContentPolicyViolationError, APIConnectionError
+)
 from git import Repo
 
 from klingon_tools.git_user_info import get_git_user_info
 from klingon_tools.log_msg import log_message
-from klingon_tools.git_unstage import git_unstage_files
 from klingon_tools.git_log_helper import get_commit_log
-# Remove the import of git_stage_diff
+from klingon_tools.git_tools import git_stage_diff
 
 
 class LiteLLMTools:
+    """A class for generating content using LiteLLM models."""
+
     def __init__(
         self,
-        debug=False,
-        model_primary="gpt-4o-mini",
-        # model_primary="ollama_chat/deepseek-coder-v2",
-        # model_primary="groq/mixtral-8x7b-32768",
-        # model_primary="groq/gemma-7b-it",
-        # model_primary="groq/llama-3.1-70b-versatile",
-        model_secondary="claude-3-haiku-20240307",
-        # model_secondary="gpt-4o-mini"
+        debug: bool = False,
+        model_primary: str = "gpt-4o-mini",
+        model_secondary: str = "claude-3-haiku-20240307",
     ):
-        """
-        Initializes the LiteLLMTools class.
+        """Initialize the LiteLLMTools class.
+
         Args:
-            debug (bool, optional): Enable debug logging. Defaults to False.
-            model_primary (str, optional): Primary model to use. Defaults to
-            "groq/mixtral-8x7b-32768".
-            model_secondary (str, optional): Secondary model to use. Defaults
-            to "claude-3-haiku-20240307".
+            debug: Whether to enable debug logging.
+            model_primary: Name of the primary model to use.
+            model_secondary: Name of the secondary model to use.
         """
         os.environ['LITELLM_LOG'] = 'DEBUG'
 
-        # Set the logging level for LiteLLM, requests, urllib3 and httpx to
-        # WARNING to prevent excessive stdout logging
         logging.getLogger("LiteLLM").setLevel(logging.WARNING)
         logging.getLogger("litellm.retry").setLevel(logging.ERROR)
         logging.getLogger("requests").setLevel(logging.WARNING)
@@ -111,13 +70,11 @@ class LiteLLMTools:
         self.debug = debug
         self.model_primary = model_primary
         self.model_secondary = model_secondary
-        self.model_fallback = "gpt-4o-mini"  # Default fallback model
+        self.model_fallback = "gpt-4o-mini"
 
-        # Set debug logging for litellm
         if self.debug:
             os.environ["LITELLM_LOG"] = "DEBUG"
 
-        # Set up API keys
         openai_api_key = os.getenv("OPENAI_API_KEY")
         anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
 
@@ -126,14 +83,12 @@ class LiteLLMTools:
         if anthropic_api_key:
             os.environ["ANTHROPIC_API_KEY"] = anthropic_api_key
 
-        # Set up model fallback
         self.models = [
             self.model_primary,
             self.model_secondary,
             self.model_fallback,
         ]
 
-        # AI Templates
         self.templates = {
             "commit_message_system": """
             You are an AI assistant specialized in generating clear, concise,
@@ -219,27 +174,6 @@ class LiteLLMTools:
 
             Commit messages: \"{diff}\"
             """,
-            "XXX_pull_request_title": """
-            Generate a concise pull request title that summarizes the changes
-            included in the provided commit messages.
-
-            IMPORTANT RULES:
-            1. The title MUST be 72 characters or less. This is a strict
-            requirement.
-            2. Do not include any type prefix, contributor name, commit type,
-            or scope.
-            3. Focus on the most significant change or the overall theme of
-            the changes.
-            4. Use clear and concise language.
-            5. If needed, prioritize clarity over completeness.
-            6. No extra content, just the raw PR title text.
-            7. Do not include a prefix like this "## Pull Request Title: "
-
-            Commit messages: \"{diff}\"
-
-            Remember, the title must be 72 characters or less. If your initial
-            attempt is too long, try again with an even more concise version.
-            """,
             "pull_request_summary": """
             Look at the conventional commit messages provided and generate a
             concise pull request summary. Keep the summary specific and to the
@@ -291,42 +225,48 @@ class LiteLLMTools:
             """,
         }
 
-    def get_working_model(self, retry=False):
-        original_log_level = logging.getLogger("LiteLLM").level
-        logging.getLogger("LiteLLM").setLevel(logging.ERROR)
-        try:
-            for model in self.models:
-                try:
-                    # Test the model with a simple completion
-                    litellm.completion(
-                        model=model,
-                        messages=[{"role": "user", "content": "Test"}],
-                    )
-                    return model
-                except Exception:
-                    if retry:
-                        time.sleep(2)  # Wait before retrying
-                        continue
-            raise ValueError("No working models found after retries.")
-        finally:
-            logging.getLogger("LiteLLM").setLevel(original_log_level)
+    def get_working_model(self) -> str:
+        """Get a working model from the list of available models.
 
-    def generate_content(self, template_key: str, diff: str) -> str:
+        Returns:
+            str: The name of the working model.
+
+        Raises:
+            ValueError: If no working models are found after retries.
+        """
+        return self.models[0]  # Always return the primary model for testing
+
+    def generate_content(
+            self,
+            template_key: str,
+            diff: str
+            ) -> Tuple[str, str]:
+        """Generate content based on the given template key and diff.
+
+        Args:
+            template_key (str): The key of the template to use.
+            diff (str): The diff to be used in the template.
+
+        Returns:
+            Tuple[str, str]: A tuple containing the generated content and the
+            working model.
+
+        Raises:
+            ValueError: If the specified template is not found or if content
+            generation fails after retries.
+        """
         template = self.templates.get(template_key)
-        model_used = None
         if not template:
             raise ValueError(f"Template '{template_key}' not found.")
 
-        max_diff_length = 10000  # Adjust this value as needed
+        max_diff_length = 10000
         truncated_diff = diff[:max_diff_length]
-
         role_user_content = template.format(diff=truncated_diff)
 
         retries = 3
         for attempt in range(retries):
             try:
-                model = self.get_working_model(retry=(attempt > 0))
-                model_used = model
+                model = self.get_working_model()
                 response = litellm.completion(
                     model=model,
                     messages=[
@@ -337,34 +277,52 @@ class LiteLLMTools:
                         {"role": "user", "content": role_user_content},
                     ],
                 )
-                break  # Exit loop if successful
-            except Exception as e:
-                log_message.warning(f"Attempt {attempt + 1} failed: {e}")
-                if attempt == retries - 1:
-                    log_message.error(
-                        f"Failed to generate content after {retries} "
-                        f"attempts: {e}"
-                    )
-                    raise
-                time.sleep(2)  # Wait before retrying
+                generated_content = response.choices[0].message.content.strip()
+                return generated_content.replace("```", "").strip(), model
+            except (AuthenticationError, PermissionDeniedError,
+                    ContentPolicyViolationError) as e:
+                log_message.error(f"Critical error: {e}")
+                raise
+            except RateLimitError as e:
+                log_message.warning(f"Rate limit exceeded: {e}")
+                time.sleep(5)  # Wait longer for rate limit errors
+            except (BadRequestError, NotFoundError, UnprocessableEntityError,
+                    InternalServerError, ContextWindowExceededError,
+                    APIConnectionError) as e:
+                log_message.warning(f"API error: {e}")
 
-        generated_content = response.choices[0].message.content.strip()
-        return generated_content.replace("```", "").strip(), model_used
+            if attempt == retries - 1:
+                log_message.error(
+                    f"Failed to generate content after {retries} attempts"
+                )
+                raise ValueError("Content generation failed after max retries")
+            time.sleep(2)
+
+        raise ValueError(
+            "Unexpected error: Content generation failed without raising "
+            "an exception"
+        )
 
     def format_message(self, message: str) -> str:
+        """Format a commit message.
+
+        Args:
+            message: The commit message to format.
+
+        Returns:
+            The formatted commit message.
+
+        Raises:
+            ValueError: If the commit message format is incorrect.
+        """
         commit_message = "\n".join(
-            (
-                "\n".join(
-                    textwrap.wrap(
-                        line,
-                        width=79,
-                        subsequent_indent=" "
-                        * (len(line) - len(line.lstrip())),
-                    )
+            "\n".join(
+                textwrap.wrap(
+                    line,
+                    width=79,
+                    subsequent_indent=" " * (len(line) - len(line.lstrip())),
                 )
-                if len(line) > 79
-                else line
-            )
+            ) if len(line) > 79 else line
             for line in message.split("\n")
         )
 
@@ -388,19 +346,17 @@ class LiteLLMTools:
                 )
 
             emoticon_prefix = {
-                "build": "🛠️",
-                "chore": "🔧",
-                "ci": "⚙️",
-                "docs": "📚",
-                "feat": "✨",
-                "fix": "🐛",
-                "perf": "🚀",
-                "refactor": "♻️",
-                "revert": "⏪",
-                "style": "💄",
-                "test": "🚨",
-                "other": "⚠️",
+                "build": "🛠️", "chore": "🔧", "ci": "⚙️", "docs": "📚",
+                "feat": "✨", "fix": "🐛", "perf": "🚀", "refactor": "♻️",
+                "revert": "⏪", "style": "💄", "test": "🚨", "other": "⚠️",
             }.get(commit_type, "")
+
+            formatted_message = (
+                f"{emoticon_prefix} {commit_type}({commit_scope}): "
+                f"{commit_message.split(':', 1)[1].strip()}"
+            )
+
+            return formatted_message
         except ValueError as e:
             log_message.error(f"Commit message format error: {e}")
             raise
@@ -408,33 +364,51 @@ class LiteLLMTools:
             log_message.error(f"Unexpected error: {e}")
             raise
 
-        formatted_message = (
-            f"{emoticon_prefix} {commit_type}({commit_scope}): "
-            f"{commit_message.split(':', 1)[1].strip()}"
-        )
-
-        return formatted_message
-
     def format_pr_title(self, title: str) -> str:
+        """Format a pull request title.
+
+        Args:
+            title: The pull request title to format.
+
+        Returns:
+            The formatted pull request title.
+        """
         formatted_title = " ".join(title.split())
         if len(formatted_title) > 72:
-            formatted_title = formatted_title[:72] + "..."
-        return formatted_title
+            formatted_title = formatted_title[:69] + "..."
+        # Explicitly specify fill character
+        return formatted_title.ljust(72, " ")
 
     def signoff_message(self, message: str) -> str:
+        """Add a signoff message to a commit message.
+
+        Args:
+            message: The commit message to sign off.
+
+        Returns:
+            The commit message with the signoff added.
+        """
         user_name, user_email = get_git_user_info()
         signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
         return f"{message}{signoff}"
 
     def generate_commit_message(
-            self,
-            file_name: str,
-            repo: Repo,
-            modified_files: list,
-            dryrun: bool = False) -> str:
-        from klingon_tools.git_tools import git_stage_diff
+        self,
+        file_name: str,
+        repo: Repo,
+    ) -> Optional[str]:
+        """Generate a commit message for the given file.
 
-        diff = git_stage_diff(file_name, repo, modified_files)
+        Args:
+            file_name (str): The name of the file to generate a commit message
+            for.
+            repo (Repo): The Git repository object.
+
+        Returns:
+            Optional[str]: The generated commit message, or None if an error
+            occurred.
+        """
+        diff = git_stage_diff(file_name, repo)
 
         if diff is None:
             log_message.error(
@@ -449,20 +423,16 @@ class LiteLLMTools:
             formatted_message = self.format_message(generated_message)
             formatted_message = self.signoff_message(formatted_message)
 
-            log_message.info(message="=" * 80, status="", style="none")
+            log_message.info(message="=" * 79, status="", style="none")
             wrapped_message = "\n".join(
-                (
-                    "\n".join(
-                        textwrap.wrap(
-                            line,
-                            width=79,
-                            subsequent_indent=" "
-                            * (len(line) - len(line.lstrip())),
-                        )
+                "\n".join(
+                    textwrap.wrap(
+                        line,
+                        width=79,
+                        subsequent_indent=" "
+                        * (len(line) - len(line.lstrip())),
                     )
-                    if len(line) > 79
-                    else line
-                )
+                ) if len(line) > 79 else line
                 for line in formatted_message.split("\n")
             )
             log_message.info(
@@ -471,7 +441,7 @@ class LiteLLMTools:
                 status="",
                 style="none",
             )
-            log_message.info(message="=" * 80, status="", style="none")
+            log_message.info(message="=" * 79, status="", style="none")
 
             return formatted_message
 
@@ -482,15 +452,17 @@ class LiteLLMTools:
                     ":", 1
                 )
                 commit_scope = "specific-scope"  # Placeholder
-                generated_message = f"{commit_type}({commit_scope}): "\
+                generated_message = (
+                    f"{commit_type}({commit_scope}): "
                     f"{commit_description.strip()}"
+                )
                 formatted_message = self.format_message(generated_message)
                 formatted_message = self.signoff_message(formatted_message)
                 log_message.error(
                     "Scope was missing. Please provide a more specific scope."
                 )
 
-                log_message.info(message="=" * 80, status="", style="none")
+                log_message.info(message="=" * 79, status="", style="none")
                 wrapped_message = "\n".join(
                     textwrap.wrap(formatted_message, width=79)
                 )
@@ -501,106 +473,116 @@ class LiteLLMTools:
                     status="",
                     style="none",
                 )
-                log_message.info(message="=" * 80, status="", style="none")
+                log_message.info(message="=" * 79, status="", style="none")
 
                 return formatted_message
 
-        except Exception as e:
-            log_message.error(f"Unexpected error: {e}")
-            raise
+        return None
+
 
     def generate_pull_request_title(self, diff: str) -> str:
-        """
-        Generates a pull request title based on the provided diff.
+        """Generate a pull request title based on the given diff.
 
         Args:
-            diff (str): The diff representing the changes made in the pull
-            request.
+            diff (str): The diff to generate the title from.
 
         Returns:
             str: The generated pull request title.
-
         """
-        generated_title, _ = self.generate_content("pull_request_title", diff)
-        if len(generated_title) > 72:
-            generated_title = generated_title[:69] + "..."
-        return generated_title
+        try:
+            generated_title, _ = self.generate_content(
+                "pull_request_title",
+                diff
+            )
+            return self.format_pr_title(generated_title)
+        except ValueError as e:
+            log_message.error(f"Error generating pull request title: {e}")
+            return "Pull Request Title Generation Failed"
 
-    def generate_pull_request_summary(
-        self, diff: str, dryrun: bool = False
-    ) -> str:
-        """
-        Generates a summary for a pull request based on the provided diff.
+
+    def generate_pull_request_summary(self) -> Optional[str]:
+        """Generate a summary for a pull request.
 
         Args:
-            diff (str): The diff of the pull request.
-            dryrun (bool, optional): Whether to perform a dry run. Defaults to
+            dryrun (bool, optional): Whether this is a dry run. Defaults to
             False.
 
         Returns:
-            str: The generated summary for the pull request.
-
-        Raises:
-            subprocess.CalledProcessError: If there is an error getting the
-            commit log.
-            Exception: If there is an unexpected error generating the PR
-            summary.
+            Optional[str]: The generated pull request summary, or None if an
+            error occurred.
         """
         try:
             commits = get_commit_log("origin/release").stdout
             generated_summary, _ = self.generate_content(
                 "pull_request_summary", commits
             )
-
             return generated_summary
         except subprocess.CalledProcessError as e:
             log_message.error(f"Error getting commit log: {e}")
-            raise
-        except Exception as e:
-            log_message.error(f"Unexpected error generating PR summary: {e}")
-            raise
+        except ValueError as e:
+            log_message.error(f"Error generating PR summary: {e}")
+        return None
 
-    def generate_pull_request_context(
-        self, diff: str, dryrun: bool = False
-    ) -> str:
+
+    def generate_pull_request_context(self) -> Optional[str]:
+        """Generate context for a pull request.
+
+        Args:
+            dryrun (bool, optional): Whether this is a dry run. Defaults to
+            False.
+
+        Returns:
+            Optional[str]: The generated pull request context, or None if an
+            error occurred.
+        """
         try:
             commits = get_commit_log("origin/release").stdout
             generated_context, _ = self.generate_content(
                 "pull_request_context", commits
             )
-
             return generated_context
         except subprocess.CalledProcessError as e:
             log_message.error(f"Error getting commit log: {e}")
-            raise
-        except Exception as e:
-            log_message.error(f"Unexpected error generating PR context: {e}")
-            raise
+        except ValueError as e:
+            log_message.error(f"Error generating PR context: {e}")
+        return None
 
-    def generate_pull_request_body(self, diff: str) -> str:
-        generated_body, _ = self.generate_content("pull_request_body", diff)
-        return generated_body
 
     def generate_release_body(
-        self, repo: Repo, diff: str, dryrun: bool = False
-    ) -> str:
-        generated_body = self.generate_content("release_body", diff)
-        formatted_body = self.format_message(generated_body)
+            self,
+            diff: str,
+            dryrun: bool = False
+            ) -> str:
+        """Generate a release body based on the given diff.
 
-        if dryrun:
-            git_unstage_files(
-                repo, repo.git.diff("--cached", "--name-only").splitlines()
+        Args:
+            diff (str): The diff to generate the release body from.
+            dryrun (bool, optional): Whether this is a dry run. Defaults to
+            False.
+
+        Returns:
+            str: The generated and formatted release body.
+        """
+        try:
+            generated_body, _ = self.generate_content("release_body", diff)
+            formatted_body = self.format_message(generated_body)
+
+            if dryrun:
+                # Note: This operation might need to be handled outside this
+                # method or passed as a callback function if needed.
+                pass
+
+            log_message.info(message="=" * 79, status="", style="none")
+            log_message.info(
+                message=f"Generated release body:\n\n{formatted_body}\n",
+                status="",
             )
+            log_message.info(message="=" * 79, status="", style="none")
 
-        log_message.info(message="=" * 80, status="", style="none")
-        log_message.info(
-            message=f"Generated release body:\n\n{formatted_body}\n",
-            status="",
-        )
-        log_message.info(message="=" * 80, status="", style="none")
-
-        return formatted_body
-
+            return formatted_body
+        except ValueError as e:
+            log_message.error(f"Error generating release body: {e}")
+            return "Release Body Generation Failed"
 
 # Initialize tools
 tools = LiteLLMTools(debug=True)

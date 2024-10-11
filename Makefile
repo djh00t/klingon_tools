@@ -132,7 +132,7 @@ uninstall:
 # Upload to PyPI
 upload: test wheel
 	@echo "Uploading Version to PyPI..."
-	@TWINE_USER_AGENT="$(PYPI_USER_AGENT)" poetry publish --build
+	@TWINE_USER_AGENT="$(PYPI_USER_AGENT)" poetry publish --build --no-interaction
 
 # Upload to TestPyPI
 upload-test: test wheel

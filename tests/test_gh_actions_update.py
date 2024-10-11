@@ -140,34 +140,22 @@ def test_get_latest_version(mock_get):
 @patch(
     "builtins.open",
     new_callable=mock_open,
-    read_data="uses: actions/checkout@v2",
-)
+    read_data="jobs:\n  build:\n    steps:\n      - uses: actions/checkout@v2")
 @patch("klingon_tools.gh_actions_update.YAML")
 @patch("klingon_tools.gh_actions_update.log_message")
 def test_update_action_version(mock_log_message, mock_yaml, mock_file):
-    """
-    Test the update_action_version function.
-
-    This test verifies that the update_action_version function correctly
-    updates the version of a GitHub Action in a workflow file.
-
-    Assertions:
-        - Asserts that the YAML dump method is called once.
-        - Asserts that the action version is updated in the workflow file.
-        - Asserts that the log message is called with the correct information.
-    """
     mock_yaml_instance = mock_yaml.return_value
     mock_yaml_instance.load.return_value = {
         "jobs": {"build": {"steps": [{"uses": "actions/checkout@v2"}]}}
     }
 
-    update_action_version("workflow.yml", "actions/checkout", "v3")
+    result = update_action_version("workflow.yml", "actions/checkout", "v3")
 
+    assert result is True
     mock_yaml_instance.dump.assert_called_once()
     assert "actions/checkout@v3" in str(mock_yaml_instance.dump.call_args)
     mock_log_message.info.assert_called_once_with(
-        message="Action actions/checkout updated to version v3 in file "
-        "workflow.yml"
+        f"Action actions/checkout updated to version v3 in file workflow.yml"
     )
 
 

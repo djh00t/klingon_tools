@@ -1,0 +1,51 @@
+import pytest
+from unittest.mock import patch, MagicMock
+from klingon_tools.git_tools import (
+    branch_exists,
+    cleanup_lock_file,
+    git_get_toplevel,
+    git_get_status,
+    git_commit_deletes,
+    git_stage_diff,
+    git_pre_commit,
+    git_commit_file,
+    log_git_stats,
+    push_changes_if_needed
+)
+
+@pytest.fixture
+def mock_repo():
+    return MagicMock()
+
+def test_branch_exists():
+    with patch('subprocess.run') as mock_run:
+        mock_run.return_value.returncode = 0
+        assert branch_exists('main') == True
+        
+        mock_run.return_value.returncode = 1
+        assert branch_exists('non_existent_branch') == False
+
+def test_cleanup_lock_file(tmp_path):
+    lock_file = tmp_path / '.git' / 'index.lock'
+    lock_file.parent.mkdir(parents=True)
+    lock_file.touch()
+
+    with patch('psutil.process_iter') as mock_process_iter:
+        mock_process_iter.return_value = []
+        cleanup_lock_file(str(tmp_path))
+        assert not lock_file.exists()
+
+def test_git_get_toplevel():
+    with patch('git.Repo') as mock_repo:
+        mock_repo.return_value.active_branch.tracking_branch.return_value = None
+        result = git_get_toplevel()
+        assert result is not None
+
+def test_git_get_status(mock_repo):
+    mock_repo.index.diff.return_value = []
+    mock_repo.untracked_files = []
+    result = git_get_status(mock_repo)
+    assert len(result) == 5
+    assert all(isinstance(item, list) for item in result)
+
+# Add more tests for other functions...

@@ -33,16 +33,16 @@ warnings.filterwarnings(
 @patch("klingon_tools.entrypoints.LiteLLMTools")
 def test_gh_pr_gen_title(mock_litellm_tools, mock_get_commit_log):
     """
-    Test the gh_pr_gen_context function.
+    Test the gh_pr_gen_title function.
 
-    This test verifies that the gh_pr_gen_context function correctly generates
-    a pull request context based on the commit log.
+    This test verifies that the gh_pr_gen_title function correctly generates
+    a pull request title based on the commit log.
 
     Assertions:
         - Asserts that the function returns 0.
-        - Asserts that the generated pull request context is in the output.
+        - Asserts that the generated pull request title is in the output.
         - Asserts that get_commit_log is called once with the correct argument.
-        - Asserts that generate_pull_request_context is called once with the
+        - Asserts that generate_pull_request_title is called once with the
           correct arguments.
 
     Args:
@@ -64,17 +64,14 @@ def test_gh_pr_gen_title(mock_litellm_tools, mock_get_commit_log):
         assert_called_once_with("Test commit log")
 
 
-@patch("klingon_tools.entrypoints.get_commit_log")
 @patch("klingon_tools.entrypoints.LiteLLMTools")
-def test_gh_pr_gen_summary(mock_litellm_tools, mock_get_commit_log):
+def test_gh_pr_gen_summary(mock_litellm_tools):
     """
     Test the gh_pr_gen_summary function.
 
     Args:
         mock_litellm_tools (MagicMock): Mock for LiteLLMTools.
-        mock_get_commit_log (MagicMock): Mock for get_commit_log function.
     """
-    mock_get_commit_log.return_value = MagicMock(stdout="Test commit log")
     mock_litellm_tools.return_value.generate_pull_request_summary.\
         return_value = "Test PR Summary"
 
@@ -83,22 +80,18 @@ def test_gh_pr_gen_summary(mock_litellm_tools, mock_get_commit_log):
 
     assert result == 0
     assert "Test PR Summary" in fake_out.getvalue()
-    mock_get_commit_log.assert_called_once_with("origin/release")
     mock_litellm_tools.return_value.generate_pull_request_summary.\
-        assert_called_once_with("Test commit log", dryrun=False)
+        assert_called_once_with()
 
 
-@patch("klingon_tools.entrypoints.get_commit_log")
 @patch("klingon_tools.entrypoints.LiteLLMTools")
-def test_gh_pr_gen_context(mock_litellm_tools, mock_get_commit_log):
+def test_gh_pr_gen_context(mock_litellm_tools):
     """
     Test the gh_pr_gen_context function.
 
     Args:
         mock_litellm_tools (MagicMock): Mock for LiteLLMTools.
-        mock_get_commit_log (MagicMock): Mock for get_commit_log function.
     """
-    mock_get_commit_log.return_value = MagicMock(stdout="Test commit log")
     mock_litellm_tools.return_value.generate_pull_request_context.\
         return_value = "Test PR Context"
 
@@ -107,9 +100,8 @@ def test_gh_pr_gen_context(mock_litellm_tools, mock_get_commit_log):
 
     assert result == 0
     assert "Test PR Context" in fake_out.getvalue()
-    mock_get_commit_log.assert_called_once_with("origin/release")
     mock_litellm_tools.return_value.generate_pull_request_context.\
-        assert_called_once_with("Test commit log", dryrun=False)
+        assert_called_once_with()
 
 
 if __name__ == "__main__":

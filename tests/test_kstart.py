@@ -93,14 +93,17 @@ def test_check_git_config(mock_subprocess_run, mock_input):
         ["git", "config", "--global", "user.name"],
         capture_output=True,
         text=True,
+        check=True
     )
     mock_subprocess_run.assert_any_call(
         ["git", "config", "--global", "user.email"],
         capture_output=True,
         text=True,
+        check=True
     )
     mock_subprocess_run.assert_any_call(
-        ["git", "config", "--global", "user.name", "Test User"]
+        ["git", "config", "--global", "user.name", "Test User"],
+        check=True
     )
 
 

@@ -7,12 +7,18 @@ command-line tool. It verifies the command's execution and output.
 """
 
 import subprocess
-
 import pytest
+
+@pytest.fixture
+def no_llm(pytestconfig):
+    """
+    Fixture to access the --no-llm flag.
+    """
+    return pytestconfig.getoption("--no-llm")
 
 
 @pytest.mark.parametrize("debug", [False, True])
-def test_pr_title_generate(debug: bool, capsys) -> None:
+def test_pr_title_generate(no_llm, debug: bool, capsys) -> None:
     """
     Test the pr-title-generate command execution and output.
 
@@ -37,6 +43,10 @@ def test_pr_title_generate(debug: bool, capsys) -> None:
     Raises:
         AssertionError: If any of the assertions fail.
     """
+    # Skip the test if the --no-llm flag is set
+    if no_llm:
+        pytest.skip("Skipping LLM tests due to --no-llm flag")
+
     # Run the pr-title-generate command
     result = subprocess.run(
         ["pr-title-generate"],
@@ -58,12 +68,12 @@ def test_pr_title_generate(debug: bool, capsys) -> None:
 
     # Assertions
     assert_pr_title_generate_output(
-        result, captured.out if debug else "", debug
+        no_llm, result, captured.out if debug else "", debug
     )
 
 
 def assert_pr_title_generate_output(
-    result: subprocess.CompletedProcess, debug_output: str, debug: bool
+    no_llm: bool, result: subprocess.CompletedProcess, debug_output: str, debug: bool
 ) -> None:
     """
     Assert the output of pr-title-generate command.
@@ -77,6 +87,10 @@ def assert_pr_title_generate_output(
     Raises:
         AssertionError: If any of the assertions fail.
     """
+    # Skip the test if the --no-llm flag is set
+    if no_llm:
+        pytest.skip("Skipping LLM tests due to --no-llm flag")
+
     # Check that the command ran without errors
     assert (
         result.returncode == 0

@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "klingon_tools"
-version = "2.1.5"
+version = "2.1.5-rc.2"
 description = "A set of utilities for running and logging shell commands in a user-friendly manner."
 authors = ["David Hooton <klingon_tools+david@hooton.org>"]
 license = "MIT"
@@ -28,11 +28,14 @@ packaging = "^24.1"
 jinja2 = "^3.1.4"
 litellm = "^1.44.4"
 iniconfig = "^2.0.0"
+toml = "^0.10.2"
+emoji = "^2.14.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest-mock = "^3.14.0"
 poetry = "^1.8.3"
 pytest = "^8.3.2"
+pytest-dependency = "^0.6.0"
 
 [tool.poetry.scripts]
 push = "klingon_tools.push:main"
@@ -81,7 +84,9 @@ addopts = "-ra -q"
 testpaths = ["tests"]
 minversion = "8.3.1"
 filterwarnings = ["error", "ignore::DeprecationWarning", 'ignore:open_text is deprecated. Use files() instead.:DeprecationWarning:litellm.utils',]
-markers = ["optional: mark test as optional","dependency: mark test as having dependencies",]
+markers = ["optional: mark test as optional","dependency: mark test as having dependencies", "ollama_installed: marks tests that require Ollama to be installed", "ollama_server_running: marks tests that require the Ollama server to be running", "depends: marks tests with dependencies on other tests"]
+
+
 
 [tool.semantic_release]
 version_variable = ["pyproject.toml:version"]

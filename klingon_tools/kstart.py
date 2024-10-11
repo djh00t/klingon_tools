@@ -1,3 +1,16 @@
+"""
+This module provides functionality for managing Git configuration and creating
+feature branches.
+
+Functions:
+- check_git_config: Check and set Git configuration for user name and email.
+- load_branch_metadata: Load branch metadata from a configuration file.
+- save_branch_metadata: Save branch metadata to a configuration file.
+- prompt_with_default: Prompt the user with a default value and return the
+  input.
+- main: The main entry point of the program.
+"""
+
 import os
 import sys
 import subprocess
@@ -10,12 +23,15 @@ def check_git_config():
 
     def get_git_config(key):
         result = subprocess.run(
-            ["git", "config", "--global", key], capture_output=True, text=True
+            ["git", "config", "--global", key],
+            capture_output=True,
+            text=True,
+            check=True
         )
         return result.stdout.strip()
 
     def set_git_config(key, value):
-        subprocess.run(["git", "config", "--global", key, value])
+        subprocess.run(["git", "config", "--global", key, value], check=True)
 
     # Check and set user.name
     user_name = get_git_config("user.name")
@@ -35,6 +51,7 @@ def check_git_config():
 
 
 def load_branch_metadata():
+    """Load branch metadata from a configuration file."""
     config = configparser.ConfigParser()
     if os.path.exists(".branch-metadata"):
         config.read(".branch-metadata")
@@ -42,15 +59,18 @@ def load_branch_metadata():
 
 
 def save_branch_metadata(config):
-    with open(".branch-metadata", "w") as configfile:
+    """Save branch metadata to a configuration file."""
+    with open(".branch-metadata", "w", encoding="utf-8") as configfile:
         config.write(configfile)
 
 
 def prompt_with_default(prompt, default):
+    """Prompt the user with a default value and return the input."""
     return input(f"{prompt} [{default}]: ") or default
 
 
 def main():
+    """The main entry point of the program."""
     check_git_config()
 
     config = load_branch_metadata()
@@ -128,6 +148,7 @@ def main():
             ["git", "rev-parse", "--verify", branch_name],
             capture_output=True,
             text=True,
+            check=False
         )
         if result.returncode == 0:
             print(f"Branch {branch_name} already exists. Switching to it.")
@@ -152,6 +173,3 @@ if __name__ == "__main__":
 
 # This allows us to test the entrypoint
 __main__ = main
-
-if __name__ == "__main__":
-    main()

@@ -1,10 +1,5 @@
 # tests/test_openai_tools.py
-"""Tests for the OpenAITools class and its methods.
-
-This module contains pytest-style unit tests for the OpenAITools class from the
-klingon_tools package. It covers initialization, PR summary generation, title
-generation, and message formatting.
-"""
+"""Tests for the OpenAITools class and its methods."""
 
 import logging
 from unittest.mock import patch, MagicMock
@@ -25,27 +20,19 @@ def disable_logging():
 
 @pytest.fixture
 def openai_tools():
-    """Fixture to create an instance of OpenAITools."""
+    """Create an instance of OpenAITools."""
     return OpenAITools(debug=True)
 
 
 @patch("klingon_tools.openai_tools.get_commit_log")
 def test_generate_pull_request_summary(mock_get_commit_log, openai_tools):
-    """Test the generate_pull_request_summary method.
-
-    Assertions:
-    1. Check that generate_content is called once with "pull_request_summary"
-    and "commit log content".
-    2. Verify that the summary is "Generated PR Summary".
-    """
+    """Test the generate_pull_request_summary method."""
     mock_get_commit_log.return_value.stdout = "commit log content"
     openai_tools.generate_content = MagicMock(
         return_value="Generated PR Summary"
     )
 
-    summary = openai_tools.generate_pull_request_summary(
-        Repo(), "diff content"
-    )
+    summary = openai_tools.generate_pull_request_summary()
 
     openai_tools.generate_content.assert_called_once_with(
         "pull_request_summary", "commit log content"
@@ -54,25 +41,14 @@ def test_generate_pull_request_summary(mock_get_commit_log, openai_tools):
 
 
 def test_init_with_valid_api_key(openai_tools):
-    """Test initialization of OpenAITools with a valid API key.
-
-    Assertions:
-    1. Verify that debug is set to True.
-    2. Ensure that client is not None.
-    """
+    """Test initialization of OpenAITools with a valid API key."""
     assert openai_tools.debug is True
     assert openai_tools.client is not None
 
 
 @patch("openai.ChatCompletion.create")
 def test_generate_pull_request_title(mock_create, openai_tools):
-    """Test the generate_pull_request_title method.
-
-    Assertions:
-    1. Verify that the title is a string.
-    2. Ensure that the length of the title is less than or equal to 72
-    characters.
-    """
+    """Test the generate_pull_request_title method."""
     mock_create.return_value = MagicMock(
         choices=[MagicMock(message=MagicMock(content="Generated PR title"))]
     )
@@ -81,9 +57,6 @@ def test_generate_pull_request_title(mock_create, openai_tools):
 
     assert isinstance(title, str)
     assert len(title) <= 72
-
-    # Print the generated title
-    print(f"LLM generated title: {title}")
 
 
 @pytest.mark.parametrize(
@@ -95,46 +68,27 @@ def test_generate_pull_request_title(mock_create, openai_tools):
             False,
         ),
         ("invalid message", None, True),
-        (
-            "feat: minimal valid message",
-            None,
-            True,
-        ),  # This is now expected to raise an error
+        ("feat: minimal valid message", None, True),
         (
             "feat(core): minimal valid message",
             "✨ feat(core): minimal valid message",
             False,
-        ),  # New valid edge case
+        ),
         (
             "fix(bug): fix critical issue",
             "🐛 fix(bug): fix critical issue",
             False,
-        ),  # Additional valid case
+        ),
     ],
 )
 def test_format_message(openai_tools, message, expected, should_raise):
-    """Test the format_message method with valid, invalid, and edge case
-    inputs.
-
-    Assertions:
-    1. If should_raise is True, verify that a ValueError is raised.
-    2. If should_raise is False, check that the formatted message matches the
-    expected value.
-    """
+    """Test the format_message method with various inputs."""
     if should_raise:
         with pytest.raises(ValueError):
             openai_tools.format_message(message)
     else:
         formatted_message = openai_tools.format_message(message)
         assert formatted_message == expected
-
-    # Print the result for debugging
-    print(f"Input: {message}")
-    print(f"Expected: {expected}")
-    print(f"Should raise: {should_raise}")
-    if not should_raise:
-        print(f"Actual output: {openai_tools.format_message(message)}")
-    print("---")
 
 
 @pytest.mark.parametrize(
@@ -152,13 +106,77 @@ def test_format_message(openai_tools, message, expected, should_raise):
     ],
 )
 def test_format_pr_title(openai_tools, title, expected):
-    """Test the format_pr_title method with various inputs.
-
-    Assertions:
-    1. Verify that the formatted title matches the expected value.
-    """
+    """Test the format_pr_title method with various inputs."""
     formatted_title = openai_tools.format_pr_title(title)
     assert formatted_title == expected
+
+
+@patch("klingon_tools.openai_tools.get_git_user_info")
+def test_signoff_message(mock_get_git_user_info, openai_tools):
+    """Test the signoff_message method."""
+    mock_get_git_user_info.return_value = ("John Doe", "john@example.com")
+    message = "Test commit message"
+    signed_message = openai_tools.signoff_message(message)
+    assert signed_message == (
+        "Test commit message\n\nSigned-off-by: John Doe <john@example.com>"
+    )
+
+
+@patch("klingon_tools.openai_tools.git_stage_diff")
+@patch.object(OpenAITools, "generate_content")
+@patch.object(OpenAITools, "format_message")
+@patch.object(OpenAITools, "signoff_message")
+def test_generate_commit_message(
+    mock_signoff, mock_format, mock_generate, mock_stage_diff, openai_tools
+):
+    """Test the generate_commit_message method."""
+    mock_stage_diff.return_value = "Test diff"
+    mock_generate.return_value = "feat(test): add new feature"
+    mock_format.return_value = "✨ feat(test): add new feature"
+    mock_signoff.return_value = (
+        "✨ feat(test): add new feature\n\nSigned-off-by: John <john@example.com>"
+    )
+
+    result = openai_tools.generate_commit_message(
+        "test.py", MagicMock()
+    )
+
+    assert result == (
+        "✨ feat(test): add new feature\n\nSigned-off-by: John <john@example.com>"
+    )
+    mock_stage_diff.assert_called_once()
+    mock_generate.assert_called_once()
+    mock_format.assert_called_once()
+    mock_signoff.assert_called_once()
+
+
+@patch.object(OpenAITools, "generate_content")
+def test_generate_pull_request_body(mock_generate, openai_tools):
+    """Test the generate_pull_request_body method."""
+    mock_generate.return_value = "Test PR body"
+    result = openai_tools.generate_pull_request_body("Test diff")
+    assert result == "Test PR body"
+    mock_generate.assert_called_once_with("pull_request_body", "Test diff")
+
+
+@patch.object(OpenAITools, "generate_content")
+@patch.object(OpenAITools, "format_message")
+@patch("klingon_tools.openai_tools.git_unstage_files")
+def test_generate_release_body(
+    mock_unstage, mock_format, mock_generate, openai_tools
+):
+    """Test the generate_release_body method."""
+    mock_generate.return_value = "Test release body"
+    mock_format.return_value = "Formatted test release body"
+    mock_repo = MagicMock()
+    mock_repo.git.diff.return_value = "file1.py\nfile2.py"
+
+    result = openai_tools.generate_release_body(mock_repo, "Test diff", True)
+
+    assert result == "Formatted test release body"
+    mock_generate.assert_called_once_with("release_body", "Test diff")
+    mock_format.assert_called_once_with("Test release body")
+    mock_unstage.assert_called_once_with(["file1.py", "file2.py"])
 
 
 if __name__ == "__main__":
