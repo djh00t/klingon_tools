@@ -41,7 +41,7 @@ def test_git_push(mock_push_changes, mock_is_submodule, mock_generate,
 def test_handle_file_deletions(mock_run, mock_repo):
     """Tests the _handle_file_deletions function."""
     mock_run.return_value.stdout = "file1.txt\nfile2.txt"
-    
+
     _handle_file_deletions(mock_repo)
 
     assert mock_repo.index.remove.call_count == 2
@@ -53,7 +53,7 @@ def test_generate_and_commit_messages(mock_run, mock_repo):
     """Tests the _generate_and_commit_messages function."""
     mock_repo.untracked_files = ['file1.txt', 'file2.txt']
     mock_litellm_tools = Mock()
-    
+
     _generate_and_commit_messages(mock_repo, mock_litellm_tools)
 
     assert mock_repo.git.add.call_count == 2
@@ -63,10 +63,10 @@ def test_generate_and_commit_messages(mock_run, mock_repo):
 def test_is_submodule(mock_repo):
     """Tests the _is_submodule function."""
     mock_repo.git.rev_parse.return_value = "/path/to/.git/modules"
-    assert _is_submodule(mock_repo) == True
+    assert _is_submodule(mock_repo)
 
     mock_repo.git.rev_parse.return_value = "/path/to/repo"
-    assert _is_submodule(mock_repo) == False
+    assert not _is_submodule(mock_repo)
 
 
 @patch('klingon_tools.git_push.git.Repo')
@@ -106,7 +106,8 @@ def test_push_changes(mock_log, mock_repo):
 @patch('klingon_tools.git_push.log_message')
 def test_push_changes_error(mock_log, mock_repo):
     """Tests the push_changes function when an error occurs."""
-    mock_repo.remotes.origin.push.side_effect = GitCommandError("push", "error")
+    mock_repo.remotes.origin.push.side_effect = GitCommandError(
+        "push", "error")
 
     push_changes(mock_repo)
 
