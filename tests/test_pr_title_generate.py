@@ -9,6 +9,7 @@ command-line tool. It verifies the command's execution and output.
 import subprocess
 import pytest
 
+
 @pytest.fixture
 def no_llm(pytestconfig):
     """
@@ -67,13 +68,15 @@ def test_pr_title_generate(no_llm, debug: bool, capsys) -> None:
     captured = capsys.readouterr()
 
     # Assertions
-    assert_pr_title_generate_output(
-        no_llm, result, captured.out if debug else "", debug
-    )
+    assert_pr_title_generate_output(no_llm, result,
+                                    captured.out if debug else "", debug)
 
 
 def assert_pr_title_generate_output(
-    no_llm: bool, result: subprocess.CompletedProcess, debug_output: str, debug: bool
+    no_llm: bool,
+    result: subprocess.CompletedProcess,
+    debug_output: str,
+    debug: bool
 ) -> None:
     """
     Assert the output of pr-title-generate command.
@@ -92,9 +95,8 @@ def assert_pr_title_generate_output(
         pytest.skip("Skipping LLM tests due to --no-llm flag")
 
     # Check that the command ran without errors
-    assert (
-        result.returncode == 0
-    ), f"Command failed with return code {result.returncode}"
+    assert result.returncode == 0, \
+        f"Command failed with return code {result.returncode}"
 
     output_lines = result.stdout.splitlines()
 
