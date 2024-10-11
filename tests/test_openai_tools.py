@@ -1,11 +1,9 @@
 # tests/test_openai_tools.py
 """Tests for the OpenAITools class and its methods."""
 
-import logging
 from unittest.mock import patch, MagicMock
-
+import logging
 import pytest
-from git import Repo
 
 from klingon_tools.openai_tools import OpenAITools
 
@@ -134,7 +132,8 @@ def test_generate_commit_message(
     mock_generate.return_value = "feat(test): add new feature"
     mock_format.return_value = "✨ feat(test): add new feature"
     mock_signoff.return_value = (
-        "✨ feat(test): add new feature\n\nSigned-off-by: John <john@example.com>"
+        "✨ feat(test): add new feature\n\n"
+        "Signed-off-by: John <john@example.com>"
     )
 
     result = openai_tools.generate_commit_message(
@@ -142,7 +141,8 @@ def test_generate_commit_message(
     )
 
     assert result == (
-        "✨ feat(test): add new feature\n\nSigned-off-by: John <john@example.com>"
+        "✨ feat(test): add new feature\n\n"
+        "Signed-off-by: John <john@example.com>"
     )
     mock_stage_diff.assert_called_once()
     mock_generate.assert_called_once()
