@@ -44,6 +44,7 @@ warnings.filterwarnings(
     "ignore", category=DeprecationWarning, module="importlib_resources"
 )
 
+
 def gh_pr_gen_title():
     """
     Generate and print a GitHub pull request title using OpenAI tools.
@@ -80,6 +81,7 @@ def gh_pr_gen_title():
         log_message.error(f"Traceback: {traceback.format_exc()}")
         return 1
 
+
 def gh_pr_gen_summary():
     """
     Generate and print a GitHub pull request summary using OpenAI tools.
@@ -113,6 +115,7 @@ def gh_pr_gen_summary():
         log_message.error(f"Unexpected error occurred: {e}")
         log_message.error(f"Traceback: {traceback.format_exc()}")
         return 1
+
 
 def gh_pr_gen_context():
     """
