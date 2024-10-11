@@ -1,3 +1,40 @@
+## [2.3.0-release.8](https://github.com/djh00t/klingon_tools/compare/v2.3.0-release.7...v2.3.0-release.8) (2024-08-27)
+
+## [2.3.0-release.7](https://github.com/djh00t/klingon_tools/compare/v2.3.0-release.6...v2.3.0-release.7) (2024-08-27)
+
+
+### Features
+
+* **requirements:** add litellm to project dependencies ([8a80794](https://github.com/djh00t/klingon_tools/commit/8a80794e9f066a29f5882b555ea205a62b908295))
+* **push:** add pytest support and test directory checks ([d6f04f2](https://github.com/djh00t/klingon_tools/commit/d6f04f2e451e246af38f09010a3e70b7344ad9f1))
+
+
+### Bug Fixes
+
+* **openai_tools:** set style parameter to 'none' for generated commit message ([f8f215f](https://github.com/djh00t/klingon_tools/commit/f8f215fd01f9924ac75a18e6b5dd2364c524f5f2))
+
+## [2.3.0-release.6](https://github.com/djh00t/klingon_tools/compare/v2.3.0-release.5...v2.3.0-release.6) (2024-08-09)
+
+
+### Features
+
+* **docs/openai_tools:** add documentation for OpenAI tools module ([cbef94a](https://github.com/djh00t/klingon_tools/commit/cbef94a362e2f07218fb0093260202bcf08a138d))
+* **setup.py:** add entry point for ktest to run tests ([5723b45](https://github.com/djh00t/klingon_tools/commit/5723b454bfcc5342c71d69792412773ec6c53123))
+* **klingon_tools/log_msg:** add logging initialization module ([81a2ebe](https://github.com/djh00t/klingon_tools/commit/81a2ebe114ad4467469d6b68af26bb967d57f8e4))
+* **logtools:** add support for default styles in log messages ([3d78007](https://github.com/djh00t/klingon_tools/commit/3d78007ee5d191aeb81da35f26e3e5cc3d190274))
+* **push:** refactor logging integration and streamline startup tasks ([8eca42e](https://github.com/djh00t/klingon_tools/commit/8eca42e8282f8659d54d81e5fb949419fbed376b))
+
+
+### Bug Fixes
+
+* **Makefile:** improve spacing in echo commands for readability ([b007802](https://github.com/djh00t/klingon_tools/commit/b0078023266dc2565c50c289f0c4963b9a8a8974))
+* **klingon_tools/git_validate_commit.py:** remove unused imports from ([e9b6ec9](https://github.com/djh00t/klingon_tools/commit/e9b6ec96c1d2800ef6534aab2e0c7082cb4d3f72))
+* **git_log_helper.py:** replace logger with log_message for branch existence ([c60938e](https://github.com/djh00t/klingon_tools/commit/c60938eec8eea055a6f4c14f6f2d8081fffed20f))
+* **klingon_tools/git_unstage.py:** replace logger with log_message for ([ee86054](https://github.com/djh00t/klingon_tools/commit/ee860547e6b00b9a2784655fb180f898f75728d5))
+* **klingon_tools/git_push_helper.py:** replace logger with log_message in ([b2556e1](https://github.com/djh00t/klingon_tools/commit/b2556e12dcf4a64e83738c8cb16ab98494ed72c7))
+* **push:** update template URL for pre-commit configuration ([070493f](https://github.com/djh00t/klingon_tools/commit/070493fa145379303b1b37a2f378428b4fa978b1))
+* **openai_tools:** wrap generated commit message for better readability ([194e77a](https://github.com/djh00t/klingon_tools/commit/194e77ac1f32368c5effab9fe0ff4836dab3a6d5))
+
 ## [2.3.0-release.5](https://github.com/djh00t/klingon_tools/compare/v2.3.0-release.4...v2.3.0-release.5) (2024-07-29)
 
 ## [2.3.0-release.4](https://github.com/djh00t/klingon_tools/compare/v2.3.0-release.3...v2.3.0-release.4) (2024-07-29)

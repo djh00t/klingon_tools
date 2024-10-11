@@ -11,16 +11,17 @@ Workflow:
 1. Parse command-line arguments
 2. Run startup tasks (setup logging, check software requirements, etc.)
 3. Get git status
-4. Process files based on the mode:
+4. Run unit tests
+5. Process files based on the mode:
    a. Single file mode: Process only the specified file
    b. One-shot mode: Process only the first untracked or modified file
    c. Batch mode: Process all untracked and modified files
-5. For each processed file:
+6. For each processed file:
    a. Stage the file
    b. Run pre-commit hooks
    c. Generate commit message (if not in dry-run mode)
    d. Commit the file (if not in dry-run mode)
-6. Push changes (if not in dry-run mode)
+7. Push changes (if not in dry-run mode)
 
 The script has several options:
 --repo-path: Specify the path to the git repository (default: current
@@ -68,7 +69,7 @@ from klingon_tools.git_tools import (
 from klingon_tools.git_unstage import git_unstage_files
 
 # Initialize logging
-from klingon_tools.logger import LogTools, log_tools
+from klingon_tools.log_msg import log_message, set_log_level
 from klingon_tools.openai_tools import OpenAITools
 
 # Initialize variables
@@ -124,6 +125,7 @@ def check_software_requirements(repo_path: str, log_message: Any) -> None:
                     "-U",
                     "pre-commit",
                     "cfgv",
+                    "pytest",
                 ],
                 check=True,
                 stdout=subprocess.PIPE,
@@ -166,8 +168,8 @@ def ensure_pre_commit_config(repo_path: str, log_message: Any) -> None:
         )
         # Define the URL to the .pre-commit-config.yaml template
         template_url = (
-            "https://raw.githubusercontent.com/djh00t/klingon_tools/main/"
-            "repo_templates/python/.pre-commit-config.yaml"
+            "https://raw.githubusercontent.com/djh00t/klingon_templates/main/"
+            "python/.pre-commit-config.yaml"
         )
         try:
             # Download the .pre-commit-config.yaml template
@@ -249,12 +251,76 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def run_tests(log_message: Any = None, quiet: bool = False) -> bool:
+    """
+    Run pytest on the tests/ directory and log the results using LogTools.
+
+    This function runs pytest to execute unit tests. If pytest fails, it logs
+    detailed debug information and returns False.
+
+    Args:
+        log_message (Any): The logging function to use for output.
+        quiet (bool): Flag to run pytest in quiet mode. Defaults to False.
+
+    Returns:
+        bool: True if tests pass, False otherwise.
+    """
+    if log_message:
+        log_message.info("Running tests using pytest", status="🔍")
+    tests_dir = os.path.join(os.getcwd(), "tests")
+    if not os.path.exists(tests_dir):
+        log_message.info(
+            "Tests directory not found. Skipping tests.", status="🚫"
+        )
+        return True
+
+    test_files = [
+        f
+        for f in os.listdir(tests_dir)
+        if f.startswith("test_") and f.endswith(".py")
+    ]
+    if not test_files:
+        log_message.info(
+            "No test files found in tests directory. Skipping tests.",
+            status="🚫",
+        )
+        return True
+
+    pytest_command = (
+        "pytest -v --no-header --no-summary --disable-warnings tests/"
+    )
+    if quiet:
+        pytest_command += " --quiet"
+    try:
+        result = subprocess.run(
+            pytest_command,
+            check=True,
+            shell=True,
+            capture_output=True,
+            text=True,
+        )
+        for line in result.stdout.splitlines():
+            if "PASSED" in line:
+                test_name = line.split("::")[-1].strip()
+                log_message.info(message=test_name, status="✅")
+            elif "FAILED" in line:
+                test_name = line.split("::")[-1].strip()
+                log_message.error(message=test_name, status="❌")
+        return True
+    except subprocess.CalledProcessError as e:
+        for line in e.stdout.splitlines():
+            if "FAILED" in line:
+                test_name = line.split("::")[-1].strip()
+                log_message.error(message=test_name, status="❌")
+        log_message.error(f"ERROR DEBUG:\n{e.stderr}", status="❌")
+        return False
+
+
 def process_files(
     files: List[str],
     repo: Repo,
     args: argparse.Namespace,
     log_message: Any,
-    log_tools: Any,
 ) -> None:
     """
     Process a list of files through the git workflow.
@@ -268,7 +334,6 @@ def process_files(
         repo (Repo): The git repository object.
         args (argparse.Namespace): Command-line arguments.
         log_message (Any): The logging function to use for output.
-        log_tools (Any): Additional logging tools.
 
     Note:
         This function relies on the global 'modified_files' list to track
@@ -290,7 +355,7 @@ def process_files(
         try:
             # Process the file using the workflow_process_file function
             workflow_process_file(
-                file, modified_files, repo, args, log_message, log_tools
+                file, modified_files, repo, args, log_message
             )
         except Exception as e:
             # Log any errors that occur during processing
@@ -313,103 +378,29 @@ def run_push_prep(log_message: Any) -> None:
     Raises:
         SystemExit: If running the 'push-prep' target fails.
     """
-    # Define the path to the Makefile in the current working directory
     makefile_path = os.path.join(os.getcwd(), "Makefile")
-
-    # Check if the Makefile exists
     if os.path.exists(makefile_path):
-
-        # Open the Makefile for reading
         with open(makefile_path, "r") as makefile:
-
-            # Check if the 'push-prep' target is defined in the Makefile
             if "push-prep:" in makefile.read():
-                log_message.info("Running 'push-prep'", status="✅")
-
-                # Run the 'push-prep' target using the make command
+                log_message.info(message="Running push-prep", status="✅")
                 try:
                     subprocess.run(["make", "push-prep"], check=True)
-
-                # Log an error message if the 'push-prep' target fails
                 except subprocess.CalledProcessError as e:
                     log_message.error(
-                        f"Failed to run 'push-prep': {e}",
+                        message=f"Failed to run push-prep: {e}",
                         status="❌",
                     )
                     sys.exit(1)
-
-            # Log a message if the 'push-prep' target is not found in the
-            # Makefile
             else:
                 log_message.info(
-                    "'push-prep' target not found in Makefile",
+                    message="push-prep target not found in Makefile",
                     status="ℹ️",
                 )
-
-    # Log a message if the Makefile is not found in the root of the repository
     else:
         log_message.info(
-            "Makefile not found in the root of the repository",
+            message="Makefile not found in the root of the repository",
             status="ℹ️",
         )
-
-
-def startup_tasks(
-    args: argparse.Namespace, log_message: Any, log_tools: Any
-) -> Tuple[Repo, str, str]:
-    """
-    Run startup maintenance tasks.
-
-    This function initializes the script by setting up logging, checking
-    software requirements, and retrieving git user information.
-
-    Args:
-        args (argparse.Namespace): Command-line arguments.
-        log_message (Any): The logging function to use for output.
-        log_tools (Any): Additional logging tools.
-
-    Returns:
-        Tuple[Repo, str, str]: The initialized git repository object, user
-        name, and user email.
-
-    Raises:
-        SystemExit: If the git repository initialization fails.
-    """
-    # Set logging style and level if debug mode is enabled
-    if args.debug:
-        log_tools.set_default_style("pre-commit")
-        log_tools.set_log_level("DEBUG")
-
-    # Change the working directory to the repository path
-    repo_path = args.repo_path
-    os.chdir(repo_path)
-
-    # Clean up any existing lock files in the repository
-    cleanup_lock_file(repo_path)
-    # Ensure the pre-commit configuration file exists
-    ensure_pre_commit_config(repo_path, log_message)
-    # Run any pre-push preparation tasks defined in the Makefile
-    run_push_prep(log_message)
-    # Check and install any required software
-    check_software_requirements(repo_path, log_message)
-
-    # Retrieve the git user name and email
-    user_name, user_email = get_git_user_info()
-    # Log the git user name and email
-    log_message.info(message="Using git user name:", status=user_name)
-    log_message.info(message="Using git user email:", status=user_email)
-
-    # Initialize the git repository object
-    repo = git_get_toplevel()
-    # Exit if the git repository initialization fails
-    if repo is None:
-        log_message.error(
-            "Failed to initialize git repository. Exiting.", status="❌"
-        )
-        sys.exit(1)
-
-    # Return the initialized git repository object, user name, and user email
-    return repo, user_name, user_email
 
 
 def workflow_process_file(
@@ -418,7 +409,6 @@ def workflow_process_file(
     current_repo: Repo,
     current_args: argparse.Namespace,
     log_message: Any,
-    log_tools: Any,
 ) -> None:
     """
     Process a single file through the git workflow.
@@ -432,7 +422,6 @@ def workflow_process_file(
         current_repo (Repo): The git repository object.
         current_args (argparse.Namespace): Command-line arguments.
         log_message (Any): The logging function to use for output.
-        log_tools (Any): Additional logging tools.
 
     Raises:
         SystemExit: If pre-commit hooks fail.
@@ -496,6 +485,62 @@ def workflow_process_file(
     )
 
 
+def startup_tasks(args: argparse.Namespace) -> Tuple[Repo, str, str]:
+    """
+    Run startup maintenance tasks.
+
+    This function initializes the script by setting up logging, checking
+    software requirements, and retrieving git user information.
+
+    Args:
+        args (argparse.Namespace): Command-line arguments.
+        log_message (Any): The logging function to use for output.
+
+    Returns:
+        Tuple[Repo, str, str]: The initialized git repository object, user
+        name, and user email.
+
+    Raises:
+        SystemExit: If the git repository initialization fails.
+    """
+    # Change the working directory to the repository path
+    repo_path = args.repo_path
+    os.chdir(repo_path)
+
+    # Clean up any existing lock files in the repository
+    cleanup_lock_file(repo_path)
+
+    # Ensure the pre-commit configuration file exists
+    ensure_pre_commit_config(repo_path, log_message)
+
+    # Run any pre-push preparation tasks defined in the Makefile
+    run_push_prep(log_message)
+
+    # Check and install any required software
+    check_software_requirements(repo_path, log_message)
+
+    # Retrieve the git user name and email
+    user_name, user_email = get_git_user_info()
+    # Log the git user name and email
+    log_message.info(message=f"Using git user name: {user_name}", status="✅")
+    log_message.info(
+        message=f"Using git user email: {user_email}", status="✅"
+    )
+
+    # Initialize the git repository object
+    repo = git_get_toplevel()
+    # Exit if the git repository initialization fails
+    if repo is None:
+        log_message.error(
+            message="Failed to initialize git repository. Exiting.",
+            status="❌",
+        )
+        sys.exit(1)
+
+    # Return the initialized git repository object, user name, and user email
+    return repo, user_name, user_email
+
+
 def main():
     """
     Run the push script.
@@ -514,15 +559,17 @@ def main():
     global args, repo, deleted_files, untracked_files, modified_files
     global staged_files, committed_not_pushed
 
-    # Initialize logger
-    logger = LogTools()
-    log_message = logger.log_message
-
     # Parse command-line arguments
     args = parse_arguments()
 
+    # Set logging level if debug mode is enabled
+    if args.debug:
+        set_log_level("DEBUG")
+    else:
+        set_log_level("INFO")
+
     # Run startup tasks to initialize the script and get repo
-    repo, user_name, user_email = startup_tasks(args, log_message, log_tools)
+    repo, user_name, user_email = startup_tasks(args)
 
     if repo is None:
         log_message.error(
@@ -549,6 +596,7 @@ def main():
     ):
         log_message.info("No files processed, nothing to do", status="🚫")
         return 0
+
     log_git_stats(
         deleted_files,
         untracked_files,
@@ -556,6 +604,11 @@ def main():
         staged_files,
         committed_not_pushed,
     )
+
+    # Run tests before processing any files
+    if not run_tests(log_message):
+        log_message.error("Exiting due to failing tests", status="❌")
+        return 1
 
     # Unstage all staged files if there are any
     if staged_files:
@@ -571,15 +624,13 @@ def main():
     if args.file_name:
         # Single file mode
         log_message.info("File name mode enabled", status=args.file_name)
-        process_files([args.file_name], repo, args, log_message, log_tools)
+        process_files([args.file_name], repo, args, log_message)
     elif args.oneshot:
         # One-shot mode: Process only the first file in files_to_process
         log_message.info("One-shot mode enabled", status="🎯")
         files_to_process = untracked_files + modified_files
         if files_to_process:
-            process_files(
-                [files_to_process[0]], repo, args, log_message, log_tools
-            )
+            process_files([files_to_process[0]], repo, args, log_message)
         else:
             log_message.info("No files to process.", status="🚫")
     else:
@@ -587,7 +638,7 @@ def main():
         log_message.info("Batch mode enabled", status="📦")
         files_to_process = untracked_files + modified_files
         if files_to_process:
-            process_files(files_to_process, repo, args, log_message, log_tools)
+            process_files(files_to_process, repo, args, log_message)
         else:
             log_message.info("No files to process.", status="🚫")
 
@@ -596,7 +647,7 @@ def main():
 
     # Log script completion
     log_message.info("All files processed successfully", status="🚀")
-    log_message.info("=" * 80, status="")
+    log_message.info("=" * 80, status="", style="none")
 
     return 0
 
