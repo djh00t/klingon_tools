@@ -64,7 +64,10 @@ def test_git_push_stash_conflict(mock_log, mock_repo):
 @patch("klingon_tools.git_push_helper.log_message")
 def test_git_push_command_error(mock_log, mock_repo):
     """Test git push with GitCommandError."""
-    mock_repo.remotes.origin.push.side_effect = GitCommandError("push", "Push failed")
+    mock_repo.remotes.origin.push.side_effect = GitCommandError(
+        "push",
+        "Push failed"
+        )
 
     git_push(mock_repo)
 
