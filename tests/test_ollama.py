@@ -5,6 +5,7 @@ API connectivity, model availability, and basic model functionality.
 """
 
 import json
+import shutil
 import re
 import subprocess
 from typing import Dict
@@ -12,7 +13,11 @@ from typing import Dict
 import pytest
 import requests
 
-# URL for the Ollama API
+# Check if Ollama is installed
+OLLAMA_INSTALLED = shutil.which("ollama") is not None
+
+if not OLLAMA_INSTALLED:
+    pytestmark = pytest.mark.skip(reason="Ollama is not installed")
 OLLAMA_URL = "http://localhost:11434"
 
 
