@@ -237,7 +237,7 @@ class LiteLLMTools:
             self,
             template_key: str,
             diff: str
-            ) -> Tuple[str, str]:
+    ) -> Tuple[str, str]:
         """Generate content based on the given template key and diff.
 
         Args:
@@ -398,6 +398,26 @@ class LiteLLMTools:
         # Explicitly specify fill character
         return formatted_title.ljust(72, " ")
 
+    def generate_pull_request_title(self, diff: str) -> str:
+        """
+        Generate a pull request title based on the given diff.
+
+        Args:
+            diff (str): The diff to generate the title from.
+
+        Returns:
+            str: The generated pull request title.
+        """
+        try:
+            generated_title, _ = self.generate_content(
+                "pull_request_title",
+                diff
+            )
+            return self.format_pr_title(generated_title)
+        except ValueError as e:
+            log_message.error(f"Error generating pull request title: {e}")
+            return "Pull Request Title Generation Failed"
+
     def signoff_message(self, message: str) -> str:
         """Add a signoff message to a commit message.
 
@@ -411,10 +431,8 @@ class LiteLLMTools:
         signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
         return f"{message}{signoff}"
 
-    def generate_commit_message(
-        self,
-        file_name: str,
-        repo: Repo,
+    def generate_commit_message_for_file(
+        self, file_name: str, repo: Repo
     ) -> Optional[str]:
         """Generate a commit message for the given file.
 
@@ -432,9 +450,9 @@ class LiteLLMTools:
 
         if diff is None:
             log_message.error(
-                    message=f"Failed to get diff for {file_name}",
-                    status="❌"
-                )
+                message=f"Failed to get diff for {file_name}",
+                status="❌"
+            )
             return None
 
         try:
@@ -453,7 +471,7 @@ class LiteLLMTools:
                             width=79,
                             subsequent_indent=" " * (
                                 len(line) - len(line.lstrip())
-                                ),
+                            ),
                         )
                     )
                     if len(line) > 79
@@ -476,7 +494,7 @@ class LiteLLMTools:
             if "must include a scope" in str(e):
                 commit_type, commit_description = generated_message.split(
                     ":", 1
-                    )
+                )
                 commit_scope = "specific-scope"  # Placeholder
                 generated_message = (
                     f"{commit_type}({commit_scope}): "
@@ -504,25 +522,6 @@ class LiteLLMTools:
                 return formatted_message
 
         return None
-
-    def generate_pull_request_title(self, diff: str) -> str:
-        """Generate a pull request title based on the given diff.
-
-        Args:
-            diff (str): The diff to generate the title from.
-
-        Returns:
-            str: The generated pull request title.
-        """
-        try:
-            generated_title, _ = self.generate_content(
-                "pull_request_title",
-                diff
-                )
-            return self.format_pr_title(generated_title)
-        except ValueError as e:
-            log_message.error(f"Error generating pull request title: {e}")
-            return "Pull Request Title Generation Failed"
 
     def generate_pull_request_summary(self) -> Optional[str]:
         """Generate a summary for a pull request.
@@ -605,3 +604,4 @@ class LiteLLMTools:
 
 # Initialize tools
 tools = LiteLLMTools(debug=True)
+# Add the litellm_tools module content here
