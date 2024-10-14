@@ -78,7 +78,10 @@ def gh_pr_gen_title():
         return 1
     except Exception as e:  # pylint: disable=broad-except
         log_message.error(f"Unexpected error occurred: {e}")
-        log_message.error(f"Traceback: {traceback.format_exc()}")
+        log_message.error(
+            message=f"Traceback: {traceback.format_exc()}",
+            status="",
+            style="none",)
         return 1
 
 
