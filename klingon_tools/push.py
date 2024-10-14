@@ -40,7 +40,8 @@ from klingon_tools.pre_commit import git_pre_commit
 from klingon_tools.git_user_info import get_git_user_info
 from klingon_tools.git_commit_validate import validate_commit_message
 from klingon_tools.litellm_model_cache import get_supported_models
-from klingon_tools.log_msg import log_message, set_log_level
+from klingon_tools.log_msg import log_message
+from klingon_tools.log_tools import LogTools
 from klingon_tools.litellm_tools import LiteLLMTools
 
 # Initialize variables
@@ -496,25 +497,18 @@ def workflow_process_file(
 
     # Stage the file
     log_message.info(
-        f"Staging {file_name}",
+        message=f"Staging {file_name}",
         status=f"{file_counter}/{len(current_modified_files)}",
     )
 
     # Generate commit message
-    commit_message = litellm_tools.generate_commit_message(
+    commit_message = litellm_tools.generate_commit_message_for_file(
         file_name=file_name, repo=current_repo)
-
-    # Check for emoji prefix and store it
-    # _, emoji_prefix, _ = check_prefix(commit_message, log_message)
 
     # Validate the commit message
     if not validate_commit_message(commit_message, log_message):
         log_message.error("Commit message validation failed")
         return
-
-    # Add the emoji prefix back to the commit message if it was present
-    # if emoji_prefix:
-    #     commit_message = f"{emoji_prefix} {commit_message}"
 
     # Run pre-commit hooks
     success, _ = git_pre_commit(
@@ -788,11 +782,12 @@ def main() -> int:
     args = parse_arguments()
 
     # Set log level to DEBUG if debug mode is enabled
-    set_log_level("DEBUG" if args.debug else "INFO")
+    log_tools = LogTools(debug=args.debug)
+    log_tools.set_log_level("DEBUG" if args.debug else "INFO")
 
     # Log debug mode status
     if args.debug:
-        log_message.info("Debug mode enabled", status="🐞 ")
+        log_message.info("Debug mode enabled", status="🐞")
 
     # List supported models and exit
     if args.models_list:
@@ -837,13 +832,13 @@ def main() -> int:
 
     # Filter files based on the provided file name list
     if args.file_name:
-        filter_files = expand_file_patterns(args.file_name)
-        deleted_files = filter_git_files(deleted_files, filter_files)
-        untracked_files = filter_git_files(untracked_files, filter_files)
-        modified_files = filter_git_files(modified_files, filter_files)
-        staged_files = filter_git_files(staged_files, filter_files)
+        filtered_file_list = expand_file_patterns(args.file_name)
+        deleted_files = filter_git_files(deleted_files, filtered_file_list)
+        untracked_files = filter_git_files(untracked_files, filtered_file_list)
+        modified_files = filter_git_files(modified_files, filtered_file_list)
+        staged_files = filter_git_files(staged_files, filtered_file_list)
         committed_not_pushed = filter_git_files(
-            committed_not_pushed, filter_files)
+            committed_not_pushed, filtered_file_list)
 
     if not any(
         [
