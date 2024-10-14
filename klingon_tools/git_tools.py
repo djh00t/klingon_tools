@@ -438,4 +438,54 @@ def push_changes_if_needed(repo: Repo, args) -> None:
             )
     except Exception as e:
         log_message.error(message="Failed to push changes", status="❌")
-        log_message.exception(message=f"{e}")
+        log_message.error(
+            message=f"{e}",
+            status="",
+            style="none",
+            )
+
+
+def fix_commit_message(commit_message: str) -> str:
+    """
+    Fixes the commit message by ensuring it follows the conventional format.
+    """
+    if not commit_message.startswith("chore:"):
+        commit_message = "chore: " + commit_message
+
+    # Split the message into lines
+    lines = commit_message.splitlines()
+    fixed_lines = []
+
+    for line in lines:
+        if len(line) <= 72:
+            fixed_lines.append(line)
+        else:
+            while len(line) > 72:
+                # Find the last space within the first 72 characters
+                split_pos = line.rfind(' ', 0, 72)
+                if split_pos == -1:
+                    # If no space is found, split at 72 characters
+                    split_pos = 72
+                fixed_lines.append(line[:split_pos].rstrip())
+                line = line[split_pos:].lstrip()
+            fixed_lines.append(line)
+
+    return 'chore: ' + '\n'.join(fixed_lines)
+
+
+def handle_file_deletions(repo: Repo) -> None:
+    """Handles file deletions in the repository."""
+    deleted_files = subprocess.run(
+        ["git", "ls-files", "--deleted"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.splitlines()
+
+    for file in deleted_files:
+        try:
+            repo.index.remove([file], working_tree=True)
+            commit_message = f"chore({file}): Cleanup deleted items"
+            repo.index.commit(commit_message)
+        except GitCommandError as e:
+            log_message.error(f"Failed to handle deletion for {file}: {e}")
