@@ -282,3 +282,4 @@ get_docstrings.py
 ktest.py
 klingon_templates/
 emoji*
+data/*
