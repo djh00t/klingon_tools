@@ -351,10 +351,12 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
             ValueError: If the commit message format is incorrect.
             subprocess.CalledProcessError: If a Git command fails.
         """
+        modified_files = repo.git.diff("--cached", "--name-only").splitlines()
         diff = git_stage_diff(
-                file_name,
-                repo=repo
-                )
+                    file_name,
+                    repo=repo,
+                    modified_files=modified_files
+                    )
 
         if diff is None:
             log_message.error(
@@ -370,7 +372,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
 
             log_message.info(message="=" * 80, status="", style="none")
             wrapped_message = "\n".join(
-                textwrap.wrap(formatted_message, width=79)
+                textwrap.wrap(formatted_message, width=78)
             )
             log_message.info(
                 "Generated commit message for "
