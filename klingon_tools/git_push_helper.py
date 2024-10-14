@@ -1,63 +1,70 @@
+# klingon_tools/git_push_helper.py
+# pylint: disable=broad-exception-caught
+"""Helper module for Git push operations."""
+
 from git import GitCommandError, Repo
 from klingon_tools.log_msg import log_message
 
 
 def git_push(repo: Repo) -> None:
-    """Pushes changes to the remote repository.
+    """Push changes to the remote repository.
 
-    This function performs several steps to ensure that the local repository is
-    in sync with the remote repository before pushing changes. It stashes any
-    unstaged changes, rebases the current branch on top of the remote branch,
-    and then pushes the changes. If there were any stashed changes, it attempts
-    to apply them back.
+    This function synchronizes the local repository with the remote before
+    pushing changes. It performs the following steps:
+    1. Fetches latest changes from the remote.
+    2. Stashes any unstaged changes.
+    3. Rebases the current branch on top of the remote branch.
+    4. Pushes the changes.
+    5. Attempts to reapply any stashed changes.
 
     Args:
-        repo (Repo): The Git repository object.
+        repo: The Git repository object.
 
     Raises:
-        GitCommandError: If any git command fails.
+        GitCommandError: If any Git command fails.
     """
     try:
-        # Fetch the latest changes from the remote repository
         repo.remotes.origin.fetch()
-
-        # Get the current branch name
         current_branch = repo.active_branch.name
-
-        # Check for unstaged changes and stash them if any
         stash_needed = repo.is_dirty(untracked_files=True)
+
         if stash_needed:
             repo.git.stash(
-                "save", "--include-untracked", "Auto stash before rebase"
+                "save",
+                "--include-untracked",
+                "Auto stash before rebase"
             )
 
-        # Rebase the current branch on top of the remote branch
         repo.git.rebase(f"origin/{current_branch}")
 
-        # Apply the stashed changes back if they were stashed
         if stash_needed:
             try:
                 repo.git.stash("pop")
-            except GitCommandError as e:
+            except GitCommandError:
                 log_message.error(
                     "Failed to apply stashed changes",
                     status="❌",
-                    reason=str(e),
+                    reason="stash pop",
                 )
-                # If there are conflicts, you can handle them here or manually
-                # resolve them
+                # Note: Manual conflict resolution may be required here
 
-        # Push the changes to the remote repository
         repo.remotes.origin.push()
-
         log_message.info("Pushed changes to remote repository", status="✅")
     except GitCommandError as e:
         log_message.error(
             "Failed to push changes to remote repository",
             status="❌",
+            reason=f"push: {str(e)}",
+        )
+    except (ConnectionError, TimeoutError) as e:
+        log_message.error(
+            "Network error occurred during push",
+            status="❌",
             reason=str(e),
         )
     except Exception as e:
         log_message.error(
-            "An unexpected error occurred", status="❌", reason=str(e)
+            "An unexpected error occurred",
+            status="❌",
+            reason=str(e),
         )

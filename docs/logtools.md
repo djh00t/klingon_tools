@@ -1,18 +1,25 @@
+# LogTools Documentation
+
 ## Class - LogTools
 
 The `LogTools` class provides methods for logging messages, decorating methods, and running shell commands:
 
-- `log_message` - logs a message with a given severity using a specific status name and color. for INFO, yellow for WARNING, and red for ERROR.
+- `log_message` - logs a message with a given severity using a specific status name and color.
 - `method_state` - a decorator that logs the state of a method with a given style, status, and reason.
-- `command_state` - run shell commands and log their output consistently.
+- `command_state` - runs shell commands and logs their output consistently.
+- `set_default_style` - sets the default style for log messages.
+- `set_log_level` - sets the logging level for the logger.
+- `set_template` - sets a custom template for log messages.
 
 ### Styles
 
-The `LogTools` class supports two built-in styles for logging messages. The following styles are available:
+The `LogTools` class supports four built-in styles for logging messages, plus a plain text option:
 
 - **default**: The default style with simple text formatting and right-aligned status with spaces.
 - **basic**: A simple style without ellipses and right-aligned status with spaces.
 - **pre-commit**: A style that mimics the output format of pre-commit hooks.
+- **none**: A style that outputs the message without any formatting.
+- **None**: When `style=None`, outputs the plain text value of the message argument with no formatting, ignoring the status.
 
 **default**
 
@@ -40,25 +47,24 @@ Running Install with error........................................(failed)<span 
 
 ### Method - `log_message`
 
-Drop-in replacement for the classic python logging library. Is focussed on user experience and simplicity rather than system logging.
+The `log_message` class is a drop-in replacement for the classic Python logging library. It focuses on user experience and simplicity rather than system logging.
 
-The `log_message` class provides methods for logging messages with different severities, each of which have their own default color and status labels:
+The `log_message` class provides methods for logging messages with different severities:
 
-| Severity | Color  | Status | Description |
-|----------------|--------|-------------|---------------|
-| INFO           | <span style="color: green;">Green</span>  | OK | Informational message |
-| WARNING        | <span style="color: yellow;">Yellow</span> | WARNING | Warning message |
-| ERROR          | <span style="color: red;">Red</span>    | ERROR | Error message |
-| DEBUG          | <span style="color: cyan;">Cyan</span>   | DEBUG | Debugging message |
-| CRITICAL       | <span style="color: red; font-weight: bold;">Red (Bold)</span> | CRITICAL | Critical message |
-| EXCEPTION      | <span style="color: orange;">Orange</span> | EXCEPTION | Exception message |
+| Method    | Default Color | Default Status | Description         |
+|-----------|---------------|----------------|---------------------|
+| debug     | Cyan          | DEBUG          | Debugging message   |
+| info      | Green         | OK             | Informational message |
+| warning   | Yellow        | WARNING        | Warning message     |
+| error     | Red           | ERROR          | Error message       |
+| critical  | Bold Red      | CRITICAL       | Critical message    |
+| exception | Red           | ERROR          | Exception message   |
 
 #### Args:
-- `message` (str): The message to log. Can be provided as a positional or keyword argument.
-- `severity` (str, optional): The severity of the message. Defaults to "INFO" but generally not used if log_message is called with the appropriate priority method i.e. `LogTools.log_message.info("message")`
-- `style` (str, optional): The style of the log output. Defaults to "default".
-- `status` (str, optional): The status message to log on the far right. Defaults to "OK".
-- `reason` (str, optional): The reason for the status message, displayed in round brackets just to left of `status`. Defaults to None.
+- `msg` (str): The message to log. Can be provided as a positional or keyword argument.
+- `style` (str, optional): The style of the log output. Defaults to the class's default style.
+- `status` (str, optional): The status message to log on the far right. Defaults to the method's default status.
+- `reason` (str, optional): The reason for the status message, displayed in round brackets just to the left of `status`. Defaults to None.
 
 #### Example Usage
 
@@ -83,13 +89,13 @@ Running Installation failed...                                               <sp
 
 ### Method - `method_state(self, message=None, style="default", status="OK", reason=None)`
 
-`method_state` is a decorator that logs the state of a method with a given style, status, and reason. This is useful for providing user friendly logging where system style logging is too much or likely to cause confusion for the reader.
+`method_state` is a decorator that logs the state of a method with a given style, status, and reason. This is useful for providing user-friendly logging where system-style logging is too much or likely to cause confusion for the reader.
 
 #### Args:
-- `message` (str): The message to log. Can be provided as a positional or keyword argument.
+- `message` (str): The message to log. If not provided, the function name will be used.
 - `style` (str, optional): The style of the log output. Defaults to "default".
 - `status` (str, optional): The status message to log on the far right. Defaults to "OK".
-- `reason` (str, optional): The reason for the status message, displayed in round brackets just to left of `status`. Defaults to None.
+- `reason` (str, optional): The reason for the status message, displayed in round brackets just to the left of `status`. Defaults to None.
 
 #### Example with Styles
 
@@ -162,6 +168,27 @@ Running Install numpy.................................................<span styl
 - `style` (str, optional): The style of the log output. Defaults to "default".
 - `status` (str, optional): The status message to log on the far right. Defaults to "Passed".
 - `reason` (str, optional): The reason for the status message, displayed in round brackets just to the left of `status`. Defaults to None.
+
+### Method - `set_default_style(self, style)`
+
+Sets the default style for log messages.
+
+#### Args:
+- `style` (str): The style to use for log messages. Must be one of the valid styles: "default", "basic", "pre-commit", or "none".
+
+### Method - `set_log_level(self, level)`
+
+Sets the logging level for the logger.
+
+#### Args:
+- `level` (str): The logging level to set. Must be one of: "DEBUG", "INFO", "WARNING", "ERROR", or "CRITICAL".
+
+### Method - `set_template(cls, template)`
+
+Sets the template for log messages.
+
+#### Args:
+- `template` (str): The template to use for log messages. Should include placeholders for {message}, {style}, and {status}.
 
 #### Example with Styles
 
@@ -275,49 +302,56 @@ Running Print Hello World.............................................<span styl
 
 </pre>
 
-## Advanced Usage - Custom Templates
+## Advanced Usage
+
+### Custom Templates
 
 The `LogTools` class allows you to set a custom template for log messages. This can be useful if you want to standardize the format of your log messages across different parts of your application.
-
-### Setting a Custom Template
 
 To set a custom template, use the `set_template` class method. The template should be a string with placeholders for `message`, `style`, and `status`.
 
 #### Example
 
 ```python
-
 from klingon_tools.logtools import LogTools
 
 # Set a custom template
 LogTools.set_template("Priority: {priority} - Message: {message} - Status: {status}")
 
+# Initialize LogTools
+log_tools = LogTools(debug=True)
+logger = log_tools.log_message
+
 # Use log_message with the template
-logger = LogTools.log_message
 logger.info("Installing catapult")
 logger.warning("Low disk space")
 logger.error("Installation failed")
-
 ```
 
-**Expected Output**
+### Debug Mode
 
-<pre>
-
-Severity: INFO - Message: Installing catapult - Status: OK
-Severity: WARNING - Message: Low disk space - Status: WARNING
-Severity: ERROR - Message: Installation failed - Status: ERROR
-
-</pre>
-
-## Debug Mode
-
-To enable debug mode, set the `DEBUG` flag to `True`:
+To enable debug mode, initialize `LogTools` with the `debug` parameter set to `True`:
 
 ```python
-
 log_tools = LogTools(debug=True)
-
 ```
 
 In debug mode, additional information such as command output and error messages will be printed to the console.
+
+### Setting Log Level
+
+You can set the log level using the `set_log_level` method:
+
+```python
+log_tools.set_log_level("DEBUG")
+```
+
+### Setting Default Style
+
+You can set the default style for all log messages using the `set_default_style` method:
+
+```python
+log_tools.set_default_style("pre-commit")
+```
+
+This will apply the specified style to all subsequent log messages unless overridden in individual log calls.

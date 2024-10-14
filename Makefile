@@ -2,13 +2,12 @@
 
 # Variables
 APP_NAME = "klingon-tools"
-TWINE_USERNAME ?= __token__
-TEST_TWINE_PASSWORD ?= $(TEST_PYPI_USER_AGENT)
-PYPI_TWINE_PASSWORD ?= $(PYPI_USER_AGENT)
+PYPI_USER_AGENT ?= __token__
+LOG_MSG_CONF = --level INFO --style pre-commit --message
 
-# Clean target
+# Clean the repository
 clean:
-	@echo "Cleaning up repo............................................................. 🧹"
+	@log-message $(LOG_MSG_CONF) "Cleaning up repo" --status "🧹"
 	@make push-prep
 	@pre-commit clean
 	@find . -type f -name '*.pyc' -delete
@@ -24,118 +23,130 @@ clean:
 	@rm -rf dist
 	@rm -rf htmlcov
 	@rm -rf node_modules
-	@echo "Repo cleaned up............................................................... ✅"
+	@log-message $(LOG_MSG_CONF) "Repo cleaned up" --status "✅"
+
+# Ensure that the latest Node.js and npm are installed
+ensure-node: fetch-latest-node-version install-latest-nvm
+	@if [ "$$(uname)" = "Linux" ]; then \
+		if [ -f /etc/debian_version ]; then \
+			echo "Detected Debian-based Linux. Installing Node.js $$(cat .latest_node_version)..."; \
+			curl -sL https://deb.nodesource.com/setup_$$(cat .latest_node_version | cut -d'.' -f1).x | sudo bash -; \
+			sudo apt-get install -y nodejs; \
+		else \
+			echo "Unsupported Linux distribution. Exiting..."; \
+			exit 1; \
+		fi \
+	elif [ "$$(uname)" = "Darwin" ]; then \
+		log-message $(LOG_MSG_CONF) "Detected macOS. Checking for Homebrew..." --status "🔍"; \
+		if ! command -v brew >/dev/null 2>&1; then \
+			echo "Homebrew not found. Installing Homebrew..."; \
+			/bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; \
+		fi; \
+		NODE_MAJOR_VERSION=$$(cat .latest_node_version | cut -d'.' -f1 | tr -d 'v'); \
+		if brew ls --versions node@$$NODE_MAJOR_VERSION > /dev/null; then \
+			echo "Installing Node.js $$NODE_MAJOR_VERSION using Homebrew..."; \
+			brew install node@$$NODE_MAJOR_VERSION; \
+		else \
+			echo "Specific Node.js version not available in Homebrew. Installing using nvm..."; \
+			export NVM_DIR="$$HOME/.nvm"; \
+			[ -s "$$NVM_DIR/nvm.sh" ] && \. "$$NVM_DIR/nvm.sh"; \
+			nvm install $$(cat .latest_node_version); \
+			nvm use $$(cat .latest_node_version); \
+		fi; \
+	else \
+		echo "Unsupported OS. Exiting..."; \
+		exit 1; \
+	fi
+
+# Ensure that semantic-release is installed
+ensure-semantic-release:
+	@npm list -g --depth=0 | grep semantic-release >/dev/null 2>&1 || { \
+		log-message $(LOG_MSG_CONF) "semantic-release is not installed. Installing..." --status "⬇️"; \
+		npm install -g semantic-release; \
+	}
+
+# Fetch the latest Node.js version
+fetch-latest-node-version:
+	@curl -s https://nodejs.org/dist/index.json | grep '"version"' | head -1 | awk -F'"' '{print $$4}' > .latest_node_version
+	@log-message $(LOG_MSG_CONF) "Latest Node.js version: $$(cat .latest_node_version)" --status "ℹ️"
+
+# Get developer information
+get-developer-info:
+	@log-message $(LOG_MSG_CONF) "Fetching commit author information..." --status "🔍"
+	@COMMIT_AUTHOR=$$(git log -1 --pretty=format:'%an')
+	@log-message $(LOG_MSG_CONF) "This code was committed by $$COMMIT_AUTHOR" --status "ℹ️"
+
+# Get first octet of current node version
+node-major-version:
+	@curl -s https://nodejs.org/dist/index.json | grep '"version"' | head -1 | awk -F'"' '{print $$4}' | sed 's/^v//' | awk -F'.' '{print $$1}'
+
+# Install the package locally
+install:
+	@log-message $(LOG_MSG_CONF) "Installing dependencies..." --status "⬇️"
+	@poetry install
+
+# Install the development dependencies and the package locally
+install-dev:
+	@log-message $(LOG_MSG_CONF) "Checking for Poetry installation..." --status "🔍"
+	@if ! command -v poetry &> /dev/null; then \
+		echo "Poetry not found. Installing Poetry."; \
+		curl -sSL https://install.python-poetry.org | python3 -; \
+	fi
+	@log-message $(LOG_MSG_CONF) "Poetry is installed. Checking dependencies..." --status "🔍"
+	@poetry install --with dev
+
+# Install the latest version of nvm
+install-latest-nvm:
+	@log-message $(LOG_MSG_CONF) "Installing the latest version of nvm..." --status "⬇️"
+	@LATEST_NVM_VERSION=$$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest | grep -oE '"tag_name": "[^"]+"' | cut -d'"' -f4) && \
+	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/$$LATEST_NVM_VERSION/install.sh | bash
+
+# Perform a semantic release
+release: ensure-node ensure-semantic-release
+	@log-message $(LOG_MSG_CONF) "Starting semantic release..." --status "🚀"
+	@semantic-release
 
 # Pre-push cleanup target
 push-prep:
-	@echo "Removing temporary files.................................................... 🧹"
+	@log-message $(LOG_MSG_CONF) "Running Poetry Lock" --status "🔒"
+	@poetry lock
+	@log-message $(LOG_MSG_CONF) "Removing Temporary Files" --status "🧹"
 	@find . -type f -name '*.pyc' -delete
-	@if [ -f requirements.txt ]; then \
-		echo "Resetting requirements.txt to empty state................................... ✅"; \
-		rm -rf requirements.txt; \
-		touch requirements.txt; \
-	fi
-	@if [ -f requirements-dev.txt ]; then \
-		echo "Resetting requirements-dev.txt to empty state............................... ✅"; \
-		rm -rf requirements-dev.txt; \
-		touch requirements-dev.txt; \
-	fi
-	@echo "Removed temporary files..................................................... ✅"
+	@log-message $(LOG_MSG_CONF) "Removed Temporary Files" --status "✅"
 
-## check-packages: Check for required pip packages and requirements.txt, install if missing
-check-packages:
-	@echo "Installing pip-tools..."
-	@pip install pip-tools
-	@echo "Compiling requirements.txt..."
-	@pip-compile requirements.in
-	@echo "Checking for required pip packages and requirements.txt..."
-	@if [ ! -f requirements.txt ]; then \
-		echo "requirements.txt not found. Please add it to the project root."; \
-		exit 1; \
-	fi
-	@echo "Installing missing packages from requirements.txt..."
-	@pip install -r requirements.txt
-	@pre-commit install --overwrite
-
-## sdist: Create a source distribution package
+# Create a source distribution package
 sdist: clean
-	python setup.py sdist
-
-## wheel: Create a wheel distribution package
-wheel: clean
-	python setup.py sdist bdist_wheel
-
-## upload-test: Run tests, if they pass update version number, echo it to console and upload the distribution package to TestPyPI
-upload-test: test wheel
-	@echo "Uploading Version $$NEW_VERSION to TestPyPI..."
-	twine upload --repository-url https://test.pypi.org/legacy/ --username $(TWINE_USERNAME) --password $(TEST_TWINE_PASSWORD) dist/*
-
-## upload: Run tests, if they pass update version number and upload the distribution package to PyPI
-upload: test wheel
-	@echo "Uploading Version $$NEW_VERSION to PyPI..."
-	twine upload --username $(TWINE_USERNAME) --password $(PYPI_TWINE_PASSWORD) dist/*
-
-## install: Install the package locally
-install:
-	@echo "Checking for requirements..."
-	@make check-packages
-	@echo "Installing $$APP_NAME..."
-	@pip install -e .
-
-## install-pip: Install the package locally using pip
-install-pip:
-	pip install $(APP_NAME)
-
-## install-pip-test: Install the package locally using pip from TestPyPI
-install-pip-test:
-	pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple $(APP_NAME)
-
-## uninstall: Uninstall the local package
-uninstall:
-	pip uninstall $(APP_NAME)
+	@log-message $(LOG_MSG_CONF) "Creating source distribution..."
+	@poetry build --format sdist
 
 # Run tests
 test:
-	@pip install pytest
-	@echo "Running unit tests..."
-	pytest --no-header --no-summary -v --disable-warnings tests/
+	@log-message $(LOG_MSG_CONF) "Running unit tests..." --status "🧪"
+	@poetry run pytest -vvv --ignore=tests/test_litellm_model_cache.py --ignore=tests/test_litellm_tools.py --ignore=tests/test_openai_tools.py --ignore=tests/test_pr_context_generate.py --ignore=tests/test_pr_summary_generate.py --ignore=tests/test_pr_title_generate.py
 
-## update-version: Read the version number from VERSION file and save it as
-## CURRENT_VERSION variable it will look like A.B.C Increment the third (C)
-## number by 1 and write it back to the VERSION file. Validate that the new
-## version number is valid and echo it to console then commit it to git and
-## push to origin. Confirm that VERSION and setup.py are in sync.
-update-version:
-	@CURRENT_VERSION=$$(cat VERSION); \
-	echo "Current version is:		$$CURRENT_VERSION"; \
-	NEW_VERSION=$$(awk -F. '{print $$1"."$$2"."$$3+1}' VERSION); \
-	PYPI_VERSION=$$(curl -s https://pypi.org/pypi/$(APP_NAME)/json | jq -r .info.version); \
-	TEST_PYPI_VERSION=$$(curl -s https://test.pypi.org/pypi/$(APP_NAME)/json | jq -r .info.version); \
-	HIGHEST_VERSION=$$(echo -e "$$NEW_VERSION\n$$PYPI_VERSION\n$$TEST_PYPI_VERSION" | sort -V | tail -n 1); \
-	if [ "$$HIGHEST_VERSION" != "$$NEW_VERSION" ]; then \
-		NEW_VERSION=$$(echo $$HIGHEST_VERSION | awk -F. '{print $$1"."$$2"."$$3+1}'); \
-	fi; \
-	echo $$NEW_VERSION > VERSION; \
-	sed -i "s/version=\"[0-9]*\.[0-9]*\.[0-9]*\"/version=\"$$NEW_VERSION\"/" setup.py; \
-	git add VERSION setup.py; \
-	git commit -m "Bump version to $$NEW_VERSION"; \
-	git push origin version-bump; \
-	echo $$NEW_VERSION > VERSION; \
-	echo "New version is:			$$NEW_VERSION"; \
-	sed -i "s/version=\"[0-9]*\.[0-9]*\.[0-9]*\"/version=\"$$NEW_VERSION\"/" setup.py; \
-	@SETUP_VERSION=$$(grep "version=" setup.py | awk -F"'" '{print $$2}'); \
-	if [ "$$NEW_VERSION" != "$$SETUP_VERSION" ]; then \
-		echo "Error: VERSION and setup.py are not in sync"; \
-		exit 1; \
-	fi; \
-	git add VERSION setup.py; \
-	git commit -m "Bump version to $$NEW_VERSION"; \
-	git push origin version-bump
+# Run all tests including LLM tests
+test-with-llm:
+	@log-message $(LOG_MSG_CONF) "Running all unit tests including LLM tests..." --status "🧪"
+	@poetry run pytest -vvv
 
-## generate-pyproject: Generate a pyproject.toml file
-generate-pyproject:
-	@echo "[build-system]" > pyproject.toml
-	@echo "requires = ['setuptools', 'wheel']" >> pyproject.toml
-	@echo "build-backend = 'setuptools.build_meta'" >> pyproject.toml
+# Uninstall the local package
+uninstall:
+	@log-message $(LOG_MSG_CONF) "Uninstalling $(APP_NAME)..." --status "❌"
+	@poetry remove $(APP_NAME)
 
-.PHONY: clean check-packages sdist wheel upload-test upload install uninstall test update-version generate-pyproject gh-actions
+# Upload to PyPI
+upload: test wheel
+	@log-message $(LOG_MSG_CONF) "Uploading Version to PyPI..." --status "⬆️"
+	@TWINE_USER_AGENT="$(PYPI_USER_AGENT)" poetry publish --build --no-interaction
+
+# Upload to TestPyPI
+upload-test: test wheel
+	@log-message $(LOG_MSG_CONF) "Uploading Version to TestPyPI..." --status "⬆️"
+	@poetry publish --repository testpypi --username $(PYPI_USER_AGENT) --password $(PYPI_USER_AGENT)
+
+# Create a wheel distribution package
+wheel: clean
+	@log-message $(LOG_MSG_CONF) "Creating wheel distribution..." --status "📦"
+	@poetry build --format wheel
+
+.PHONY: clean check-packages sdist wheel upload-test upload install uninstall test push-prep get-developer-info release

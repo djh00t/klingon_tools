@@ -116,9 +116,17 @@ The package provides several entry points for command-line usage:
 
 ### Example Usage of `push`
 
-The `push` entry point automates git operations such as staging, committing, and pushing files. It also integrates with pre-commit hooks and generates commit messages using OpenAI's API.
+The `push` entry point automates git operations such as staging, committing,
+and pushing files. It also integrates with pre-commit hooks and generates
+conventional commit messages using OpenAI's API.
 
 **Usage**
+
+An entrypoint for `push` is installed when klingon_tools is installed so `push`
+can be run from the command line without specifying the module.
+
+If your environment does not support entrypoints, you can run the following
+command:
 
 ```sh
 python -m klingon_tools.push --repo-path /path/to/repo --file-name example.txt
@@ -190,6 +198,13 @@ We require all commit messages to follow the Conventional Commits standard. Belo
 | chore     | 🔧        | clean up old files                               |
 | revert    | ⏪        | undo previous commit that caused issues          |
 
+### Semver Versioning
+
+Versioning uses the semver standard. The version is stored in pyproject.toml
+under the [poetry.tools] section.
+
+More information on semver can be found here: [Semver](https://semver.org/)
+
 ### Contributing
 
 Contributions are welcome. Please open an issue to discuss your idea before making a change.
@@ -252,7 +267,31 @@ Use '--action {action name}' to update all instances of a specific action.
 Use '--action' and '--file' together to update all instances of a specific action in a specific file.
 ```
 
-### Example Usage of `logtools`
+### Example Usage of `makefile_logger`
+
+The `makefile_logger.py` script allows you to log messages from a Makefile using the same logging style as `klingon_tools`. This ensures consistent logging across your project.
+
+#### Usage
+
+To use the `makefile_logger.py` script, call it from your Makefile with the desired log level and message. The available log levels are `INFO`, `WARNING`, `ERROR`, and `DEBUG`.
+
+**Example Makefile Usage:**
+
+```makefile
+# Log an informational message
+@python klingon_tools/makefile_logger.py INFO "Cleaning up repo"
+
+# Log a warning message
+@python klingon_tools/makefile_logger.py WARNING "This is a warning"
+
+# Log an error message
+@python klingon_tools/makefile_logger.py ERROR "An error occurred"
+
+# Log a debug message
+@python klingon_tools/makefile_logger.py DEBUG "Debugging information"
+```
+
+This will log messages with the appropriate status icons, ensuring that your Makefile logs are consistent with the rest of your project's logging.
 
 The `logtools` utility provides decorators for methods and CLI commands that log output in a clean and consistent manner with simple error handling.
 

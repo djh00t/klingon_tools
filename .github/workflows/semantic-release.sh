@@ -5,21 +5,13 @@ NEW_VERSION=$(grep '"version":' package.json | sed 's/.*"version": "\(.*\)",/\1/
 echo "New version extracted: $NEW_VERSION"
 
 # Update the version in pyproject.toml
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    echo "Detected macOS"
-    sed -i '' -e "s/^version = \".*\"/version = \"$NEW_VERSION\"/" ./pyproject.toml
-else
-    echo "Detected Linux"
-    sed -i'' -e "s/^version = \".*\"/version = \"$NEW_VERSION\"/" ./pyproject.toml
-fi
+poetry version $NEW_VERSION
 
 # Update the version in package.json
 jq --arg new_version "$NEW_VERSION" '.version = $new_version' package.json > tmp.$$.json && mv tmp.$$.json package.json
 
-# Replace the placeholder in pyproject.toml
-sed -i'' -e "s/\${nextRelease.version}/$NEW_VERSION/g" pyproject.toml
-
-# Run semantic-release
+# Update the version in klingon_tools/__init__.py
+sed -i '' "s/__version__ = \".*\"/__version__ = \"$NEW_VERSION\"/" klingon_tools/__init__.py
 echo "Running semantic-release..."
 npx semantic-release
 
@@ -27,7 +19,7 @@ npx semantic-release
 if [ $? -eq 0 ]; then
     git checkout -b release-v$NEW_VERSION
     git add pyproject.toml
-    git commit -m "chore: update pyproject.toml to $NEW_VERSION [skip ci]"
+    git commit -m "chore: update version to $NEW_VERSION [skip ci]"
     git push origin release-v$NEW_VERSION
 else
     echo "semantic-release failed"

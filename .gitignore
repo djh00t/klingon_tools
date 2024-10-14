@@ -280,3 +280,5 @@ var/
 ## klingon_templates/gitignore/klingon_templates/languages/python.gitignore end
 get_docstrings.py
 ktest.py
+klingon_templates/
+emoji*

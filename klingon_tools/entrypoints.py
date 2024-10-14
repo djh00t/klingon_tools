@@ -1,4 +1,6 @@
-"""Entrypoints for generating GitHub pull request components using OpenAI
+# klingon_tools/entrypoints.py
+"""
+Entrypoints for generating GitHub pull request components using OpenAI
 tools.
 
 This module provides functions to generate various components of a GitHub pull
@@ -11,7 +13,6 @@ Entrypoints:
     - pr-summary-generate: Generates a GitHub pull request summary.
     - pr-context-generate: Generates GitHub pull request context.
     - pr-body-generate: Generates a GitHub pull request body.
-    - ktest: Runs pytest and displays the results.
 
 Example:
     To generate a pull request title:
@@ -26,92 +27,126 @@ Example:
     To generate a pull request body:
         gh_pr_gen_body()
 
-    To run tests:
-        ktest()
 """
 
-import logging
+import argparse
+import traceback
+import warnings
 from klingon_tools.git_log_helper import get_commit_log
-from klingon_tools.log_msg import log_message, set_default_style, set_log_level
-from klingon_tools.openai_tools import OpenAITools
-import pytest
-import os
+from klingon_tools.litellm_tools import LiteLLMTools
+from klingon_tools.log_msg import log_message
 
 
-# Suppress logging from the httpx library
-logging.getLogger("httpx").setLevel(logging.WARNING)
+def log_message_entrypoint():
+    """
+    Entrypoint for logging messages using the log_message function.
 
-
-def ktest():
-    """Run pytest and display the results.
-
-    This function runs the tests using pytest and ensures that the logging
-    output is displayed.
+    This function parses command-line arguments and logs a message using the
+    specified log level, message, status, reason, and style.
 
     Entrypoint:
-        ktest
+        log-message
+
+    Returns:
+        int: 0 for success, 1 for failure
     """
-    set_default_style("pre-commit")
-    set_log_level("DEBUG")
+    parser = argparse.ArgumentParser(
+        description="Log messages from the command line.")
+    parser.add_argument(
+        "--level",
+        type=str,
+        default="INFO",
+        help="Log level (INFO, WARNING, ERROR, DEBUG)")
+    parser.add_argument(
+        "--message",
+        type=str,
+        required=True,
+        help="Log message")
+    parser.add_argument("--reason", type=str, default=None, help="Log reason")
+    parser.add_argument("--status", type=str, default="OK", help="Log status")
+    parser.add_argument(
+        "--style",
+        type=str,
+        default="default",
+        help="Log style")
+    parser.add_argument(
+        "--width",
+        type=int,
+        default=80,
+        help="Text Wrap Width")
 
-    # List to capture test results
-    results = []
+    args = parser.parse_args()
 
-    class MyPlugin:
-        def pytest_runtest_logreport(self, report):
-            if report.when == "call":
-                test_name = report.nodeid
-                if report.passed:
-                    log_message.info(message=f"{test_name}", status="✅")
-                    results.append((test_name, "passed"))
-                elif report.failed:
-                    log_message.error(message=f"{test_name}", status="❌")
-                    results.append((test_name, "failed"))
-                    # Print debug info after the log messages
-                    log_message.debug(message=f"Debug info for {test_name}")
-                    print(report.longrepr)
-                elif report.skipped:
-                    log_message.info(message=f"{test_name}", status="⏭️")
-                    results.append((test_name, "skipped"))
+    level = args.level.upper()
+    message = args.message
+    status = args.status
+    reason = args.reason
+    style = args.style
+    width = args.width
 
-    # Redirect stdout to suppress pytest output
-    with open(os.devnull, "w") as devnull:
-        original_stdout = os.dup(1)
-        os.dup2(devnull.fileno(), 1)
+    log_func = getattr(log_message, level.lower(), log_message.info)
+    log_func(
+        message=message,
+        status=status,
+        reason=reason,
+        style=style,
+        width=width)
+    return 0
 
-        try:
-            # Run pytest with the custom plugin
-            pytest.main(["tests", "--tb=short"], plugins=[MyPlugin()])
-        finally:
-            # Restore stdout
-            os.dup2(original_stdout, 1)
 
-    # Return the results
-    return results
+# Filter out specific warnings
+warnings.filterwarnings(
+    "ignore", category=DeprecationWarning, module="pydantic"
+)
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="imghdr")
+warnings.filterwarnings(
+    "ignore", category=DeprecationWarning, module="importlib_resources"
+)
 
 
 def gh_pr_gen_title():
-    """Generate and print a GitHub pull request title using OpenAI tools.
+    """
+    Generate and print a GitHub pull request title using OpenAI tools.
 
     This function fetches the commit log from the 'origin/release' branch,
-    generates a pull request title using OpenAI's API, and prints the title.
+    generates a pull request title using OpenAI's API, prints the title,
+    and returns it.
 
     Entrypoint:
         pr-title-generate
 
-    Example:
-        gh_pr_gen_title()
+    Returns:
+        int: 0 for success, 1 for failure
     """
-    # log_message.info("Generating PR title using OpenAITools...")
-    commit_result = get_commit_log("origin/release")
-    diff = commit_result.stdout
-    openai_tools = OpenAITools()
-    pr_title = openai_tools.generate_pull_request_title(diff)
-    print(pr_title)
+    try:
+        log_message.info("Generating PR title using LiteLLMTools...")
+        commit_result = get_commit_log("origin/release")
+        diff = commit_result.stdout
+        litellm_tools = LiteLLMTools()
+        pr_title = litellm_tools.generate_pull_request_title(diff)
+        print(pr_title)
+        return 0
+    except ImportError as e:
+        log_message.error(f"Failed to import required module: {e}")
+        return 1
+    except ValueError as e:
+        log_message.error(f"Invalid value encountered: {e}")
+        return 1
+    except ConnectionError as e:
+        log_message.error(f"Network connection error: {e}")
+        return 1
+    except Exception as e:  # pylint: disable=broad-except
+        log_message.error(f"Unexpected error occurred: {e}")
+        log_message.error(
+            message=f"Traceback: {traceback.format_exc()}",
+            status="",
+            style="none",)
+        return 1
 
 
 def gh_pr_gen_summary():
-    """Generate and print a GitHub pull request summary using OpenAI tools.
+    """
+    Generate and print a GitHub pull request summary using OpenAI tools.
 
     This function fetches the commit log from the 'origin/release' branch,
     generates a pull request summary using OpenAI's API, and prints the
@@ -120,54 +155,60 @@ def gh_pr_gen_summary():
     Entrypoint:
         pr-summary-generate
 
-    Example:
-        gh_pr_gen_summary()
+    Returns:
+        int: 0 for success, 1 for failure
     """
-    # log_message.info("Generating PR summary using OpenAITools...")
-    commit_result = get_commit_log("origin/release")
-    diff = commit_result.stdout
-    openai_tools = OpenAITools()
-    pr_summary = openai_tools.generate_pull_request_summary(diff, dryrun=False)
-    print(pr_summary)
+    try:
+        log_message.info("Generating PR summary using LiteLLMTools...")
+        litellm_tools = LiteLLMTools()
+        pr_summary = litellm_tools.generate_pull_request_summary()
+        print(pr_summary)
+        return 0
+    except ImportError as e:
+        log_message.error(f"Failed to import required module: {e}")
+        return 1
+    except ValueError as e:
+        log_message.error(f"Invalid value encountered: {e}")
+        return 1
+    except ConnectionError as e:
+        log_message.error(f"Network connection error: {e}")
+        return 1
+    except Exception as e:  # pylint: disable=broad-except
+        log_message.error(f"Unexpected error occurred: {e}")
+        log_message.error(f"Traceback: {traceback.format_exc()}")
+        return 1
 
 
 def gh_pr_gen_context():
-    """Generate and print GitHub pull request context using OpenAI tools.
+    """
+    Generate and print GitHub pull request context using LiteLLM.
 
     This function fetches the commit log from the 'origin/release' branch,
-    generates the pull request context using OpenAI's API, and prints the
+    generates the pull request context using LiteLLM's API, and prints the
     context.
 
     Entrypoint:
         pr-context-generate
 
-    Example:
-        gh_pr_gen_context()
+    Returns:
+        int: 0 for success, 1 for failure
     """
-    # log_message.info("Generating PR context using OpenAITools...")
-    commit_result = get_commit_log("origin/release")
-    diff = commit_result.stdout
-    openai_tools = OpenAITools()
-    pr_context = openai_tools.generate_pull_request_context(diff, dryrun=False)
-    print(pr_context)
-
-
-def gh_pr_gen_body():
-    """NOTE: This method & Entrypoint have been deprecated.
-    Generate and print a GitHub pull request body using OpenAI tools.
-
-    This function fetches the commit log from the 'origin/release' branch,
-    generates a pull request body using OpenAI's API, and prints the body.
-
-    Entrypoint:
-        pr-body-generate
-
-    Example:
-        gh_pr_gen_body()
-    """
-    # log_message.info("Generating PR body using OpenAITools...")
-    commit_result = get_commit_log("origin/release")
-    diff = commit_result.stdout
-    openai_tools = OpenAITools()
-    pr_body = openai_tools.generate_pull_request_body(diff)
-    print(pr_body)
+    try:
+        log_message.info("Generating PR context using LiteLLMTools...")
+        litellm_tools = LiteLLMTools()
+        pr_context = litellm_tools.generate_pull_request_context()
+        print(pr_context)
+        return 0
+    except ImportError as e:
+        log_message.error(f"Failed to import required module: {e}")
+        return 1
+    except ValueError as e:
+        log_message.error(f"Invalid value encountered: {e}")
+        return 1
+    except ConnectionError as e:
+        log_message.error(f"Network connection error: {e}")
+        return 1
+    except Exception as e:  # pylint: disable=broad-except
+        log_message.error(f"Unexpected error occurred: {e}")
+        log_message.error(f"Traceback: {traceback.format_exc()}")
+        return 1

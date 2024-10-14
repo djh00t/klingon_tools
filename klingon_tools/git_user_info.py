@@ -1,17 +1,11 @@
 """
-This module provides functionality to retrieve the user's name and email from
-git configuration.
+Provides functionality to retrieve the user's name and email from git config.
 
-The main function in this module, `get_git_user_info`, attempts to retrieve the
-user's name and email from the local and global git configuration. If the
-values are not set or are set to default values, it logs an error and exits the
-program.
+This module contains a function to get the user's name and email from the local
+and global git configuration. If the values are not set or are set to default
+values, it logs an error and raises an exception.
 
-Functions:
-    - get_git_user_info: Retrieves the user's name and email from git
-      configuration.
-
-Usage Example:
+Example:
     user_name, user_email = get_git_user_info()
 """
 
@@ -25,54 +19,52 @@ from klingon_tools.log_msg import log_message
 def get_git_user_info() -> Tuple[str, str]:
     """Retrieves the user's name and email from git configuration.
 
-    This function attempts to retrieve the user's name and email from the local
-    and global git configuration. If the values are not set or are set to
-    default values, it logs an error and exits the program.
+    Attempts to get the user's name and email from the local and global git
+    configuration. If the values are not set or are set to default values,
+    it logs an error and raises an exception.
 
     Returns:
-        Tuple[str, str]: A tuple containing the user's name and email.
+        A tuple containing the user's name and email.
 
     Raises:
-        SystemExit: If the git user name or email is not set or is set to
-        default values.
+        GitCommandError: If there's an error executing git commands.
+        ValueError: If the git user name or email is not set or is set to
+            default values.
     """
 
     def get_config_value(command: str) -> str:
-        """Helper function to get a git config value."""
+        """Helper function to get a git config value.
+
+        Args:
+            command: The git command to execute.
+
+        Returns:
+            The output of the git command.
+
+        Raises:
+            GitCommandError: If the git command fails.
+        """
         result = subprocess.run(
-            command, capture_output=True, text=True, shell=True, check=True
+            command.split(), capture_output=True, text=True, check=True
         )
         if result.returncode != 0:
             log_message.error(
-                "Failed to get git config value for command: " f"{command}"
+                f"Failed to get git config value for command: {command}"
             )
             raise GitCommandError(command, result.returncode, result.stderr)
         return result.stdout.strip()
 
     try:
-        # Check if running in GitHub Actions
         if os.getenv("GITHUB_ACTIONS"):
-            user_name = "github-actions"
-            user_email = "github-actions@github.com"
-        else:
-            user_name = get_config_value("git config --get user.name")
-            user_email = get_config_value("git config --get user.email")
+            return "github-actions", "github-actions@github.com"
 
-            # Check if user name or email are set to default values
-            if not user_name or user_name == "Your Name":
-                log_message.error(
-                    "Git user name is not set or is set to default " "value."
-                )
-                raise ValueError(
-                    "Git user name is not set or is set to default value."
-                )
-            if not user_email or user_email == "your.email@example.com":
-                log_message.error(
-                    "Git user email is not set or is set to default value."
-                )
-                raise ValueError(
-                    "Git user email is not set or is set to default value."
-                )
+        user_name = get_config_value("git config --get user.name")
+        user_email = get_config_value("git config --get user.email")
+
+        if not user_name or user_name == "Your Name":
+            raise ValueError("Git user name is not set or is set to default.")
+        if not user_email or user_email == "your.email@example.com":
+            raise ValueError("Git user email is not set or is set to default.")
 
         return user_name, user_email
     except GitCommandError as e:

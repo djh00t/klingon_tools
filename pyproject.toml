@@ -1,23 +1,77 @@
-[tool.black]
-line-length = 79
-target-version = [ "py33", "py34", "py35", "py36", "py37", "py38", "py39", "py310", "py311", "py312"]
-include = "\\.pyi?$"
-exclude = "\\.eggs|\\.git|\\.hg|\\.mypy_cache|\\.tox|\\.venv|_build|buck-out|build|dist"
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "klingon_tools"
+version = "2.1.5-rc.2"
+description = "A set of utilities for running and logging shell commands in a user-friendly manner."
+authors = ["David Hooton <klingon_tools+david@hooton.org>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/djh00t/klingon_tools"
+packages = [{ include = "klingon_tools" }]
+include = ["README.md", "docs/*.md"]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4.0"
+openai = "^1.42.0"
+gitpython = "^3.1.43"
+requests = "^2.32.3"
+httpx = "^0.27.0"
+pyyaml = "^6.0.2"
+ruamel-yaml = "^0.18.6"
+pre-commit = "^3.8.0"
+psutil = "^6.0.0"
+tabulate = "^0.9.0"
+packaging = "^24.1"
+jinja2 = "^3.1.4"
+litellm = "^1.44.4"
+iniconfig = "^2.0.0"
+toml = "^0.10.2"
+emoji = "^2.14.0"
+pytest-timeout = "^2.3.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest-mock = "^3.14.0"
+poetry = "^1.8.3"
+pytest = "^8.3.2"
+pytest-dependency = "^0.6.0"
+autopep8 = "^2.3.1"
+docformatter = "^1.7.5"
+
+[tool.poetry.scripts]
+push = "klingon_tools.push:main"
+gh-actions-update = "klingon_tools.gh_actions_update:main"
+pr-title-generate = "klingon_tools.entrypoints:gh_pr_gen_title"
+pr-summary-generate = "klingon_tools.entrypoints:gh_pr_gen_summary"
+pr-context-generate = "klingon_tools.entrypoints:gh_pr_gen_context"
+kstart = "klingon_tools.kstart:main"
+log-message = "klingon_tools.entrypoints:log_message_entrypoint"
+ktest = "klingon_tools.ktest:ktest_entrypoint"
+
+###
+### Moved to .pre-commit-config.yaml due to reliability issues
+###
+# [tool.black]
+# line-length = 79
+# target-version = ["py36", "py37", "py38", "py39", "py310", "py311", "py312"]
+# include = "\\.pyi?$"
+# exclude = "\\.eggs|\\.git|\\.hg|\\.mypy_cache|\\.tox|\\.venv|_build|buck-out|build|dist|tests/*.py"
 
 [tool.flake8]
-# ignore = ["E501"]
-max-line-length = 79
+max-line-length = 80
 verbose = 3
 
 [tool.pylint."MESSAGES CONTROL"]
 disable = ["import-error"]
 
-[tool.pylint.FORMAT]
-max-line-length = 79
+[tool.pylint.format]
+max-line-length = 80
 
 [tool.yapf]
 based_on_style = "google"
-column_limit = 79
+column_limit = 80
 dedent_closing_brackets = true
 coalesce_brackets = true
 spaces_before_comment = 4
@@ -29,14 +83,19 @@ ignore_patterns = ["temp/**/*.py", "temp2/*.py"]
 [tool.mypy]
 exclude = "tmp/"
 
-[build-system]
-requires = ["setuptools", "wheel", "packaging", "toml", "build", "twine"]
-build-backend = "setuptools.build_meta"
-
-[tool.semantic_release]
-version = "2.1.1"
-
 [tool.pytest.ini_options]
 addopts = "-ra -q"
 testpaths = ["tests"]
-minversion = "8.3.1 "
+minversion = "8.3.1"
+filterwarnings = ["error", "ignore::DeprecationWarning", 'ignore:open_text is deprecated. Use files() instead.:DeprecationWarning:litellm.utils',]
+markers = ["optional: mark test as optional","dependency: mark test as having dependencies", "ollama_installed: marks tests that require Ollama to be installed", "ollama_server_running: marks tests that require the Ollama server to be running", "depends: marks tests with dependencies on other tests"]
+
+[tool.semantic_release]
+version_variable = ["pyproject.toml:version"]
+version_toml = ["pyproject.toml:tool.poetry.version"]
+version_pattern = ["README.md:version-{version}"]
+major_on_zero = false
+branch = "main"
+upload_to_pypi = true
+upload_to_release = true
+build_command = "pip install poetry && poetry build"

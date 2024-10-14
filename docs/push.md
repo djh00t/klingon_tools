@@ -82,7 +82,7 @@ Staged files...                                                               0
 Committed not pushed files...                                                 0
 --------------------------------------------------------------------------------
 Batch mode enabled...                                                        📦
-Un-staging all staged files...                                               🔄
+Un-staging all staged files...                                               🔁
 Processing file...                                      klingon_tools/README.md
 Staging file...                                                              ✅
 Diff generated...                                                            ✅
