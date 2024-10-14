@@ -225,7 +225,7 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
                         f"File {file} is already deleted and will be staged "
                         "for removal."
                     ),
-                    status="⚠️",
+                    status="👾",
                 )
                 try:
                     if file in repo.index.entries:
@@ -235,7 +235,7 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
                         log_message.warning(
                             message=f"File {file} not found in the index, "
                             "skipping",
-                            status="⚠️",
+                            status="👾",
                         )
                 except git_exc.GitCommandError as e:
                     log_message.error(
@@ -273,7 +273,7 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
                             "GPG signing failed. Retrying commit without GPG "
                             "signing."
                         ),
-                        status="⚠️",
+                        status="👾",
                     )
                     try:
                         repo.index.commit(commit_message.strip())
@@ -442,7 +442,7 @@ def push_changes_if_needed(repo: Repo, args) -> None:
             message=f"{e}",
             status="",
             style="none",
-            )
+        )
 
 
 def fix_commit_message(commit_message: str) -> str:

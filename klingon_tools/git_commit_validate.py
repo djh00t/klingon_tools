@@ -36,7 +36,7 @@ def is_commit_message_signed_off(commit_message: str) -> bool:
 def check_prefix(
         commit_message: str,
         log_message: Any
-        ) -> Tuple[str, Optional[str], str]:
+) -> Tuple[str, Optional[str], str]:
     """
     Check for optional emoji prefix and remove if present.
 
@@ -63,11 +63,11 @@ def check_prefix(
             log_message.info(
                 message="Emoji prefix found",
                 status=f"{prefix.strip()}"
-                )
+            )
             # Remove the prefix and any immediately following space
             return commit_message[
                 len(prefix):
-                    ].lstrip(), prefix.strip(), commit_message
+            ].lstrip(), prefix.strip(), commit_message
 
     log_message.info(message="Emoji prefix not present", status="ℹ️")
     return commit_message, None, commit_message
@@ -313,7 +313,7 @@ def check_footer(commit_message_lines: list, log_message: Any) -> bool:
         else:
             log_message.info(
                 message="No footer present",
-                status=" ℹ️"
+                status="🦶"
             )
     return True
 
@@ -391,7 +391,7 @@ def validate_commit_message(commit_message: str, log_message: Any) -> bool:
         log_message.info(
             message=f"Checking for {step_name}",
             status="🔍"
-            )
+        )
         if not check_func():
             return False
 

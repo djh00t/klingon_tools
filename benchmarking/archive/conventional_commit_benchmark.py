@@ -165,11 +165,7 @@ def evaluate_compliance_and_quality(
     """Evaluate the compliance and quality of the commit message using GPT-4o."""
     try:
         compliance_response = litellm.completion(
-            model=model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": """
+            model=model, messages=[{"role": "system", "content": """
                 Evaluate the following raw and cleaned conventional commit messages
                 based on the following criteria. Provide a score out of 10 for each
                 message (commit_score_raw and commit_score_clean) using the scoring system
@@ -252,14 +248,7 @@ def evaluate_compliance_and_quality(
                     ]
                 }
                 ```
-                """,
-                },
-                {
-                    "role": "user",
-                    "content": f"Raw commit message: {raw_commit_message}\nCleaned commit message: {cleaned_commit_message}\nDiff: {diff}",
-                },
-            ],
-        )
+                """, }, {"role": "user", "content": f"Raw commit message: {raw_commit_message}\nCleaned commit message: {cleaned_commit_message}\nDiff: {diff}", }, ], )
         print()
         print(compliance_response)
         print()
@@ -284,8 +273,7 @@ def evaluate_compliance_and_quality(
         return raw_compliance, cleaned_compliance, response_quality
     except Exception as e:
         logger.error(
-            f"Failed to evaluate compliance and quality with model {model}: {e}"
-        )
+            f"Failed to evaluate compliance and quality with model {model}: {e}")
         return 0, 0, 7.0  # Default to fail and a score of 7
 
 

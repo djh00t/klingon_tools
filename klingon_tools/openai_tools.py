@@ -1,3 +1,4 @@
+# klingon_tools/openai_tools.py
 """Tools for generating content using OpenAI's API.
 
 This module provides a class for generating commit messages, pull request
@@ -285,7 +286,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                 "revert": "⏪",
                 "style": "💄",
                 "test": "🚨",
-                "other": "⚠️",
+                "other": "👾",
             }.get(commit_type, "")
         except ValueError as e:
             log_message.error(f"Commit message format error: {e}")
@@ -353,10 +354,10 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
         """
         modified_files = repo.git.diff("--cached", "--name-only").splitlines()
         diff = git_stage_diff(
-                    file_name,
-                    repo=repo,
-                    modified_files=modified_files
-                    )
+            file_name,
+            repo=repo,
+            modified_files=modified_files
+        )
 
         if diff is None:
             log_message.error(
@@ -390,7 +391,7 @@ each change of that type under it --> - [ ] `feat`: ✨ A new feature
                 )
                 commit_scope = "specific-scope"  # Placeholder
                 generated_message = f"{commit_type}({commit_scope}): "\
-                                    f"{commit_description.strip()}"
+                    f"{commit_description.strip()}"
                 formatted_message = self.format_message(generated_message)
                 formatted_message = self.signoff_message(formatted_message)
                 log_message.error(

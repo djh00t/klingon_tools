@@ -11,9 +11,9 @@ from klingon_tools.git_push import (
     _generate_and_commit_messages,
 )
 from klingon_tools.git_tools import (
-        handle_file_deletions
-        as
-        _handle_file_deletions
+    handle_file_deletions
+    as
+    _handle_file_deletions
 )
 
 

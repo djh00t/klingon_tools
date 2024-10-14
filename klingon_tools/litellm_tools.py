@@ -320,12 +320,13 @@ class LiteLLMTools:
         Raises:
             ValueError: If the commit message format is incorrect.
         """
+
         commit_message = "\n".join(
             (
                 "\n".join(
                     textwrap.wrap(
                         line,
-                        width=79,
+                        width=78,
                         subsequent_indent=" " * (
                             len(line) - len(line.lstrip())),
                     )
@@ -367,7 +368,7 @@ class LiteLLMTools:
                 "revert": "⏪",
                 "style": "💄",
                 "test": "🚨",
-                "other": "⚠️",
+                "other": "👾",
             }.get(commit_type, "")
 
             formatted_message = (
@@ -462,7 +463,7 @@ class LiteLLMTools:
             formatted_message = self.format_message(generated_message)
             formatted_message = self.signoff_message(formatted_message)
 
-            log_message.info(message="=" * 79, status="", style="none")
+            log_message.info(message="=" * 80, status="", style="none")
             wrapped_message = "\n".join(
                 (
                     "\n".join(
@@ -485,7 +486,7 @@ class LiteLLMTools:
                 status="",
                 style="none",
             )
-            log_message.info(message="=" * 79, status="", style="none")
+            log_message.info(message="=" * 80, status="", style="none")
 
             return formatted_message
 
@@ -506,7 +507,7 @@ class LiteLLMTools:
                     "Scope was missing. Please provide a more specific scope."
                 )
 
-                log_message.info(message="=" * 79, status="", style="none")
+                log_message.info(message="=" * 80, status="", style="none")
                 wrapped_message = "\n".join(
                     textwrap.wrap(formatted_message, width=79)
                 )
@@ -517,7 +518,7 @@ class LiteLLMTools:
                     status="",
                     style="none",
                 )
-                log_message.info(message="=" * 79, status="", style="none")
+                log_message.info(message="=" * 80, status="", style="none")
 
                 return formatted_message
 
@@ -589,12 +590,12 @@ class LiteLLMTools:
                 # method or passed as a callback function if needed.
                 pass
 
-            log_message.info(message="=" * 79, status="", style="none")
+            log_message.info(message="=" * 80, status="", style="none")
             log_message.info(
                 message=f"Generated release body:\n\n{formatted_body}\n",
                 status="",
             )
-            log_message.info(message="=" * 79, status="", style="none")
+            log_message.info(message="=" * 80, status="", style="none")
 
             return formatted_body
         except ValueError as e:

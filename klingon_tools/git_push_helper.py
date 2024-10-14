@@ -33,7 +33,7 @@ def git_push(repo: Repo) -> None:
                 "save",
                 "--include-untracked",
                 "Auto stash before rebase"
-                )
+            )
 
         repo.git.rebase(f"origin/{current_branch}")
 

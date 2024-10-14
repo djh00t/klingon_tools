@@ -100,23 +100,37 @@ def git_pre_commit(
             env=env,
         )
 
-        # Process the output
-        for line in process.stdout.splitlines():
-            if line.startswith("Passed"):
-                log_message.info(line, status="✅")
-            elif line.startswith("Skipped"):
-                log_message.info(
-                    message=line,
-                    status="SKIPPED 🦘"
-                    )
-            elif line.startswith("Failed"):
-                log_message.error(line, status="❌")
-            else:
-                log_message.debug(line, status="")
+        # Check if the process failed
+        if process.returncode != 0:
+            log_message.error(
+                message="Pre-commit hooks failed with "
+                f"return code {process.returncode}",
+                status="❌"
+            )
 
-        # Process the error output
-        for line in process.stderr.splitlines():
-            log_message.error(line, status="❌")
+            # Process the output
+            for line in process.stdout.splitlines():
+                if line.startswith("Passed"):
+                    log_message.info(line, status="✅")
+                elif line.startswith("Skipped"):
+                    log_message.info(
+                        message=line,
+                        status="SKIPPED 🦘"
+                    )
+                elif line.startswith("Failed"):
+                    log_message.error(line, status="❌")
+                else:
+                    log_message.debug(line, status="")
+
+            # Process the error output
+            for line in process.stderr.splitlines():
+                log_message.error(line, status="❌")
+                if "flake8" in line:
+                    log_message.error(
+                        "Linting issues found by flake8. Please fix"
+                        "them before committing.",
+                        status="❌")
+                    sys.exit(1)
 
         log_message.debug(
             message="Pre-commit hooks completed with return code",

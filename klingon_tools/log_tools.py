@@ -2,8 +2,9 @@ import io
 import logging
 import subprocess
 import sys
+import textwrap
 from functools import wraps
-from typing import Optional, Callable, List, Tuple, Dict, Any
+from typing import Optional, Callable, List, Tuple
 
 
 class LogTools:
@@ -21,6 +22,7 @@ class LogTools:
     BOLD_RED = "\033[1;31m"
     RESET = "\033[0m"
     logger = logging.getLogger(__name__)
+    log_message = None
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
     template = None
@@ -28,7 +30,10 @@ class LogTools:
     def __init__(self, debug: bool) -> None:
         self.debug = debug
         self.default_style = "default"
-        self.log_message = LogTools.LogMessage(__name__, self)
+        if LogTools.log_message is None:
+            LogTools.log_message = LogTools.LogMessage(__name__, self)
+        self.log_message = LogTools.log_message
+        self.klog_hr = LogTools.HorizontalRuleLogger(self.log_message)
         self.set_log_level("DEBUG" if self.debug else "INFO")
 
     def set_default_style(self, style: str) -> None:
@@ -44,9 +49,12 @@ class LogTools:
         if level != "INFO":
             print(f"Setting log level to {level}")
 
-        self.logger.setLevel(level)
+        self.log_message.set_log_level(level)
 
-    @classmethod
+    def get_log_level(self) -> int:
+        """Get the current log level."""
+        return self.log_message.logger.level
+
     def set_template(cls, template: str) -> None:
         cls.template = template
 
@@ -66,13 +74,35 @@ class LogTools:
             style = kwargs.get("style", self.default_style)
             status = kwargs.get("status", "OK")
             reason = kwargs.get("reason")
+            width = kwargs.get("width", 0)  # For wrapping and formatting width
+            indent = kwargs.get("indent", 0)  # For indenting wrapped lines
 
             if style not in self.parent.VALID_STYLES:
                 raise ValueError(f"Invalid style '{style}'.")
 
             msg = self._prepare_message(msg, reason, status, style)
-            final_msg = self._format_message(msg, status, style)
-            self.logger.log(level, final_msg)
+            final_msg = self._wrap_message(msg, width, indent)
+            formatted_msg = self._format_message(
+                final_msg, status, style, width)
+            self.logger.log(level, formatted_msg)
+
+            # If exc_info is True, log the exception info
+            if kwargs.get('exc_info'):
+                import traceback
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                tb_str = ''.join(
+                    traceback.format_exception(
+                        exc_type, exc_value, exc_traceback))
+                self.logger.log(level, tb_str)
+
+        def _wrap_message(self, msg, width, indent):
+            """
+            Wraps the message if a width is provided, with optional indent.
+            """
+            if width <= 0:
+                return msg
+            return textwrap.fill(
+                msg, width=width, subsequent_indent=" " * indent)
 
         def _prepare_message(self, msg, reason, status, style):
             if reason:
@@ -82,214 +112,30 @@ class LogTools:
                     message=msg, style=style, status=status)
             return msg
 
-        comment_definition: List[Dict[str, Any]] = [
-            {
-                "start": "#",
-                "interim": "NULL",
-                "end": "NULL",
-                "comment": "Single-line comment",
-                "languages": [
-                    "Python", "Ruby", "Perl", "Shell scripts (Bash, Zsh)",
-                    "PHP", "PowerShell", "R", "Julia", "Tcl", "Makefile",
-                    "CMake", "YAML", "Dockerfile", "gitconfig", "Swift", "Nim"
-                ]
-            },
-            {
-                "start": "//",
-                "interim": "NULL",
-                "end": "NULL",
-                "comment": "Single-line comment",
-                "languages": [
-                    "JavaScript", "Java", "C", "C++", "C#", "Go", "Rust",
-                    "Swift", "Kotlin", "Scala", "Dart", "TypeScript", "PHP",
-                    "Groovy", "Haxe"
-                ]
-            },
-            {
-                "start": "/*",
-                "interim": "NULL",
-                "end": "*/",
-                "comment": "Multi-line comment",
-                "languages": [
-                    "JavaScript", "Java", "C", "C++", "C#", "Go", "Rust",
-                    "Swift", "Kotlin", "Scala", "Dart", "TypeScript", "PHP",
-                    "CSS", "Less", "Sass", "SQL"
-                ]
-            },
-            {
-                "start": "<!--",
-                "interim": "NULL",
-                "end": "-->",
-                "comment": "Comment in markup languages",
-                "languages": [
-                    "HTML", "XML", "SVG", "Markdown"
-                ]
-            },
-            {
-                "start": "--",
-                "interim": "NULL",
-                "end": "NULL",
-                "comment": "Single-line comment",
-                "languages": [
-                    "SQL", "Haskell", "Lua", "Ada", "AppleScript", "Eiffel",
-                    "VHDL"
-                ]
-            },
-            {
-                "start": "%",
-                "interim": "NULL",
-                "end": "NULL",
-                "comment": "Single-line comment",
-                "languages": [
-                    "MATLAB", "Octave", "LaTeX", "Erlang", "Prolog"
-                ]
-            },
-            {
-                "start": '"""',
-                "interim": "NULL",
-                "end": '"""',
-                "comment": "Multi-line string/comment",
-                "languages": [
-                    "Python (docstrings)", "Kotlin (multi-line strings)"
-                ]
-            },
-            {
-                "start": "'''",
-                "interim": "NULL",
-                "end": "'''",
-                "comment": "Multi-line string/comment",
-                "languages": [
-                    "Python (alternative docstrings)",
-                    "Ruby (multi-line strings)"
-                ]
-            },
-            {
-                "start": "/**",
-                "interim": "*",
-                "end": "*/",
-                "comment": "Documentation comment",
-                "languages": [
-                    "Java (Javadoc)", "JavaScript (JSDoc)",
-                    "C# (XML Documentation)", "Kotlin (KDoc)",
-                    "Scala (ScalaDoc)", "Dart", "TypeScript",
-                    "PHP (phpDocumentor)"
-                ]
-            },
-            {
-                "start": "///",
-                "interim": "NULL",
-                "end": "NULL",
-                "comment": "Single-line documentation comment",
-                "languages": [
-                    "C#", "Rust", "Dart"
-                ]
-            },
-            {
-                "start": "///",
-                "interim": "///",
-                "end": "///",
-                "comment": "Multi-line documentation comment",
-                "languages": [
-                    "C#", "XML (when used in source code)"
-                ]
-            },
-            {
-                "start": "=begin",
-                "interim": "NULL",
-                "end": "=end",
-                "comment": "Multi-line comment",
-                "languages": [
-                    "Ruby"
-                ]
-            },
-            {
-                "start": "=pod",
-                "interim": "NULL",
-                "end": "=cut",
-                "comment": "Multi-line documentation",
-                "languages": [
-                    "Perl (POD - Plain Old Documentation)"
-                ]
-            },
-            {
-                "start": "{-",
-                "interim": "NULL",
-                "end": "-}",
-                "comment": "Multi-line comment",
-                "languages": [
-                    "Haskell", "Elm"
-                ]
-            },
-            {
-                "start": "--[[",
-                "interim": "NULL",
-                "end": "]]",
-                "comment": "Multi-line comment",
-                "languages": [
-                    "Lua"
-                ]
-            },
-            {
-                "start": ";",
-                "interim": "NULL",
-                "end": "NULL",
-                "comment": "Single-line comment",
-                "languages": [
-                    "Assembly", "Lisp", "Scheme", "Clojure", "AutoHotkey"
-                ]
-            },
-            {
-                "start": "'",
-                "interim": "NULL",
-                "end": "NULL",
-                "comment": "Single-line comment",
-                "languages": [
-                    "Visual Basic", "VBA"
-                ]
-            },
-            {
-                "start": "REM",
-                "interim": "NULL",
-                "end": "NULL",
-                "comment": "Single-line comment",
-                "languages": [
-                    "BASIC", "batch files"
-                ]
-            },
-            {
-                "start": "dnl",
-                "interim": "NULL",
-                "end": "NULL",
-                "comment": "Single-line comment",
-                "languages": [
-                    "M4"
-                ]
-            },
-            {
-                "start": "//!",
-                "interim": "NULL",
-                "end": "NULL",
-                "comment": "Single-line documentation comment",
-                "languages": [
-                    "Rust (for module-level documentation)"
-                ]
-            },
-            {
-                "start": "/*!",
-                "interim": "NULL",
-                "end": "*/",
-                "comment": "Multi-line documentation comment",
-                "languages": [
-                    "C", "C++ (when used with tools like Doxygen)"
-                ]
-            }
-        ]
+        def _format_message(
+                self,
+                msg,
+                status,
+                style,
+                language="Python",
+                width=80):
+            """
+            Formats the message with optional styles and width handling.
 
-        def _format_message(self, msg, status, style, language="Python"):
-            # Comment style logic removed to prevent unwanted prefixes
-            total_length = 78
+            Args:
+                msg (str): The message to format.
+                status (str): Status of the operation.
+                style (str): The style for the message (default, basic,
+                pre-commit, none).
+                language (str): The programming language (used for comment
+                formatting).
+                width (int): The total width of the message line.
+            """
+
+            # Use the provided width or default to 80 characters
+            total_length = width if width > 0 else 80
             status_length = len(status)
-            max_msg_length = total_length - status_length - 1
+            max_msg_length = total_length - status_length - 2
 
             if style == "none":
                 return msg
@@ -332,11 +178,48 @@ class LogTools:
         def error(self, *args, **kwargs):
             self._log(logging.ERROR, *args, **kwargs)
 
+        def exception(self, *args, **kwargs):
+            """Log an exception with ERROR level."""
+            kwargs['exc_info'] = True
+            self._log(logging.ERROR, *args, **kwargs)
+
         def critical(self, *args, **kwargs):
             self._log(logging.CRITICAL, *args, **kwargs)
 
-        def exception(self, *args, **kwargs):
-            self.logger.exception(*args, **kwargs)
+        def get_log_level(self) -> int:
+            """Get the current log level for the logger."""
+            return self.logger.level
+
+        def set_log_level(self, level: str) -> None:
+            """Set the log level for the logger."""
+            self.logger.setLevel(level)
+
+    class HorizontalRuleLogger:
+        """
+        A simple logger for horizontal rules (lines of characters).
+        """
+
+        def __init__(self, log_message):
+            self.log_message = log_message
+
+        def _log_hr(self, level, char="=", width=80):
+            hr_line = char * width
+            self.log_message._log(level, message=hr_line)
+
+        def info(self, char="=", width=80):
+            self._log_hr(logging.INFO, char, width)
+
+        def debug(self, char="=", width=80):
+            self._log_hr(logging.DEBUG, char, width)
+
+        def warning(self, char="=", width=80):
+            self._log_hr(logging.WARNING, char, width)
+
+        def error(self, char="=", width=80):
+            self._log_hr(logging.ERROR, char, width)
+
+        def critical(self, char="=", width=80):
+            self._log_hr(logging.CRITICAL, char, width)
 
     def method_state(
         self,

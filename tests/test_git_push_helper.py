@@ -67,7 +67,7 @@ def test_git_push_command_error(mock_log, mock_repo):
     mock_repo.remotes.origin.push.side_effect = GitCommandError(
         "push",
         "Push failed"
-        )
+    )
 
     git_push(mock_repo)
 
