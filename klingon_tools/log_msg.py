@@ -15,9 +15,7 @@ Attributes:
 import logging
 from klingon_tools import LogTools
 
-
 log_tools = LogTools(debug=False)
-
 
 log_message = log_tools.log_message
 
