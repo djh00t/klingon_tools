@@ -715,6 +715,12 @@ def process_changes(
             changes_made |= process_files(
                 files_to_process, repo, args, log_message, litellm_tools)
 
+    # Always push if there are committed but not pushed files
+    if committed_not_pushed:
+        log_message.info("Pushing committed but not pushed files", status="🚀")
+        push_changes_if_needed(repo, args)
+        changes_made = True
+
     return changes_made
 
 
