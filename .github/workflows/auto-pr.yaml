@@ -58,8 +58,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
 
       - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
+        uses: snok/install-poetry@v1.4.1
 
       - name: Install Python Requirements
         run: poetry install --with dev --no-root && pip install -U .
