@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Provides a script for automating git operations.
+"""
+Provides a script for automating git operations.
 
 This module performs various git operations such as staging, committing, and
 pushing files. It also integrates with pre-commit hooks and generates commit
