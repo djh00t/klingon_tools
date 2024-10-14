@@ -56,10 +56,10 @@ def check_prefix(
         prefix = match.group(1)
         if any(emoji.is_emoji(char) for char in prefix):
             # Log the emoji prefix
-            log_message.info(
-                message="Emoji prefix found",
-                status="✅"
-                )
+            # log_message.info(
+            #     message="Emoji prefix found",
+            #     status="✅"
+            #     )
             log_message.info(
                 message="Emoji prefix found",
                 status=f"{prefix.strip()}"
@@ -313,7 +313,7 @@ def check_footer(commit_message_lines: list, log_message: Any) -> bool:
         else:
             log_message.info(
                 message="No footer present",
-                status="ℹ️"
+                status=" ℹ️"
             )
     return True
 
@@ -388,7 +388,10 @@ def validate_commit_message(commit_message: str, log_message: Any) -> bool:
     ]
 
     for step_name, check_func in validation_steps:
-        log_message.info(message=f"Checking for {step_name}", status="🔍")
+        log_message.info(
+            message=f"Checking for {step_name}",
+            status="🔍"
+            )
         if not check_func():
             return False
 
