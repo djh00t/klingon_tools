@@ -6,7 +6,7 @@ PYPI_USER_AGENT ?= __token__
 
 # Clean the repository
 clean:
-	@echo "Cleaning up repo.............................................................. 🧹"
+	@echo "Cleaning up repo............................................................ 🧹"
 	@make push-prep
 	@pre-commit clean
 	@find . -type f -name '*.pyc' -delete
@@ -22,7 +22,7 @@ clean:
 	@rm -rf dist
 	@rm -rf htmlcov
 	@rm -rf node_modules
-	@echo "Repo cleaned up............................................................... ✅"
+	@echo "Repo cleaned up............................................................. ✅"
 
 # Ensure that the latest Node.js and npm are installed
 ensure-node: fetch-latest-node-version install-latest-nvm
