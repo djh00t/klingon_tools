@@ -10,11 +10,11 @@ from klingon_tools.log_msg import log_message, set_default_style, set_log_level
 
 
 # pylint: disable=R0903
-class TestLogPlugin:
+class KTestLogPlugin:
     """A pytest plugin for logging test results."""
 
     def __init__(self, logger, results):
-        """Initialize the TestLogPlugin.
+        """Initialize the KTestLogPlugin.
 
         Args:
             logger: A logging object for outputting messages.
@@ -104,7 +104,7 @@ def ktest(
     set_log_level(loglevel.upper())
 
     results = []
-    plugin = TestLogPlugin(log_message, results)
+    plugin = KTestLogPlugin(log_message, results)
 
     _setup_output_capture(suppress_output, loglevel)
 
