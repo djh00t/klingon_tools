@@ -65,7 +65,7 @@ jobs:
         run: poetry install --with dev
 
       - name: Run Unit Tests
-        run: poetry run pytest
+        run: make test
 
       # Check if PR exists, if it doesn't create one with a generated title using
       # pr-title-generate
