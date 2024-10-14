@@ -392,10 +392,6 @@ def push_changes_if_needed(repo: Repo, args) -> None:
     Returns:
         None
     """
-    # Update git status variables so we have a count of files to push from
-    # committed_not_pushed
-    committed_not_pushed = git_get_status(repo)[-1]
-
     def push_submodules(repo: Repo):
         """Recursively push changes in submodules."""
         for submodule in repo.submodules:
@@ -406,12 +402,16 @@ def push_changes_if_needed(repo: Repo, args) -> None:
                 push_submodules(submodule_repo)
             submodule_repo.remotes.origin.push()
 
+    # Retrieve the current status of the repository
+    _, _, _, _, committed_not_pushed = git_get_status(repo)
+
     try:
         # Check if there are new commits to push
-        if (
-            repo.is_dirty(index=True, working_tree=False)
-            or committed_not_pushed
-        ):
+        if committed_not_pushed:
+            log_message.info(
+                message="Committing not pushed files found. Pushing changes.",
+                status="🚀",
+            )
             if args.dryrun:
                 log_message.info(
                     message="Dry run mode enabled. Skipping push.", status="🚫"
@@ -424,14 +424,6 @@ def push_changes_if_needed(repo: Repo, args) -> None:
 
                 # Perform cleanup after push operation
                 cleanup_lock_file(args.repo_path)
-        elif committed_not_pushed:
-            log_message.info(
-                message="Committing not pushed files found. Pushing changes.",
-                status="🚀",
-            )
-            git_push(repo)
-            # Push changes in submodules
-            push_submodules(repo)
         else:
             log_message.info(
                 message="No new commits to push. Skipping push.", status="🚫"
