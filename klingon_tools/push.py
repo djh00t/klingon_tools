@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Provides a script for automating git operations.
+"""
+Provides a script for automating git operations.
 
 This module performs various git operations such as staging, committing, and
 pushing files. It also integrates with pre-commit hooks and generates commit
@@ -40,7 +41,8 @@ from klingon_tools.pre_commit import git_pre_commit
 from klingon_tools.git_user_info import get_git_user_info
 from klingon_tools.git_commit_validate import validate_commit_message
 from klingon_tools.litellm_model_cache import get_supported_models
-from klingon_tools.log_msg import log_message, set_log_level
+from klingon_tools.log_msg import log_message
+from klingon_tools.log_tools import LogTools
 from klingon_tools.litellm_tools import LiteLLMTools
 
 # Initialize variables
@@ -133,7 +135,7 @@ def check_software_requirements(repo_path: str, log_message: Any) -> None:
             stderr=subprocess.PIPE,
         )
     except subprocess.CalledProcessError:
-        log_message.info("pre-commit is not installed.", status="Installing")
+        log_message.info("pre-commit is not installed", status="Installing")
         try:
             subprocess.run(
                 [
@@ -172,7 +174,7 @@ def ensure_pre_commit_config(repo_path: str, log_message: Any) -> None:
     config_path = os.path.join(repo_path, ".pre-commit-config.yaml")
     if not os.path.exists(config_path):
         log_message.info(
-            ".pre-commit-config.yaml not found. Creating from template.",
+            ".pre-commit-config.yaml not found. Creating from template",
             status="📝",
         )
         template_url = (
@@ -185,7 +187,7 @@ def ensure_pre_commit_config(repo_path: str, log_message: Any) -> None:
             with open(config_path, "w") as file:
                 file.write(response.text)
             log_message.info(
-                ".pre-commit-config.yaml created successfully.",
+                ".pre-commit-config.yaml created successfully",
                 status="✅",
             )
         except requests.RequestException as e:
@@ -209,7 +211,7 @@ def parse_arguments() -> argparse.Namespace:
         An object containing the parsed arguments.
     """
     parser = argparse.ArgumentParser(
-        description="Git repository status checker and committer."
+        description="Git repository status checker and committer"
     )
     parser.add_argument(
         "--no-tests",
@@ -342,10 +344,16 @@ def run_tests(log_message: Any = None, no_llm: bool = False) -> bool:
 
         if tests_passed:
             if log_message:
-                log_message.info("All tests passed successfully.", status="✅")
+                log_message.info(
+                    message="All tests passed or were skipped successfully",
+                    status="✅"
+                )
         else:
             if log_message:
-                log_message.error("Some tests failed.", status="❌")
+                log_message.error(
+                    message="Some tests failed",
+                    status="❌"
+                )
 
         return tests_passed
 
@@ -353,10 +361,9 @@ def run_tests(log_message: Any = None, no_llm: bool = False) -> bool:
         import traceback
         if log_message:
             log_message.error(
-                f"An error occurred while running tests:\n{str(e)}\n\n"
+                message=f"An error occurred while running tests:\n{str(e)}\n\n"
                 f"Traceback:\n{traceback.format_exc()}",
-                status="❌",
-                style=None
+                status="❌"
             )
         return False
 
@@ -385,7 +392,7 @@ def process_files(
         bool: True if any changes were made, False otherwise.
     """
     changes_made = False
-    # files_to_process = files
+
     file_counter = 0
 
     for file in files:
@@ -393,16 +400,23 @@ def process_files(
 
         if not os.path.exists(file):
             log_message.warning(
-                f"File does not exist or has already been committed: {file}",
+                message="File does not exist or has already been committed: "
+                f"{file}",
                 status="❌",
             )
             continue
 
         if os.path.isdir(file):
-            log_message.warning(f"Skipping directory: {file}", status="⏭️")
+            log_message.warning(
+                message=f"Skipping directory: {file}",
+                status="SKIPPED 🦘"
+            )
             continue
 
-        log_message.debug(f"Processing file: {file}", status="process_files ✅")
+        log_message.debug(
+            message=f"Processing file: {file}",
+            status="process_files ✅"
+        )
 
         try:
             workflow_process_file(
@@ -417,7 +431,8 @@ def process_files(
             changes_made = True
         except Exception as e:
             log_message.error(
-                f"Error processing file {file}: {str(e)}", status="❌"
+                message=f"Error processing file {file}: {str(e)}",
+                status="❌"
             )
             print(f"\n{str(e)}\n")
 
@@ -437,23 +452,26 @@ def run_push_prep(log_message: Any) -> None:
     if os.path.exists(makefile_path):
         with open(makefile_path, "r") as makefile:
             if "push-prep:" in makefile.read():
-                log_message.info("Running push-prep", status="✅")
+                log_message.info(
+                    message="Running push-prep",
+                    status="✅"
+                )
                 try:
                     subprocess.run(["make", "push-prep"], check=True)
                 except subprocess.CalledProcessError:
                     log_message.error(
-                        "Failed to run push-prep.",
+                        message="Failed to run push-prep",
                         status="❌",
                     )
                     sys.exit(1)
             else:
                 log_message.info(
-                    "push-prep target not found in Makefile",
+                    message="push-prep target not found in Makefile",
                     status="ℹ️",
                 )
     else:
         log_message.info(
-            "Makefile not found in the root of the repository",
+            message="Makefile not found in the root of the repository",
             status="ℹ️",
         )
 
@@ -491,30 +509,26 @@ def workflow_process_file(
 
     # Check if the file has already been committed but not pushed
     if file_name in committed_not_pushed:
-        log_message.info(f"File already committed: {file_name}", status="⏭️")
+        log_message.info(
+            message=f"File already committed: {file_name}",
+            status="SKIPPED 🦘"
+        )
         return
 
     # Stage the file
     log_message.info(
-        f"Staging {file_name}",
+        message=f"Staging {file_name}",
         status=f"{file_counter}/{len(current_modified_files)}",
     )
 
     # Generate commit message
-    commit_message = litellm_tools.generate_commit_message(
+    commit_message = litellm_tools.generate_commit_message_for_file(
         file_name=file_name, repo=current_repo)
-
-    # Check for emoji prefix and store it
-    # _, emoji_prefix, _ = check_prefix(commit_message, log_message)
 
     # Validate the commit message
     if not validate_commit_message(commit_message, log_message):
         log_message.error("Commit message validation failed")
         return
-
-    # Add the emoji prefix back to the commit message if it was present
-    # if emoji_prefix:
-    #     commit_message = f"{emoji_prefix} {commit_message}"
 
     # Run pre-commit hooks
     success, _ = git_pre_commit(
@@ -524,13 +538,13 @@ def workflow_process_file(
     if success:
         if current_args.dryrun:
             log_message.info(
-                "Dry run mode enabled. Skipping commit and push.",
+                "Dry run mode enabled. Skipping commit and push",
                 status="🚫")
         else:
             git_commit_file(file_name, current_repo, commit_message)
     else:
         log_message.error(
-            "Pre-commit hooks failed. Exiting script.",
+            "Pre-commit hooks failed. Exiting script",
             status="❌"
         )
         sys.exit(1)
@@ -605,10 +619,10 @@ def check_for_tests(args):
 
     if not os.path.isdir(tests_dir):
         log_message.info(
-            message=f"{tests_dir} does not exist."
+            message=f"{tests_dir} does not exist"
             "Write some tests for this code!",
-            status="⏭️"
-            )
+            status="SKIPPED 🦘"
+        )
         return False  # Skip running tests
 
     # Look for pytest tests in the tests directory
@@ -622,8 +636,8 @@ def check_for_tests(args):
         log_message.info(
             message=f"{tests_dir} exists but there are no tests. Write some"
             "tests for this code!",
-            status="⏭️"
-            )
+            status="SKIPPED 🦘"
+        )
         return False  # Skip running tests
     else:
         log_message.debug("Found tests", status="✅")
@@ -644,12 +658,12 @@ def run_tests_and_confirm(log_message: Any, no_llm: bool) -> bool:
     tests_passed = run_tests(log_message, no_llm)
     if not tests_passed:
         log_message.error(
-            "Tests failed. Do you want to continue anyway? (y/n)", status="⚠️")
+            "Tests failed. Do you want to continue anyway? (y/n)", status="👾")
         user_input = input().strip().lower()
         if user_input != 'y':
             log_message.error("Exiting due to failing tests", status="❌")
             return False
-        log_message.warning("Continuing despite test failures", status="⚠️")
+        log_message.warning("Continuing despite test failures", status="👾")
     return True
 
 
@@ -691,7 +705,7 @@ def process_changes(
         log_message.info("Staged and committed all changes", status="✅")
 
     if deleted_files:
-        git_commit_deletes(repo, deleted_files, litellm_tools)
+        git_commit_deletes(repo, deleted_files)
         changes_made = True
 
     if files_to_process:
@@ -701,6 +715,12 @@ def process_changes(
         else:
             changes_made |= process_files(
                 files_to_process, repo, args, log_message, litellm_tools)
+
+    # Always push if there are committed but not pushed files
+    if committed_not_pushed:
+        log_message.info("Pushing committed but not pushed files", status="🚀")
+        push_changes_if_needed(repo, args)
+        changes_made = True
 
     return changes_made
 
@@ -734,11 +754,11 @@ def startup_tasks(args: argparse.Namespace) -> Tuple[Repo, str, str]:
                 status="✅",
             )
         elif user_input == "n":
-            log_message.error("No git repository found. Exiting.", status="❌")
+            log_message.error("No git repository found. Exiting", status="❌")
             sys.exit(1)
         else:
             log_message.warning(
-                "Invalid input. Please enter 'y' or 'n'.", status="⚠️"
+                "Invalid input. Please enter 'y' or 'n'", status="👾"
             )
     os.chdir(repo_path)
 
@@ -763,7 +783,7 @@ def startup_tasks(args: argparse.Namespace) -> Tuple[Repo, str, str]:
     repo = git_get_toplevel()
     if repo is None:
         log_message.error(
-            "Failed to initialize git repository. Exiting.",
+            "Failed to initialize git repository. Exiting",
             status="❌",
         )
         sys.exit(1)
@@ -788,11 +808,12 @@ def main() -> int:
     args = parse_arguments()
 
     # Set log level to DEBUG if debug mode is enabled
-    set_log_level("DEBUG" if args.debug else "INFO")
+    log_tools = LogTools(debug=args.debug)
+    log_tools.set_log_level("DEBUG" if args.debug else "INFO")
 
     # Log debug mode status
     if args.debug:
-        log_message.info("Debug mode enabled", status="🐞 ")
+        log_message.info("Debug mode enabled", status="🐞")
 
     # List supported models and exit
     if args.models_list:
@@ -822,7 +843,7 @@ def main() -> int:
     # Error if there is no repository
     if repo is None:
         log_message.error(
-            "Failed to initialize git repository. Exiting.",
+            "Failed to initialize git repository. Exiting",
             status="❌")
         return 1
 
@@ -837,13 +858,13 @@ def main() -> int:
 
     # Filter files based on the provided file name list
     if args.file_name:
-        filter_files = expand_file_patterns(args.file_name)
-        deleted_files = filter_git_files(deleted_files, filter_files)
-        untracked_files = filter_git_files(untracked_files, filter_files)
-        modified_files = filter_git_files(modified_files, filter_files)
-        staged_files = filter_git_files(staged_files, filter_files)
+        filtered_file_list = expand_file_patterns(args.file_name)
+        deleted_files = filter_git_files(deleted_files, filtered_file_list)
+        untracked_files = filter_git_files(untracked_files, filtered_file_list)
+        modified_files = filter_git_files(modified_files, filtered_file_list)
+        staged_files = filter_git_files(staged_files, filtered_file_list)
         committed_not_pushed = filter_git_files(
-            committed_not_pushed, filter_files)
+            committed_not_pushed, filtered_file_list)
 
     if not any(
         [
@@ -885,7 +906,7 @@ def main() -> int:
         )
         if not modified_files:
             log_message.info(
-                "No more files to process. Exiting script.",
+                "No more files to process. Exiting script",
                 status="🚪",
             )
             return 0
@@ -911,7 +932,7 @@ def main() -> int:
     if changes_made:
         push_changes_if_needed(repo, args)
     else:
-        log_message.info("No changes to push.", status="ℹ️")
+        log_message.info("No changes to push", status="ℹ️")
 
     log_message.info("All files processed successfully", status="🚀")
     log_message.info("=" * 80, status="", style="none")

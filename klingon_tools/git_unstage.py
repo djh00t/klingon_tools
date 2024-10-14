@@ -17,7 +17,7 @@ def git_unstage_files(repo: Repo) -> None:
     Returns:
         None
     """
-    log_message.info(message="Unstaging staged files", status="🔄")
+    log_message.info(message="Unstaging staged files", status="🔁")
 
     # Get the list of staged files
     staged_files = repo.git.diff("--cached", "--name-only").splitlines()

@@ -136,7 +136,7 @@ def push_changes(repo: git.Repo) -> None:
                 "save",
                 "--include-untracked",
                 "Auto stash before rebase"
-                )
+            )
 
         repo.git.rebase(f"origin/{current_branch}")
 

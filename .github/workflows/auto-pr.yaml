@@ -58,14 +58,13 @@ jobs:
           git config --global user.name "github-actions[bot]"
 
       - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
+        uses: snok/install-poetry@v1.4.1
 
       - name: Install Python Requirements
-        run: poetry install --group=dev
+        run: poetry install --with dev --no-root && pip install -U .
 
       - name: Run Unit Tests
-        run: poetry run pytest
+        run: make test
 
       # Check if PR exists, if it doesn't create one with a generated title using
       # pr-title-generate

@@ -21,7 +21,9 @@ def test_get_working_model(litellm_tools):
 
 
 @patch('litellm.completion')
-def test_generate_content(mock_completion, litellm_tools):
+def test_generate_content(mock_completion, litellm_tools, no_llm):
+    if no_llm:
+        pytest.skip("Skipping LLM tests due to --no-llm flag")
     mock_completion.return_value = MagicMock(
         choices=[
             MagicMock(

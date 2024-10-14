@@ -3,10 +3,11 @@
 # Variables
 APP_NAME = "klingon-tools"
 PYPI_USER_AGENT ?= __token__
+LOG_MSG_CONF = --level INFO --style pre-commit --message
 
 # Clean the repository
 clean:
-	@echo "Cleaning up repo.............................................................. 🧹"
+	@log-message $(LOG_MSG_CONF) "Cleaning up repo" --status "🧹"
 	@make push-prep
 	@pre-commit clean
 	@find . -type f -name '*.pyc' -delete
@@ -22,7 +23,7 @@ clean:
 	@rm -rf dist
 	@rm -rf htmlcov
 	@rm -rf node_modules
-	@echo "Repo cleaned up............................................................... ✅"
+	@log-message $(LOG_MSG_CONF) "Repo cleaned up" --status "✅"
 
 # Ensure that the latest Node.js and npm are installed
 ensure-node: fetch-latest-node-version install-latest-nvm
@@ -36,7 +37,7 @@ ensure-node: fetch-latest-node-version install-latest-nvm
 			exit 1; \
 		fi \
 	elif [ "$$(uname)" = "Darwin" ]; then \
-		echo "Detected macOS. Checking for Homebrew..."; \
+		log-message $(LOG_MSG_CONF) "Detected macOS. Checking for Homebrew..." --status "🔍"; \
 		if ! command -v brew >/dev/null 2>&1; then \
 			echo "Homebrew not found. Installing Homebrew..."; \
 			/bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; \
@@ -60,20 +61,20 @@ ensure-node: fetch-latest-node-version install-latest-nvm
 # Ensure that semantic-release is installed
 ensure-semantic-release:
 	@npm list -g --depth=0 | grep semantic-release >/dev/null 2>&1 || { \
-		echo >&2 "semantic-release is not installed. Installing..."; \
+		log-message $(LOG_MSG_CONF) "semantic-release is not installed. Installing..." --status "⬇️"; \
 		npm install -g semantic-release; \
 	}
 
 # Fetch the latest Node.js version
 fetch-latest-node-version:
 	@curl -s https://nodejs.org/dist/index.json | grep '"version"' | head -1 | awk -F'"' '{print $$4}' > .latest_node_version
-	@echo $$(cat .latest_node_version)"
+	@log-message $(LOG_MSG_CONF) "Latest Node.js version: $$(cat .latest_node_version)" --status "ℹ️"
 
 # Get developer information
 get-developer-info:
-	@echo "Fetching commit author information..."
+	@log-message $(LOG_MSG_CONF) "Fetching commit author information..." --status "🔍"
 	@COMMIT_AUTHOR=$$(git log -1 --pretty=format:'%an')
-	@echo "This code was committed by $$COMMIT_AUTHOR"
+	@log-message $(LOG_MSG_CONF) "This code was committed by $$COMMIT_AUTHOR" --status "ℹ️"
 
 # Get first octet of current node version
 node-major-version:
@@ -81,67 +82,71 @@ node-major-version:
 
 # Install the package locally
 install:
-	@echo "Installing dependencies..."
+	@log-message $(LOG_MSG_CONF) "Installing dependencies..." --status "⬇️"
 	@poetry install
 
 # Install the development dependencies and the package locally
 install-dev:
-	@echo "Checking for Poetry installation..."
+	@log-message $(LOG_MSG_CONF) "Checking for Poetry installation..." --status "🔍"
 	@if ! command -v poetry &> /dev/null; then \
 		echo "Poetry not found. Installing Poetry."; \
 		curl -sSL https://install.python-poetry.org | python3 -; \
 	fi
-	@echo "Poetry is installed. Checking dependencies..."
+	@log-message $(LOG_MSG_CONF) "Poetry is installed. Checking dependencies..." --status "🔍"
 	@poetry install --with dev
 
 # Install the latest version of nvm
 install-latest-nvm:
-	@echo "Installing the latest version of nvm..."
+	@log-message $(LOG_MSG_CONF) "Installing the latest version of nvm..." --status "⬇️"
 	@LATEST_NVM_VERSION=$$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest | grep -oE '"tag_name": "[^"]+"' | cut -d'"' -f4) && \
 	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/$$LATEST_NVM_VERSION/install.sh | bash
 
 # Perform a semantic release
 release: ensure-node ensure-semantic-release
-	@echo "Starting semantic release..."
+	@log-message $(LOG_MSG_CONF) "Starting semantic release..." --status "🚀"
 	@semantic-release
 
 # Pre-push cleanup target
 push-prep:
-
-	@echo "Running poetry lock......................................................... 🔒"
+	@log-message $(LOG_MSG_CONF) "Running Poetry Lock" --status "🔒"
 	@poetry lock
-	@echo "Removing temporary files.................................................... 🧹"
+	@log-message $(LOG_MSG_CONF) "Removing Temporary Files" --status "🧹"
 	@find . -type f -name '*.pyc' -delete
-	@echo "Removed temporary files..................................................... ✅"
+	@log-message $(LOG_MSG_CONF) "Removed Temporary Files" --status "✅"
 
 # Create a source distribution package
 sdist: clean
-	@echo "Creating source distribution..."
+	@log-message $(LOG_MSG_CONF) "Creating source distribution..."
 	@poetry build --format sdist
 
 # Run tests
 test:
-	@echo "Running unit tests..."
-	@poetry run pytest
+	@log-message $(LOG_MSG_CONF) "Running unit tests..." --status "🧪"
+	@poetry run pytest -vvv --ignore=tests/test_litellm_model_cache.py --ignore=tests/test_litellm_tools.py --ignore=tests/test_openai_tools.py --ignore=tests/test_pr_context_generate.py --ignore=tests/test_pr_summary_generate.py --ignore=tests/test_pr_title_generate.py
+
+# Run all tests including LLM tests
+test-with-llm:
+	@log-message $(LOG_MSG_CONF) "Running all unit tests including LLM tests..." --status "🧪"
+	@poetry run pytest -vvv
 
 # Uninstall the local package
 uninstall:
-	@echo "Uninstalling $(APP_NAME)..."
+	@log-message $(LOG_MSG_CONF) "Uninstalling $(APP_NAME)..." --status "❌"
 	@poetry remove $(APP_NAME)
 
 # Upload to PyPI
 upload: test wheel
-	@echo "Uploading Version to PyPI..."
+	@log-message $(LOG_MSG_CONF) "Uploading Version to PyPI..." --status "⬆️"
 	@TWINE_USER_AGENT="$(PYPI_USER_AGENT)" poetry publish --build --no-interaction
 
 # Upload to TestPyPI
 upload-test: test wheel
-	@echo "Uploading Version to TestPyPI..."
+	@log-message $(LOG_MSG_CONF) "Uploading Version to TestPyPI..." --status "⬆️"
 	@poetry publish --repository testpypi --username $(PYPI_USER_AGENT) --password $(PYPI_USER_AGENT)
 
 # Create a wheel distribution package
 wheel: clean
-	@echo "Creating wheel distribution..."
+	@log-message $(LOG_MSG_CONF) "Creating wheel distribution..." --status "📦"
 	@poetry build --format wheel
 
 .PHONY: clean check-packages sdist wheel upload-test upload install uninstall test push-prep get-developer-info release

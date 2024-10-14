@@ -6,21 +6,21 @@ import sys
 from unittest.mock import MagicMock
 import pytest
 
-from klingon_tools.log_msg import log_message, set_default_style, set_log_level
+from klingon_tools.log_msg import log_message, set_default_style
+from klingon_tools.log_tools import LogTools
 
 
 # pylint: disable=R0903
-class TestLogPlugin:
+class KTestLogPlugin:
     """A pytest plugin for logging test results."""
 
-    def __init__(self, logger, results):
-        """Initialize the TestLogPlugin.
+    def __init__(self, results):
+        """Initialize the KTestLogPlugin.
 
         Args:
-            logger: A logging object for outputting messages.
             results: A list to store test results.
         """
-        self.logger = logger
+        self.log_message = log_message
         self.results = results
 
     def pytest_runtest_logreport(self, report):
@@ -39,34 +39,44 @@ class TestLogPlugin:
             elif report.failed:
                 self._log_failed_test(test_name, report)
             elif report.skipped:
-                self._log_skipped_test(test_name)
+                if "no-llm" in report.keywords:
+                    self.log_message.info(
+                        message=f"{test_name} (skipped due to --no-llm)",
+                        status="SKIPPED 🦘"
+                    )
+                    self.results.append((test_name, "skipped"))
+                else:
+                    self._log_skipped_test(test_name)
 
     def _log_passed_test(self, test_name):
         """Log a passed test."""
-        self.logger.info(message=f"{test_name}", status="✅")
+        self.log_message.info(message=f"{test_name}", status="✅")
         self.results.append((test_name, "passed"))
 
     def _log_failed_test(self, test_name, report):
         """Log a failed test."""
         if "optional" in report.keywords:
-            self.logger.warning(
-                message=f"{test_name} (optional)", status="⚠️"
+            self.log_message.warning(
+                message=f"{test_name} (optional)", status="👾"
             )
             self.results.append((test_name, "optional-failed"))
         else:
-            self.logger.error(message=f"{test_name}", status="❌")
+            self.log_message.error(message=f"{test_name}", status="❌")
             self.results.append((test_name, "failed"))
 
         self._log_exception_info(test_name, report)
 
     def _log_skipped_test(self, test_name):
         """Log a skipped test."""
-        self.logger.info(message=f"{test_name}", status="⏭️")
+        self.log_message.info(
+            message=f"{test_name}",
+            status="SKIPPED 🦘"
+        )
         self.results.append((test_name, "skipped"))
 
     def _log_exception_info(self, test_name, report):
         """Log exception information for a failed test."""
-        self.logger.error(
+        self.log_message.error(
             message=f"Exception info for {test_name}:",
             status="",
             style="none"
@@ -74,14 +84,14 @@ class TestLogPlugin:
         print(report.longrepr)
 
         if isinstance(
-                self.logger.logger,
+                self.log_message.logger,
                 MagicMock
-        ) or self.logger.logger.getEffectiveLevel() <= 10:
+        ) or self.log_message.logger.getEffectiveLevel() <= 10:
             self._log_debug_info(test_name, report)
 
     def _log_debug_info(self, test_name, report):
         """Log additional debug information for a failed test."""
-        self.logger.debug(
+        self.log_message.debug(
             message=f"Additional debug info for {test_name}:",
             status="",
             style="none"
@@ -101,10 +111,10 @@ def ktest(
 ):
     """Run pytest and display the results with the specified log level."""
     set_default_style("pre-commit")
-    set_log_level(loglevel.upper())
+    LogTools(debug=False).set_log_level(loglevel.upper())
 
     results = []
-    plugin = TestLogPlugin(log_message, results)
+    plugin = KTestLogPlugin(results)
 
     _setup_output_capture(suppress_output, loglevel)
 

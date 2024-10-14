@@ -6,10 +6,14 @@ from git import Repo, GitCommandError
 from klingon_tools.git_push import (
     git_push,
     push_changes,
-    _handle_file_deletions,
-    _generate_and_commit_messages,
-    _is_submodule,
     _handle_submodule,
+    _is_submodule,
+    _generate_and_commit_messages,
+)
+from klingon_tools.git_tools import (
+    handle_file_deletions
+    as
+    _handle_file_deletions
 )
 
 

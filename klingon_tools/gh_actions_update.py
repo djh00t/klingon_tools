@@ -44,7 +44,7 @@ def can_display_emojis(no_emojis_flag: bool, args: argparse.Namespace) -> bool:
     if no_emojis_flag:
         if not args.quiet:
             log_message.debug(
-                message="Emojis are disabled by the --no-emojis flag."
+                "Emojis are disabled by the --no-emojis flag."
             )
         return False
 
@@ -52,7 +52,7 @@ def can_display_emojis(no_emojis_flag: bool, args: argparse.Namespace) -> bool:
     lang = os.getenv("LANG", "")
     if "UTF-8" in lang:
         log_message.debug(
-            message=f"Terminal supports emojis based on LANG: {lang} 😎"
+            f"Terminal supports emojis based on LANG: {lang} 😎"
         )
         return True
 
@@ -100,8 +100,7 @@ def get_latest_version(repo_name: str) -> str:
     # Construct the URL for the GitHub API request
     url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
     log_message.debug(
-        message=f"Fetching latest version for repo: {repo_name} using "
-        f"URL: {url}"
+        f"Fetching latest version for repo: {repo_name} using URL: {url}"
     )
 
     # Set up headers for the API request

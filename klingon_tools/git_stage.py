@@ -24,7 +24,7 @@ def git_stage_diff(file_name: str, repo: Repo, modified_files: list) -> str:
     # Check if any files are already staged
     if repo.git.diff("--cached", "--name-only"):
         log_message.info(
-            message="Unstaging previously staged files", status="🔄")
+            message="Unstaging previously staged files", status="🔁")
         from klingon_tools.git_unstage import git_unstage_files
 
         git_unstage_files(repo)

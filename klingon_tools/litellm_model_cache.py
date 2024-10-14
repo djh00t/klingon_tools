@@ -1,4 +1,5 @@
-"""Fetch, cache, and filter supported LLM models from a remote JSON file.
+"""
+Fetch, cache, and filter supported LLM models from a remote JSON file.
 
 This module is part of the `klingon_tools` library. It fetches a list of
 supported LLM models from a remote JSON file, caches the data locally, and
@@ -34,6 +35,11 @@ from typing import List, Dict
 import requests
 import logging
 
+# Suppress logs for common HTTP libraries
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("litellm").setLevel(logging.WARNING)
+
 MODEL_URL = (
     "https://raw.githubusercontent.com/BerriAI/litellm/main/"
     "model_prices_and_context_window.json"
@@ -58,11 +64,6 @@ IGNORED_REGEXES = [
     r'sagemaker', r'sample_spec', r'together', r'vertex', r'voyage',
     r'whisper', r'tts', r'babbage', r'davinci', r'embed-'
 ]
-
-# Suppress logs for common HTTP libraries
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-logging.getLogger("requests").setLevel(logging.WARNING)
-logging.getLogger("litellm").setLevel(logging.WARNING)
 
 
 def fetch_model_data() -> Dict[str, dict]:

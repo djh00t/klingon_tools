@@ -114,29 +114,6 @@ def test_find_github_actions(mock_args: argparse.Namespace):
         print(f"  {key}: {value}")
 
 
-@patch("requests.get")
-def test_get_latest_version(mock_get):
-    """
-    Test the get_latest_version function.
-
-    This test verifies that the get_latest_version function correctly retrieves
-    the latest version tag from a GitHub repository.
-
-    Assertions:
-        - Asserts that the function returns the correct version tag when the
-          request is successful.
-        - Asserts that the function returns None when the request fails.
-    """
-    mock_response = mock_get.return_value
-    mock_response.status_code = 200
-    mock_response.json.return_value = {"tag_name": "v1.2.3"}
-
-    assert get_latest_version("owner/repo") == "v1.2.3"
-
-    mock_response.status_code = 404
-    assert get_latest_version("owner/repo") is None
-
-
 @patch(
     "builtins.open",
     new_callable=mock_open,
@@ -222,3 +199,27 @@ def test_build_action_dict():
         "job_name": "Build",
         "action_latest_version": None,
     }
+
+
+@patch("requests.get")
+def test_get_latest_version(mock_get):
+    """
+    Test the get_latest_version function.
+
+    This test verifies that the get_latest_version function correctly retrieves
+    the latest version tag from a GitHub repository.
+
+    Assertions:
+        - Asserts that the function returns the correct version tag when the
+          request is successful.
+        - Asserts that the function returns None when the request fails.
+    """
+    mock_response = mock_get.return_value
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"tag_name": "v1.2.3"}
+
+    assert get_latest_version("owner/repo") == "v1.2.3"
+
+    # Test for a failed request
+    mock_response.status_code = 404
+    assert get_latest_version("owner/repo") is None

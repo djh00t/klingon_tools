@@ -225,7 +225,7 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
                         f"File {file} is already deleted and will be staged "
                         "for removal."
                     ),
-                    status="⚠️",
+                    status="👾",
                 )
                 try:
                     if file in repo.index.entries:
@@ -235,7 +235,7 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
                         log_message.warning(
                             message=f"File {file} not found in the index, "
                             "skipping",
-                            status="⚠️",
+                            status="👾",
                         )
                 except git_exc.GitCommandError as e:
                     log_message.error(
@@ -273,7 +273,7 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
                             "GPG signing failed. Retrying commit without GPG "
                             "signing."
                         ),
-                        status="⚠️",
+                        status="👾",
                     )
                     try:
                         repo.index.commit(commit_message.strip())
@@ -392,10 +392,6 @@ def push_changes_if_needed(repo: Repo, args) -> None:
     Returns:
         None
     """
-    # Update git status variables so we have a count of files to push from
-    # committed_not_pushed
-    committed_not_pushed = git_get_status(repo)[-1]
-
     def push_submodules(repo: Repo):
         """Recursively push changes in submodules."""
         for submodule in repo.submodules:
@@ -406,12 +402,16 @@ def push_changes_if_needed(repo: Repo, args) -> None:
                 push_submodules(submodule_repo)
             submodule_repo.remotes.origin.push()
 
+    # Retrieve the current status of the repository
+    _, _, _, _, committed_not_pushed = git_get_status(repo)
+
     try:
         # Check if there are new commits to push
-        if (
-            repo.is_dirty(index=True, working_tree=False)
-            or committed_not_pushed
-        ):
+        if committed_not_pushed:
+            log_message.info(
+                message="Committing not pushed files found. Pushing changes.",
+                status="🚀",
+            )
             if args.dryrun:
                 log_message.info(
                     message="Dry run mode enabled. Skipping push.", status="🚫"
@@ -424,18 +424,60 @@ def push_changes_if_needed(repo: Repo, args) -> None:
 
                 # Perform cleanup after push operation
                 cleanup_lock_file(args.repo_path)
-        elif committed_not_pushed:
-            log_message.info(
-                message="Committing not pushed files found. Pushing changes.",
-                status="🚀",
-            )
-            git_push(repo)
-            # Push changes in submodules
-            push_submodules(repo)
         else:
             log_message.info(
                 message="No new commits to push. Skipping push.", status="🚫"
             )
     except Exception as e:
         log_message.error(message="Failed to push changes", status="❌")
-        log_message.exception(message=f"{e}")
+        log_message.error(
+            message=f"{e}",
+            status="",
+            style="none",
+        )
+
+
+def fix_commit_message(commit_message: str) -> str:
+    """
+    Fixes the commit message by ensuring it follows the conventional format.
+    """
+    if not commit_message.startswith("chore:"):
+        commit_message = "chore: " + commit_message
+
+    # Split the message into lines
+    lines = commit_message.splitlines()
+    fixed_lines = []
+
+    for line in lines:
+        if len(line) <= 72:
+            fixed_lines.append(line)
+        else:
+            while len(line) > 72:
+                # Find the last space within the first 72 characters
+                split_pos = line.rfind(' ', 0, 72)
+                if split_pos == -1:
+                    # If no space is found, split at 72 characters
+                    split_pos = 72
+                fixed_lines.append(line[:split_pos].rstrip())
+                line = line[split_pos:].lstrip()
+            fixed_lines.append(line)
+
+    return 'chore: ' + '\n'.join(fixed_lines)
+
+
+def handle_file_deletions(repo: Repo) -> None:
+    """Handles file deletions in the repository."""
+    deleted_files = subprocess.run(
+        ["git", "ls-files", "--deleted"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.splitlines()
+
+    for file in deleted_files:
+        try:
+            repo.index.remove([file], working_tree=True)
+            commit_message = f"chore({file}): Cleanup deleted items"
+            repo.index.commit(commit_message)
+        except GitCommandError as e:
+            log_message.error(f"Failed to handle deletion for {file}: {e}")

@@ -23,11 +23,14 @@ def process_pre_commit_config(repo: Repo, modified_files: list) -> None:
     # If .pre-commit-config.yaml is modified, stage and commit it
     if ".pre-commit-config.yaml" in modified_files:
         log_message.info(
-            message=".pre-commit-config.yaml modified", status="Staging"
+            message=".pre-commit-config.yaml modified",
+            status="Staging"
         )
         repo.git.add(".pre-commit-config.yaml")
+
         log_message.info(
-            message=".pre-commit-config.yaml staged", status="Committing"
+            message=".pre-commit-config.yaml staged",
+            status="Committing"
         )
         litellm_tools = LiteLLMTools()
         repo.git.diff("HEAD", ".pre-commit-config.yaml")
@@ -35,8 +38,10 @@ def process_pre_commit_config(repo: Repo, modified_files: list) -> None:
             ".pre-commit-config.yaml", repo
         )
         repo.index.commit(commit_message)
+
         log_message.info(
-            message=".pre-commit-config.yaml committed", status="✅"
+            message=".pre-commit-config.yaml committed",
+            status="✅"
         )
 
         # Remove .pre-commit-config.yaml from modified_files
@@ -46,7 +51,7 @@ def process_pre_commit_config(repo: Repo, modified_files: list) -> None:
         if not modified_files:
             log_message.info(
                 message="No more files to process. Exiting script.",
-                status="🚪",
+                status="🚪🏃‍♂️",
             )
             sys.exit(0)
 
@@ -88,66 +93,63 @@ def git_pre_commit(
         # Set PYTHONUNBUFFERED to ensure real-time output
         env["PYTHONUNBUFFERED"] = "1"
 
-        process = subprocess.Popen(  # Run the pre-commit hooks
+        process = subprocess.run(
             ["pre-commit", "run", "--files", file_name],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             text=True,
             env=env,
         )
 
-        stdout, stderr = (
-            [],
-            [],
-        )  # Initialize lists to capture stdout and stderr
-
-        for line in process.stdout:  # Capture stdout line by line
-            # Replace specific strings with emoticons
-            modified_line = (
-                line.replace("Passed", "... ✅")
-                .replace("Skipped", ".... ⏭️")
-                .replace("Failed", "... ❌")
+        # Check if the process failed
+        if process.returncode != 0:
+            log_message.error(
+                message="Pre-commit hooks failed with "
+                f"return code {process.returncode}",
+                status="❌"
             )
-            sys.stdout.write(modified_line)
-            stdout.append(modified_line)
 
-        for line in process.stderr:  # Capture stderr line by line
-            # Replace specific strings with emoticons
-            modified_line = (
-                line.replace("Passed", "... ✅")
-                .replace("Skipped", ".... ⏭️")
-                .replace("Failed", "... ❌")
-            )
-            sys.stderr.write(modified_line)
-            stderr.append(modified_line)
+            # Process the output
+            for line in process.stdout.splitlines():
+                if line.startswith("Passed"):
+                    log_message.info(line, status="✅")
+                elif line.startswith("Skipped"):
+                    log_message.info(
+                        message=line,
+                        status="SKIPPED 🦘"
+                    )
+                elif line.startswith("Failed"):
+                    log_message.error(line, status="❌")
+                else:
+                    log_message.debug(line, status="")
 
-        process.wait()  # Wait for the process to complete
-        result = (
-            subprocess.CompletedProcess(  # Create a CompletedProcess instance
-                process.args,
-                process.returncode,
-                "".join(stdout),
-                "".join(stderr),
-            )
-        )
+            # Process the error output
+            for line in process.stderr.splitlines():
+                log_message.error(line, status="❌")
+                if "flake8" in line:
+                    log_message.error(
+                        "Linting issues found by flake8. Please fix"
+                        "them before committing.",
+                        status="❌")
+                    sys.exit(1)
 
         log_message.debug(
             message="Pre-commit hooks completed with return code",
-            status=f"{result.returncode}",
+            status=f"{process.returncode}",
         )
+
         if (
-            "files were modified by this hook" in result.stdout
-            or "Fixing" in result.stdout
+            "files were modified by this hook" in process.stdout
+            or "Fixing" in process.stdout
         ):
             # Log that the file was modified by the pre-commit hook
             log_message.info(message=80 * "-", status="", style="none")
             log_message.info(
                 f"File {file_name} was modified by pre-commit hooks",
-                status="🔄",
+                status="🔁",
             )
             log_message.info(
                 message=("File modified by pre-commit, restaging"),
-                status="🔄",
+                status="🔁",
             )
             log_message.info(message=80 * "-", status="", style="none")
 
@@ -165,27 +167,22 @@ def git_pre_commit(
                     status="❌",
                 )
                 sys.exit(1)  # Exit the script if maximum attempts reached
-        if result.returncode == 0:  # Check if pre-commit hooks passed
+        if process.returncode == 0:  # Check if pre-commit hooks passed
             log_message.info(
-                f"Pre-commit hooks passed for {file_name}", status="✅"
+                f"Pre-commit hooks passed for {file_name}",
+                status="✅"
             )
             return True, diff  # Return True if hooks passed
 
         if (
-            result.returncode == 1
-            and "files were modified by this hook" not in result.stdout
-            and "Fixing" not in result.stdout
+            process.returncode == 1
+            and "files were modified by this hook" not in process.stdout
+            and "Fixing" not in process.stdout
         ):
             log_message.error(
                 message="Pre-commit hooks failed without modifying files. "
                 "Exiting push.",
                 status="❌",
-            )
-            log_message.debug(
-                message=f"Pre-commit stdout: {result.stdout}", status=""
-            )
-            log_message.debug(
-                message=f"Pre-commit stderr: {result.stderr}", status=""
             )
             log_message.info(80 * "-", status="", style="none")
             sys.exit(1)

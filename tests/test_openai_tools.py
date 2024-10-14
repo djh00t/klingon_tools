@@ -8,6 +8,12 @@ import pytest
 from klingon_tools.openai_tools import OpenAITools
 
 
+@pytest.fixture
+def no_llm(request):
+    """Fixture to access the --no-llm flag."""
+    return request.config.getoption("--no-llm")
+
+
 @pytest.fixture(scope="module", autouse=True)
 def disable_logging():
     """Disable logging for all tests in this module."""
@@ -17,14 +23,24 @@ def disable_logging():
 
 
 @pytest.fixture
-def openai_tools():
+def openai_tools(no_llm):
     """Create an instance of OpenAITools."""
+    if no_llm:
+        pytest.skip("Skipping LLM tests due to --no-llm flag")
     return OpenAITools(debug=True)
 
 
 @patch("klingon_tools.openai_tools.get_commit_log")
-def test_generate_pull_request_summary(mock_get_commit_log, openai_tools):
+def test_generate_pull_request_summary(
+    mock_get_commit_log,
+    openai_tools,
+    no_llm
+):
+    if no_llm:
+        pytest.skip("Skipping LLM tests due to --no-llm flag")
     """Test the generate_pull_request_summary method."""
+    if no_llm:
+        pytest.skip("Skipping LLM tests due to --no-llm flag")
     mock_get_commit_log.return_value.stdout = "commit log content"
     openai_tools.generate_content = MagicMock(
         return_value="Generated PR Summary"
@@ -35,17 +51,21 @@ def test_generate_pull_request_summary(mock_get_commit_log, openai_tools):
     openai_tools.generate_content.assert_called_once_with(
         "pull_request_summary", "commit log content"
     )
+    if no_llm:
+        pytest.skip("Skipping LLM tests due to --no-llm flag")
     assert summary == "Generated PR Summary"
 
 
-def test_init_with_valid_api_key(openai_tools):
+def test_init_with_valid_api_key(openai_tools, no_llm):
     """Test initialization of OpenAITools with a valid API key."""
     assert openai_tools.debug is True
     assert openai_tools.client is not None
 
 
 @patch("openai.ChatCompletion.create")
-def test_generate_pull_request_title(mock_create, openai_tools):
+def test_generate_pull_request_title(mock_create, openai_tools, no_llm):
+    if no_llm:
+        pytest.skip("Skipping LLM tests due to --no-llm flag")
     """Test the generate_pull_request_title method."""
     mock_create.return_value = MagicMock(
         choices=[MagicMock(message=MagicMock(content="Generated PR title"))]
@@ -125,10 +145,16 @@ def test_signoff_message(mock_get_git_user_info, openai_tools):
 @patch.object(OpenAITools, "format_message")
 @patch.object(OpenAITools, "signoff_message")
 def test_generate_commit_message(
-    mock_signoff, mock_format, mock_generate, mock_stage_diff, openai_tools
+    mock_signoff,
+    mock_format,
+    mock_generate,
+    mock_stage_diff,
+    openai_tools,
+    no_llm
 ):
     """Test the generate_commit_message method."""
-    mock_stage_diff.return_value = "Test diff"
+    if no_llm:
+        pytest.skip("Skipping LLM tests due to --no-llm flag")
     mock_generate.return_value = "feat(test): add new feature"
     mock_format.return_value = "✨ feat(test): add new feature"
     mock_signoff.return_value = (
@@ -151,7 +177,9 @@ def test_generate_commit_message(
 
 
 @patch.object(OpenAITools, "generate_content")
-def test_generate_pull_request_body(mock_generate, openai_tools):
+def test_generate_pull_request_body(mock_generate, openai_tools, no_llm):
+    if no_llm:
+        pytest.skip("Skipping LLM tests due to --no-llm flag")
     """Test the generate_pull_request_body method."""
     mock_generate.return_value = "Test PR body"
     result = openai_tools.generate_pull_request_body("Test diff")
@@ -163,11 +191,13 @@ def test_generate_pull_request_body(mock_generate, openai_tools):
 @patch.object(OpenAITools, "format_message")
 @patch("klingon_tools.openai_tools.git_unstage_files")
 def test_generate_release_body(
-    mock_unstage, mock_format, mock_generate, openai_tools
+    mock_unstage, mock_format, mock_generate, openai_tools, no_llm
 ):
     """Test the generate_release_body method."""
-    mock_generate.return_value = "Test release body"
+    if no_llm:
+        pytest.skip("Skipping LLM tests due to --no-llm flag")
     mock_format.return_value = "Formatted test release body"
+    mock_generate.return_value = "Test release body"
     mock_repo = MagicMock()
     mock_repo.git.diff.return_value = "file1.py\nfile2.py"
 
@@ -175,6 +205,9 @@ def test_generate_release_body(
 
     assert result == "Formatted test release body"
     mock_generate.assert_called_once_with("release_body", "Test diff")
+    mock_unstage.assert_called_once_with(["file1.py", "file2.py"])
+    mock_unstage.assert_called_once_with(["file1.py", "file2.py"])
+    mock_unstage.assert_called_once_with(["file1.py", "file2.py"])
     mock_format.assert_called_once_with("Test release body")
     mock_unstage.assert_called_once_with(["file1.py", "file2.py"])
 

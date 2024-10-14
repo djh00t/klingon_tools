@@ -45,7 +45,7 @@ def get_git_user_info() -> Tuple[str, str]:
             GitCommandError: If the git command fails.
         """
         result = subprocess.run(
-            command, capture_output=True, text=True, shell=True, check=True
+            command.split(), capture_output=True, text=True, check=True
         )
         if result.returncode != 0:
             log_message.error(

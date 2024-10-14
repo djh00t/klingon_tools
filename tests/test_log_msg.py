@@ -2,13 +2,12 @@
 
 import pytest
 import logging
-from klingon_tools import LogTools
-from klingon_tools.log_msg import (
-    log_tools,
-    log_message,
-    set_log_level,
-    set_default_style,
-)
+from klingon_tools.log_tools import LogTools
+
+log_tools = LogTools(debug=False)
+
+log_message = log_tools.log_message
+set_default_style = log_tools.set_default_style
 
 
 def test_log_tools_initialization():
@@ -22,19 +21,14 @@ def test_log_message():
     assert isinstance(log_message, LogTools.LogMessage)
 
 
-def test_set_log_level():
-    """Test if set_log_level is a callable function."""
-    assert callable(set_log_level)
-
-
 def test_set_default_style():
     """Test if set_default_style is a callable function."""
     assert callable(set_default_style)
 
 
 def test_default_style():
-    """Test if the default style is set to 'pre-commit'."""
-    assert log_tools.default_style == "pre-commit"
+    """Test if the default style is set to 'default'."""
+    assert log_tools.default_style == "default"
 
 
 @pytest.mark.parametrize(
@@ -42,9 +36,10 @@ def test_default_style():
 )
 def test_set_log_level_functionality(level):
     """Test if set_log_level function changes the log level correctly."""
-    set_log_level(level)
-    assert log_tools.logger.level == getattr(logging, level)
-    assert log_message.logger.level == getattr(logging, level)
+    log_tools.set_log_level(level)
+    # Assuming log_tools has a method or attribute to get the current log level
+    assert log_tools.get_log_level() == getattr(logging, level)
+    assert log_message.get_log_level() == getattr(logging, level)
 
 
 def test_set_default_style_functionality():

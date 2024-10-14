@@ -267,7 +267,31 @@ Use '--action {action name}' to update all instances of a specific action.
 Use '--action' and '--file' together to update all instances of a specific action in a specific file.
 ```
 
-### Example Usage of `logtools`
+### Example Usage of `makefile_logger`
+
+The `makefile_logger.py` script allows you to log messages from a Makefile using the same logging style as `klingon_tools`. This ensures consistent logging across your project.
+
+#### Usage
+
+To use the `makefile_logger.py` script, call it from your Makefile with the desired log level and message. The available log levels are `INFO`, `WARNING`, `ERROR`, and `DEBUG`.
+
+**Example Makefile Usage:**
+
+```makefile
+# Log an informational message
+@python klingon_tools/makefile_logger.py INFO "Cleaning up repo"
+
+# Log a warning message
+@python klingon_tools/makefile_logger.py WARNING "This is a warning"
+
+# Log an error message
+@python klingon_tools/makefile_logger.py ERROR "An error occurred"
+
+# Log a debug message
+@python klingon_tools/makefile_logger.py DEBUG "Debugging information"
+```
+
+This will log messages with the appropriate status icons, ensuring that your Makefile logs are consistent with the rest of your project's logging.
 
 The `logtools` utility provides decorators for methods and CLI commands that log output in a clean and consistent manner with simple error handling.
 

@@ -1,3 +1,4 @@
+# Cxecel.py - Render CSV file in terminal
 import argparse
 import curses
 import signal
