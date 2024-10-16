@@ -7,12 +7,11 @@ module.exports = {
   plugins: [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
-    "@semantic-release/changelog",
     "@semantic-release/github",
     ["@semantic-release/git", {
       "assets": ["README.md", "pyproject.toml", "CHANGELOG.md"],
       "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
-    }],
+    }]
   ],
   preset: "conventionalcommits",
   releaseRules: [
@@ -27,14 +26,14 @@ module.exports = {
     { type: "revert", release: "patch" },
     { type: "style", release: "patch" },
     { type: "test", release: "patch" },
-    { type: "other", release: "patch" },
+    { type: "other", release: "patch" }
   ],
   parserOpts: {
     headerPattern: /^(?:[\u{1F300}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]\s)?(\w*)(?:\((.*)\))?!?:\s(.*)$/u,
     headerCorrespondence: ['type', 'scope', 'subject'],
-    noteKeywords: ["BREAKING CHANGE", "BREAKING CHANGES"],
+    noteKeywords: ["BREAKING CHANGE", "BREAKING CHANGES"]
   },
   writerOpts: {
-    commitsSort: ["subject", "scope"],
-  },
+    commitsSort: ["subject", "scope"]
+  }
 };
