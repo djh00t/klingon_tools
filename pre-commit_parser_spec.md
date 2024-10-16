@@ -78,22 +78,29 @@ def pre_commit_exception_log_message():
     # Log the first line
     log_message(
         message=message,
-        status=status
+        status=status,
+        style="none"
     )
 
     # Log the hook id
     log_message(
-        message=f"hook id: {exception_hook_id}"
+        message=f"hook id: {exception_hook_id}",
+        status="",
+        style="none"
     )
 
     # Log the exit code
     log_message(
-        message=f"exit code: {exception_exit_code}"
+        message=f"exit code: {exception_exit_code}",
+        status="",
+        style="none"
     )
 
     # Log the exception message
     for line in exception_message:
         log_message(
-            message=line
+            message=line,
+            status="",
+            style="none"
         )
 ```
