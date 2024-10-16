@@ -1,4 +1,4 @@
-I want you to modiufy the pre-commit parser to use a template system to capture
+I want you to modify the pre-commit parser to use a template system to capture
 the pre-commit output.
 
 There are 3 templates used to format the output of the pre-commit parser. Lets
