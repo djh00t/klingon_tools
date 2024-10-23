@@ -54,9 +54,9 @@ staged_files: List[str] = []
 committed_not_pushed: List[str] = []
 
 # Suppress logs for common HTTP libraries
-#logging.getLogger("urllib3").setLevel(logging.WARNING)
-#logging.getLogger("requests").setLevel(logging.WARNING)
-#logging.getLogger("litellm").setLevel(logging.WARNING)
+# logging.getLogger("urllib3").setLevel(logging.WARNING)
+# logging.getLogger("requests").setLevel(logging.WARNING)
+# logging.getLogger("litellm").setLevel(logging.WARNING)
 
 # Configure logging with a simpler format
 logging.basicConfig(
@@ -541,7 +541,6 @@ def workflow_process_file(
 
         # Validate the commit message
         is_valid = validate_commit_message(commit_message, log_message)
-        fixed_message = None  # Since validate_commit_message returns only bool
 
         if is_valid:
             # Run pre-commit hooks
@@ -576,7 +575,10 @@ def workflow_process_file(
             return
 
     # If max retries exceeded
-    log_message.error(f"Maximum auto-fix attempts reached for {file_name}.", status="❌")
+    log_message.error(
+        message=f"Maximum auto-fix attempts reached for {file_name}.",
+        status="❌"
+        )
     return
 
 
@@ -704,6 +706,17 @@ def process_changes(
         bool: True if changes were made, False otherwise.
     """
     changes_made = False
+
+    # Handle deleted files first
+    if deleted_files:
+        log_message.info("Processing deleted files first", status="🗑️")
+        git_commit_deletes(repo, deleted_files)
+        changes_made = True
+
+        # Re-get status after handling deletes
+        global untracked_files, modified_files
+        (_, untracked_files, modified_files, _, _) = git_get_status(repo)
+
     files_to_process = untracked_files + modified_files
 
     if ".pre-commit-config.yaml" in files_to_process:
@@ -725,10 +738,6 @@ def process_changes(
         repo.git.add(A=True)
         repo.git.commit("-m", "Update .pre-commit-config.yaml", "--no-verify")
         log_message.info("Staged and committed all changes", status="✅")
-
-    if deleted_files:
-        git_commit_deletes(repo, deleted_files)
-        changes_made = True
 
     if files_to_process:
         if args.oneshot:
