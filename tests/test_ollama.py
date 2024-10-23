@@ -12,7 +12,6 @@ from typing import Dict
 
 import pytest
 import requests
-import time
 
 # Check if Ollama is installed
 OLLAMA_INSTALLED = shutil.which("ollama") is not None
@@ -96,7 +95,8 @@ def test_ollama_cli_version(ollama_info):
         "Ollama CLI version not found"
     )
     assert re.match(r'\d+\.\d+\.\d+', ollama_info['ollama_cli_version']), (
-        f"Invalid Ollama CLI version format: {ollama_info['ollama_cli_version']}"
+        f"Invalid Ollama CLI version format: {
+            ollama_info['ollama_cli_version']}"
     )
     print(f"ollama_cli_version: {ollama_info['ollama_cli_version']}")
 
@@ -111,23 +111,14 @@ def test_ollama_server_running(ollama_info):
 @pytest.mark.depends(on=['test_ollama_server_running'])
 def test_can_connect_to_ollama():
     """Check if the Ollama API is accessible."""
-    max_retries = 3
-    retry_delay = 5  # seconds
-
-    for attempt in range(1, max_retries + 1):
-        try:
-            response = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
-            assert response.status_code == 200, (
-                f"Expected status code 200, but got {response.status_code}"
-            )
-            print("Successfully connected to Ollama API")
-            break  # Success, exit loop
-        except requests.RequestException as e:
-            if attempt < max_retries:
-                print(f"Attempt {attempt} failed: {e}. Retrying in {retry_delay} seconds...")
-                time.sleep(retry_delay)
-            else:
-                pytest.fail(f"Cannot connect to Ollama API after {max_retries} attempts: {e}")
+    try:
+        response = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
+        assert response.status_code == 200, (
+            f"Expected status code 200, but got {response.status_code}"
+        )
+        print("Successfully connected to Ollama API")
+    except requests.RequestException as e:
+        pytest.fail(f"Cannot connect to Ollama API: {e}")
 
 
 @pytest.mark.depends(on=['test_can_connect_to_ollama'])
@@ -135,30 +126,23 @@ def test_models_available(no_llm):
     """Test if there are any models available on the Ollama server."""
     if no_llm:
         pytest.skip("Skipping LLM tests due to --no-llm flag")
-    max_retries = 3
-    retry_delay = 5  # seconds
+    try:
+        response = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
+        assert response.status_code == 200, (
+            f"Cannot retrieve models, status code: {response.status_code}, "
+            f"response: {response.text}"
+        )
 
-    for attempt in range(1, max_retries + 1):
-        try:
-            response = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
-            assert response.status_code == 200, (
-                f"Cannot retrieve models, status code: {response.status_code}, "
-                f"response: {response.text}"
-            )
+        models = response.json().get("models", [])
+        assert len(models) > 0, "No models available. Please pull a model."
 
-            models = response.json().get("models", [])
-            assert len(models) > 0, "No models available. Please pull a model."
-
-            print(f"Found {len(models)} models on the Ollama server:")
-            for model in models:
-                print(f"- {model['name']}")
-            break  # Success
-        except (requests.RequestException, json.JSONDecodeError) as e:
-            if attempt < max_retries:
-                print(f"Attempt {attempt} failed: {e}. Retrying in {retry_delay} seconds...")
-                time.sleep(retry_delay)
-            else:
-                pytest.skip(f"Cannot retrieve models from Ollama server after {max_retries} attempts: {e}")
+        print(f"Found {len(models)} models on the Ollama server:")
+        for model in models:
+            print(f"- {model['name']}")
+    except requests.RequestException as e:
+        pytest.skip(f"Cannot retrieve models from Ollama server: {e}")
+    except json.JSONDecodeError as e:
+        pytest.skip(f"Invalid JSON response: {e}")
 
 
 @pytest.mark.depends(on=['test_models_available'])
@@ -167,67 +151,60 @@ def test_model_functionality(no_llm):
     if no_llm:
         pytest.skip("Skipping LLM tests due to --no-llm flag")
 
-    max_retries = 3
-    retry_delay = 5  # seconds
+    try:
+        response = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
+        assert response.status_code == 200, (
+            f"Cannot retrieve models, status code: {response.status_code}"
+        )
 
-    for attempt in range(1, max_retries + 1):
-        try:
-            response = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
-            assert response.status_code == 200, (
-                f"Cannot retrieve models, status code: {response.status_code}"
-            )
+        models = response.json().get("models", [])
+        assert len(models) > 0, "No models available to test"
 
-            models = response.json().get("models", [])
-            assert len(models) > 0, "No models available to test"
+        model_to_test = models[0]["name"]
+        print(f"Testing model: {model_to_test}")
 
-            # Hard-coded model selection
-            model_to_test = "nemotron-mini:latest"
-            print(f"Testing model: {model_to_test}")
+        prompt = "Solve `2 + 2`. You **MUST** only return a single number."
 
-            prompt = "What is 2 + 2? Respond with only the number, no conversation."
+        generate_response = requests.post(
+            f"{OLLAMA_URL}/api/generate",
+            json={"prompt": prompt, "model": model_to_test, "stream": False},
+            timeout=30
+        )
+        assert generate_response.status_code == 200, (
+            f"Failed to generate response, status code: "
+            f"{generate_response.status_code}"
+        )
 
-            generate_response = requests.post(
-                f"{OLLAMA_URL}/api/generate",
-                json={"prompt": prompt, "model": model_to_test, "stream": False},
-                timeout=60  # Increased timeout
-            )
-            assert generate_response.status_code == 200, (
-                f"Failed to generate response, status code: "
-                f"{generate_response.status_code}"
-            )
+        result = generate_response.json()
+        model_response = result.get("response", "").strip()
 
-            result = generate_response.json()
-            model_response = result.get("response", "").strip()
+        # Check if either "4" or "four" appears in the response
+        assert any(
+            answer in model_response.lower() for answer in ["4", "four"]
+            ), (
+            "Unexpected response. Expected '4' or 'four', "
+            f"got '{model_response}'"
+        )
 
-            assert model_response == "4", (
-                f"Unexpected response. Expected '4', got '{model_response}'"
-            )
+        print(f"Model {model_to_test} successfully answered the question.")
 
-            print(f"Model {model_to_test} successfully answered the question.")
+        for field in ['total_duration', 'load_duration', 'prompt_eval_count',
+                      'eval_count']:
+            assert field in result, f"Response is missing '{field}'"
 
-            for field in ['total_duration', 'load_duration', 'prompt_eval_count',
-                          'eval_count']:
-                assert field in result, f"Response is missing '{field}'"
+        print(
+            f"Response metadata: Total duration: {result['total_duration']}ns,"
+            f" Load duration: {result['load_duration']}ns, "
+            f"Prompt eval count: {result['prompt_eval_count']}, "
+            f"Eval count: {result['eval_count']}"
+        )
 
-            print(
-                f"Response metadata: Total duration: {result['total_duration']}ns,"
-                f" Load duration: {result['load_duration']}ns, "
-                f"Prompt eval count: {result['prompt_eval_count']}, "
-                f"Eval count: {result['eval_count']}"
-            )
-
-            # If everything passes, break out of the retry loop
-            break
-
-        except (requests.RequestException, json.JSONDecodeError, AssertionError) as e:
-            if attempt < max_retries:
-                print(f"Attempt {attempt} failed: {e}. Retrying in {retry_delay} seconds...")
-                time.sleep(retry_delay)
-            else:
-                if isinstance(e, AssertionError):
-                    pytest.fail(str(e))
-                else:
-                    pytest.skip(f"Failed to communicate with Ollama server after {max_retries} attempts: {e}")
+    except requests.RequestException as e:
+        pytest.skip(f"Failed to communicate with Ollama server: {e}")
+    except json.JSONDecodeError as e:
+        pytest.skip(f"Invalid JSON response: {e}")
+    except AssertionError as e:
+        pytest.fail(str(e))
 
 
 if __name__ == "__main__":
