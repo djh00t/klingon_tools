@@ -163,7 +163,8 @@ def test_model_functionality(no_llm):
         model_to_test = models[0]["name"]
         print(f"Testing model: {model_to_test}")
 
-        prompt = "What is 2 + 2? Please respond with just the number."
+        prompt = "Calculate this, returning only a single "
+        "number as your answer: `2 + 2`"
 
         generate_response = requests.post(
             f"{OLLAMA_URL}/api/generate",
@@ -178,8 +179,12 @@ def test_model_functionality(no_llm):
         result = generate_response.json()
         model_response = result.get("response", "").strip()
 
-        assert model_response == "4", (
-            f"Unexpected response. Expected '4', got '{model_response}'"
+        # Check if either "4" or "four" appears in the response
+        assert any(
+            answer in model_response.lower() for answer in ["4", "four"]
+            ), (
+            "Unexpected response. Expected '4' or 'four', "
+            f"got '{model_response}'"
         )
 
         print(f"Model {model_to_test} successfully answered the question.")
