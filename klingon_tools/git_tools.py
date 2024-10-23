@@ -1,4 +1,5 @@
-"""Module for various Git operations and utilities.
+"""
+Module for various Git operations and utilities.
 
 This module provides functions to interact with a Git repository, including
 staging, committing, pushing changes, and running pre-commit hooks. It also
@@ -18,7 +19,6 @@ import subprocess
 import sys
 from typing import Optional, Tuple
 import psutil
-
 from git import (
     GitCommandError,
     InvalidGitRepositoryError,
@@ -29,15 +29,7 @@ from git import (
 
 from klingon_tools.git_push_helper import git_push
 from klingon_tools.git_user_info import get_git_user_info
-from klingon_tools.git_validate_commit import (
-    is_commit_message_signed_off,
-    is_conventional_commit,
-    validate_commit_messages,
-)
 from klingon_tools.log_msg import log_message
-from klingon_tools.openai_tools import OpenAITools
-
-LOOP_MAX_PRE_COMMIT = 10
 
 
 def branch_exists(branch_name: str) -> bool:
@@ -119,11 +111,6 @@ def git_get_toplevel() -> Optional[Repo]:
             message="Error initializing git repository", status="❌"
         )
         log_message.exception(message=f"{e}")
-        # Log an error message if the repository initialization fails
-        log_message.error(
-            message="Error initializing git repository", status="❌"
-        )
-        log_message.exception(message=f"{e}")
         # Return None if the repository initialization fails
         return None
 
@@ -153,14 +140,12 @@ def git_get_status(repo: Repo) -> Tuple[list, list, list, list, list]:
 
     # Initialize lists to store the status of files
     deleted_files = [
-        # List of deleted files
         item.a_path
         for item in repo.index.diff(None)
         if item.change_type == "D"
     ]
-    untracked_files = repo.untracked_files  # List of untracked files
+    untracked_files = repo.untracked_files
     modified_files = [
-        # List of modified files
         item.a_path
         for item in repo.index.diff(None)
         if item.change_type == "M"
@@ -174,21 +159,16 @@ def git_get_status(repo: Repo) -> Tuple[list, list, list, list, list]:
         # Check for committed but not pushed files
         for item in repo.head.commit.diff(f"origin/{current_branch}"):
             if hasattr(item, "a_blob") and hasattr(item, "b_blob"):
-                # Add the file to the committed but not pushed list
                 committed_not_pushed.append(item.a_path)
     except ValueError as e:
-        # Log an error message if there is an issue processing the diff-tree
-        # output
         log_message.error(
             message="Error processing diff-tree output:", status="❌"
         )
         log_message.exception(message=f"{e}")
     except Exception as e:
-        # Log an error message for any unexpected errors
         log_message.error(message="Unexpected error:", status="❌")
         log_message.exception(message=f"{e}")
 
-    # Return the collected status information
     return (
         deleted_files,
         untracked_files,
@@ -203,11 +183,11 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
 
     This function identifies deleted files in the repository, stages them for
     commit, generates a commit message, and commits the changes. It ensures
-    that the commit message follows the Conventional Commits standard and is
-    signed off by the user.
+    that the commit message is signed off by the user.
 
     Args:
         repo: An instance of the git.Repo object representing the repository.
+        deleted_files: A list of deleted files to be committed.
 
     Returns:
         None
@@ -233,32 +213,59 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
             message=f"Deleted files: {all_deleted_files}", status="🐞"
         )
 
+        successfully_staged = []
         # Stage the deleted files for commit
         for file in all_deleted_files:
             if os.path.exists(file):
                 repo.index.remove([file], working_tree=True)
+                successfully_staged.append(file)
             else:
                 log_message.info(
                     message=(
                         f"File {file} is already deleted and will be staged "
                         "for removal."
                     ),
-                    status="⚠️",
+                    status="👾",
                 )
-            repo.index.remove([file], working_tree=True)
+                try:
+                    if file in repo.index.entries:
+                        repo.index.remove([file], working_tree=True)
+                        successfully_staged.append(file)
+                    else:
+                        log_message.warning(
+                            message=f"File {file} not found in the index, "
+                            "skipping",
+                            status="👾",
+                        )
+                except git_exc.GitCommandError as e:
+                    log_message.error(
+                        message=f"Failed to stage deleted file {file}",
+                        status="❌",
+                    )
+                    log_message.exception(message=f"{e}")
+                    continue
 
+        if successfully_staged:
             # Generate the commit message with scope
-            commit_message = f"chore({file}): Committing deleted file"
+            commit_message = (
+                f"chore: Delete {len(successfully_staged)}"
+                f" file(s)"
+            )
 
-            # Ensure the commit message is signed off
-            if not is_commit_message_signed_off(commit_message):
+            # Add sign-off if it doesn't exist
+            if "Signed-off-by:" not in commit_message:
                 user_name, user_email = get_git_user_info()
                 signoff = f"\n\nSigned-off-by: {user_name} <{user_email}>"
                 commit_message += signoff
 
-            # Commit the deleted file with the generated commit message
+            # Commit the deleted files with the generated commit message
             try:
-                repo.git.commit("-S", "-m", commit_message)
+                repo.index.commit(commit_message.strip())
+                log_message.info(
+                    message=f"Committed {len(successfully_staged)} deleted "
+                    "file(s)",
+                    status="✅"
+                )
             except GitCommandError as e:
                 if "gpg failed to sign the data" in str(e):
                     log_message.warning(
@@ -266,282 +273,74 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
                             "GPG signing failed. Retrying commit without GPG "
                             "signing."
                         ),
-                        status="⚠️",
+                        status="👾",
                     )
                     try:
-                        repo.git.commit("-m", commit_message)
+                        repo.index.commit(commit_message.strip())
                     except GitCommandError as inner_e:
                         log_message.error(
-                            message="Failed to commit deleted file",
+                            message="Failed to commit deleted files",
                             status="❌",
                         )
                         log_message.exception(message=f"{inner_e}")
                         raise
                 else:
                     log_message.error(
-                        message="Failed to commit deleted file", status="❌"
+                        message="Failed to commit deleted files", status="❌"
                     )
                     log_message.exception(message=f"{e}")
                     raise
 
-            # Log the successful commit
-            log_message.info(
-                message=f"Committed deleted file: {file}", status="✅"
-            )
-
-        # Push the commit to the remote repository
-        git_push(repo)
-
-
-def git_unstage_files(repo: Repo, staged_files: list) -> None:
-    """Unstages all staged files in the given repository.
-
-    This function iterates over all staged files in the repository and
-    un-stages them. It logs the status of each file as it is un-staged.
-
-    Args:
-        repo: An instance of the git.Repo object representing the repository.
-
-    Returns:
-        None
-    """
-    log_message.info(message="Un-staging all staged files", status="🔄")
-    log_message.debug(message="Staged files", status=f"{staged_files}")
-
-    # Iterate over each staged file and un-stage it
-    for file in staged_files:
-        try:
-            repo.git.reset("--", file)
-            log_message.info(message="Un-staging file", status=f"{file}")
-        except git_exc.GitCommandError as e:
-            log_message.error(
-                message="Error un-staging file", status=f"{file}"
-            )
-            log_message.exception(message=f"{e}")
-
-
-def git_stage_diff(file_name: str, repo: Repo, modified_files: list) -> str:
-    """Stages a file, generates a diff, and returns the diff.
-
-    This function stages the specified file in the repository, generates a diff
-    for the staged file, and returns the diff as a string. It logs the status
-    of the staging and diff generation processes.
-
-    Args:
-        file_name: The name of the file to be staged and diffed. repo: An
-        instance of the git.Repo object representing the repository.
-
-    Returns:
-        A string containing the diff of the staged file.
-    """
-    # Stage the specified file Process .pre-commit-config.yaml if modified
-    process_pre_commit_config(repo, modified_files)
-
-    def stage_file(repo: Repo, file_name: str):
-        """Helper function to stage a file."""
-        repo.index.add([file_name])
-        staged_files = repo.git.diff("--cached", "--name-only").splitlines()
-        log_message.debug(message="Staged files", status=f"{staged_files}")
-
-        # Check if the file was successfully staged
-        if file_name in staged_files:
-            log_message.info(message="Staging file", status="✅")
+            # Push the commit to the remote repository
+            git_push(repo)
         else:
-            log_message.error(message="Failed to stage file", status="❌")
-            sys.exit(1)
-
-    # Stage the file in the main repo
-    stage_file(repo, file_name)
-
-    # Recursively stage files in submodules
-    for submodule in repo.submodules:
-        submodule_repo = submodule.module()
-        if submodule_repo.is_dirty(untracked_files=True):
-            stage_file(submodule_repo, file_name)
-
-    # Generate the diff for the staged file
-    diff = repo.git.diff("HEAD", file_name)
-    if diff:
-        log_message.info(message="Diff generated", status="✅")
-    else:
-        log_message.error(message="Failed to generate diff", status="❌")
-
-    return diff
-
-
-def git_pre_commit(
-    file_name: str, repo: Repo, modified_files: list
-) -> Tuple[bool, str]:
-    """Runs pre-commit hooks on a file.
-
-    This function runs pre-commit hooks on the specified file. If the hooks
-    modify the file, it re-stages the file and re-runs the hooks up to a
-    maximum number of attempts. If the hooks pass without modifying the file,
-    it returns True. If the hooks fail after the maximum number of attempts, it
-    exits the script.
-
-    Args:
-        file_name: The name of the file to run pre-commit hooks on. repo: An
-        instance of the git.Repo object representing the repository.
-
-    Returns:
-        True if the pre-commit hooks pass without modifying the file, otherwise
-        exits the script after the maximum number of attempts.
-    """
-    attempt = 0  # Initialize the attempt counter
-
-    # Stage the file and generate a diff of the file being processed
-    diff = git_stage_diff(file_name, repo, modified_files)
-
-    while attempt < LOOP_MAX_PRE_COMMIT:
-        env = os.environ.copy()  # Copy the current environment variables
-        # Set PYTHONUNBUFFERED to ensure real-time output
-        env["PYTHONUNBUFFERED"] = "1"
-
-        process = subprocess.Popen(  # Run the pre-commit hooks
-            ["pre-commit", "run", "--files", file_name],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            env=env,
-        )
-
-        stdout, stderr = (
-            [],
-            [],
-        )  # Initialize lists to capture stdout and stderr
-
-        for line in process.stdout:  # Capture stdout line by line
-            # Replace specific strings with emoticons
-            modified_line = (
-                line.replace("Passed", "....✅")
-                .replace("Skipped", ".....⏭️")
-                .replace("Failed", "....❌")
-            )
-            sys.stdout.write(modified_line)
-            stdout.append(modified_line)
-
-        for line in process.stderr:  # Capture stderr line by line
-            # Replace specific strings with emoticons
-            modified_line = (
-                line.replace("Passed", "....✅")
-                .replace("Skipped", ".....⏭️")
-                .replace("Failed", "....❌")
-            )
-            sys.stderr.write(modified_line)
-            stderr.append(modified_line)
-
-        process.wait()  # Wait for the process to complete
-        result = (
-            subprocess.CompletedProcess(  # Create a CompletedProcess instance
-                process.args,
-                process.returncode,
-                "".join(stdout),
-                "".join(stderr),
-            )
-        )
-
-        if (
-            "files were modified by this hook" in result.stdout
-            or "Fixing" in result.stdout
-        ):
-            # Log that the file was modified by the pre-commit hook
-            log_message.info(message=80 * "-", status="", style="none")
-            log_message.info(
-                message=("File modified by pre-commit, restaging"),
-                status="🔄",
-            )
-            log_message.info(message=80 * "-", status="", style="none")
-
-            # Re-stage the file and generate a new diff
-            diff = git_stage_diff(file_name, repo, modified_files)
-
-            # Increment the attempt counter
-            attempt += 1  # Increment the attempt counter
-            if (
-                attempt == LOOP_MAX_PRE_COMMIT
-            ):  # Check if maximum attempts reached
-                log_message.error(
-                    message=f"Pre-commit hooks failed for {file_name} after "
-                    f"{LOOP_MAX_PRE_COMMIT} attempts. Exiting script.",
-                    status="❌",
-                )
-                sys.exit(1)  # Exit the script if maximum attempts reached
-        if result.returncode == 0:  # Check if pre-commit hooks passed
-            log_message.info(message="Pre-commit completed", status="✅")
-            return True, diff  # Return True if hooks passed
-
-        if (
-            result.returncode == 1
-            and "files were modified by this hook" not in result.stdout
-            and "Fixing" not in result.stdout
-        ):
-            log_message.error(
-                message="Pre-commit hooks failed without modifying files. "
-                "Exiting push.",
-                status="❌",
-            )
-            log_message.debug(
-                message=f"Pre-commit stdout: {result.stdout}", status=""
-            )
-            log_message.debug(
-                message=f"Pre-commit stderr: {result.stderr}", status=""
-            )
-            sys.exit(1)
-
-    return False, diff  # Return False if pre-commit hooks did not pass
+            log_message.info(message="No deleted files to commit", status="ℹ️")
 
 
 def git_commit_file(
     file_name: str, repo: Repo, commit_message: Optional[str] = None
-) -> None:
-    """Commits a file with a generated commit message.
+) -> bool:
+    """Commits a file with a validated commit message.
 
-    This function stages the specified file, generates a commit message using
-    the diff of the file, and commits the file to the repository. It logs the
-    status of each step and handles exceptions that may occur during the
-    process.
+    This function stages the specified file and commits it to the repository
+    using a commit message provided by push.py after validation.
 
     Args:
-        file_name: The name of the file to be committed. repo: An instance of
-        the git.Repo object representing the repository. commit_message: The
-        commit message to use. If None, a new commit message will be generated.
+        file_name (str): The name of the file to be committed.
+        repo (Repo): An instance of the git.Repo object representing the
+        repository.
+        commit_message (Optional[str]): The commit message to use (validated
+        externally).
 
     Returns:
-        None
+        bool: True if the commit was successful, False otherwise.
     """
-    repo.index.add([file_name])
-
     try:
-        if commit_message is None:
-            # Generate the diff for the staged file
-            diff = repo.git.diff("HEAD", file_name)
-            openai_tools = OpenAITools()
-            commit_message = None
-            while not commit_message or not is_conventional_commit(
-                commit_message
-            ):
-                commit_message = openai_tools.generate_commit_message(diff)
+        # Stage the file
+        repo.index.add([file_name])
+        log_message.info(message=f"File staged: {file_name}", status="✅")
 
-        # Commit the file with the generated commit message
-        if commit_message:
-            repo.index.commit(commit_message.strip())
-        else:
-            raise ValueError("Commit message cannot be None")
-        # Log the successful commit
-        log_message.info(message="File committed", status="✅")
+        # Ensure commit message is not None or empty
+        if not commit_message:
+            raise ValueError("Commit message cannot be empty")
 
-        # Example call to validate_commit_messages
-        openai_tools = OpenAITools()
-        validate_commit_messages(repo, openai_tools)
+        # Commit the file
+        repo.index.commit(commit_message.strip())
+        log_message.info(message=f"File committed: {file_name}", status="✅")
+        return True
+
     except ValueError as ve:
-        # Log an error message if the commit message format is invalid
-        log_message.error(message="Commit message format error", status="❌")
-        log_message.exception(message=f"{ve}")
+        log_message.error(
+            message=f"Commit message error: {ve}", status="❌")
+    except GitCommandError as ge:
+        log_message.error(
+            message=f"Git command error: {ge}", status="❌")
     except Exception as e:
-        # Log an error message if the commit fails
-        log_message.error(message="Failed to commit file", status="❌")
-        log_message.exception(message=f"{e}")
+        log_message.error(
+            message=f"Unexpected error during commit: {e}",
+            status="❌")
+
+    return False
 
 
 def log_git_stats(
@@ -593,10 +392,6 @@ def push_changes_if_needed(repo: Repo, args) -> None:
     Returns:
         None
     """
-    # Update git status variables so we have a count of files to push from
-    # committed_not_pushed
-    committed_not_pushed = git_get_status(repo)[-1]
-
     def push_submodules(repo: Repo):
         """Recursively push changes in submodules."""
         for submodule in repo.submodules:
@@ -607,12 +402,16 @@ def push_changes_if_needed(repo: Repo, args) -> None:
                 push_submodules(submodule_repo)
             submodule_repo.remotes.origin.push()
 
+    # Retrieve the current status of the repository
+    _, _, _, _, committed_not_pushed = git_get_status(repo)
+
     try:
         # Check if there are new commits to push
-        if (
-            repo.is_dirty(index=True, working_tree=False)
-            or committed_not_pushed
-        ):
+        if committed_not_pushed:
+            log_message.info(
+                message="Committing not pushed files found. Pushing changes.",
+                status="🚀",
+            )
             if args.dryrun:
                 log_message.info(
                     message="Dry run mode enabled. Skipping push.", status="🚫"
@@ -625,56 +424,60 @@ def push_changes_if_needed(repo: Repo, args) -> None:
 
                 # Perform cleanup after push operation
                 cleanup_lock_file(args.repo_path)
-        elif committed_not_pushed:
-            log_message.info(
-                message="Committing not pushed files found. Pushing changes.",
-                status="🚀",
-            )
-            git_push(repo)
-            # Push changes in submodules
-            push_submodules(repo)
         else:
             log_message.info(
                 message="No new commits to push. Skipping push.", status="🚫"
             )
     except Exception as e:
         log_message.error(message="Failed to push changes", status="❌")
-        log_message.exception(message=f"{e}")
+        log_message.error(
+            message=f"{e}",
+            status="",
+            style="none",
+        )
 
 
-def process_pre_commit_config(repo: Repo, modified_files: list) -> None:
-    """Process the .pre-commit-config.yaml file.
-
-    This function stages and commits the .pre-commit-config.yaml file if it is
-    modified.
-
-    Args:
-        repo (Repo): The git repository object.
+def fix_commit_message(commit_message: str) -> str:
     """
-    # If .pre-commit-config.yaml is modified, stage and commit it
-    if ".pre-commit-config.yaml" in modified_files:
-        log_message.info(
-            message=".pre-commit-config.yaml modified", status="Staging"
-        )
-        repo.git.add(".pre-commit-config.yaml")
-        log_message.info(
-            message=".pre-commit-config.yaml staged", status="Committing"
-        )
-        openai_tools = OpenAITools()
-        diff = repo.git.diff("HEAD", ".pre-commit-config.yaml")
-        commit_message = openai_tools.generate_commit_message(diff)
-        repo.index.commit(commit_message)
-        log_message.info(
-            message=".pre-commit-config.yaml committed", status="✅"
-        )
+    Fixes the commit message by ensuring it follows the conventional format.
+    """
+    if not commit_message.startswith("chore:"):
+        commit_message = "chore: " + commit_message
 
-        # Remove .pre-commit-config.yaml from modified_files
-        modified_files.remove(".pre-commit-config.yaml")
+    # Split the message into lines
+    lines = commit_message.splitlines()
+    fixed_lines = []
 
-        # If modified_files is empty, log no more files to process and exit
-        if not modified_files:
-            log_message.info(
-                message="No more files to process. Exiting script.",
-                status="🚪",
-            )
-            sys.exit(0)
+    for line in lines:
+        if len(line) <= 72:
+            fixed_lines.append(line)
+        else:
+            while len(line) > 72:
+                # Find the last space within the first 72 characters
+                split_pos = line.rfind(' ', 0, 72)
+                if split_pos == -1:
+                    # If no space is found, split at 72 characters
+                    split_pos = 72
+                fixed_lines.append(line[:split_pos].rstrip())
+                line = line[split_pos:].lstrip()
+            fixed_lines.append(line)
+
+    return 'chore: ' + '\n'.join(fixed_lines)
+
+
+def handle_file_deletions(repo: Repo) -> None:
+    """Handles file deletions in the repository."""
+    deleted_files = subprocess.run(
+        ["git", "ls-files", "--deleted"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.splitlines()
+
+    for file in deleted_files:
+        try:
+            repo.index.remove([file], working_tree=True)
+            commit_message = f"chore({file}): Cleanup deleted items"
+            repo.index.commit(commit_message)
+        except GitCommandError as e:
+            log_message.error(f"Failed to handle deletion for {file}: {e}")

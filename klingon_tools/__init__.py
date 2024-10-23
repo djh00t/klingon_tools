@@ -1,10 +1,12 @@
-from .logtools import LogTools as _LogTools
+"""
+Klingon Tools: A collection of utilities for various tasks.
 
+This module provides access to the LogTools class, which offers
+logging functionality for the Klingon Tools package.
+"""
 
-class LogTools(_LogTools):
+from .log_tools import LogTools
 
-    def __init__(self, debug=False):
-        super().__init__(debug)
-
+__version__ = "0.0.0"
 
 __all__ = ["LogTools"]
