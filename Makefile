@@ -149,4 +149,10 @@ wheel: clean
 	@log-message $(LOG_MSG_CONF) "Creating wheel distribution..." --status "📦"
 	@poetry build --format wheel
 
-.PHONY: clean check-packages sdist wheel upload-test upload install uninstall test push-prep get-developer-info release
+# Commit changes after auto-fix
+commit-auto-fix:
+	@log-message $(LOG_MSG_CONF) "Auto-fix detected. Re-staging and reprocessing changes..." --status "🔄"
+	@git add .
+	@python klingon_tools/push.py --repo-path . --file-name .
+
+.PHONY: clean check-packages sdist wheel upload-test upload install uninstall test push-prep get-developer-info release commit-auto-fix

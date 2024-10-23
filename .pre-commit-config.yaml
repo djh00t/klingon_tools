@@ -51,3 +51,10 @@ repos:
       - id: jwt
       - id: slack-webhook-url
       - id: google-oauth-client-secret
+  - repo: local
+    hooks:
+      - id: commit-msg
+        name: Commit Message Validator
+        entry: python klingon_tools/git_commit_validate.py
+        language: system
+        stages: [commit-msg]
