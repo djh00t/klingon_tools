@@ -45,6 +45,7 @@ from klingon_tools.log_msg import log_message, klog_hr
 from klingon_tools.git_stage import git_stage_diff
 from klingon_tools.litellm_tools import LiteLLMTools
 from klingon_tools.utils import klingon_title_case
+from klingon_tools.log_tools import LogTools
 
 # Maximum number of pre-commit attempts
 LOOP_MAX_PRE_COMMIT = 10
@@ -57,7 +58,7 @@ STATUS_TEMPLATE_MAP = {
     "Passed": {"status_icon": "✅", "template": "Template 1"},
     "Skipped": {"status_icon": "SKIPPED 🦘", "template": "Template 2"},
     "Failed": {"status_icon": "❌", "template": "Template 3"},
-    "Unknown": {"status_icon": "Unknown", "template": "Template 4"},
+    "Unknown": {"status_icon": "❌", "template": "Template 4"},
 }
 
 
@@ -77,8 +78,7 @@ def set_debug_mode(debug: bool) -> None:
 
 
 def pretty_format_dict(data: dict) -> str:
-    """
-    Format a dictionary into a pretty-printed string.
+    """Format a dictionary into a pretty-printed string.
 
     Args:
         data (dict): The dictionary to format.
@@ -109,8 +109,7 @@ def pretty_format_dict(data: dict) -> str:
 
 
 def get_status_info(status: str) -> Dict[str, str]:
-    """
-    Retrieve the status icon and template for a given status.
+    """Retrieve the status icon and template for a given status.
 
     Args:
         status (str): The status string (e.g., "Passed", "Failed").
@@ -130,15 +129,20 @@ def get_status_info(status: str) -> Dict[str, str]:
 
 
 def update_parsed_data(
-    data: Dict, updates: Optional[Dict] = None, status_key: Optional[str] = None
+    data: Dict,
+    updates: Optional[Dict] = None,
+    status_key: Optional[str] = None
 ) -> Dict:
     """
-    Update the parsed data dictionary with additional updates and substitute status values if applicable.
+    Update the parsed data dictionary with additional updates and substitute
+    status values if applicable.
 
     Args:
         data (Dict): The original parsed data dictionary.
-        updates (Optional[Dict]): Additional key-value pairs to update the data with.
-        status_key (Optional[str]): The key in the data dictionary that holds the status value.
+        updates (Optional[Dict]): Additional key-value pairs to update the data
+        with.
+        status_key (Optional[str]): The key in the data dictionary that holds
+        the status value.
 
     Returns:
         Dict: The updated data dictionary.
@@ -147,7 +151,8 @@ def update_parsed_data(
     --------------
     ```python
     data = {'status': 'Passed'}
-    updated_data = update_parsed_data(data, {'template': 'Template 1'}, 'status')
+    updated_data = update_parsed_data(data, {'template': 'Template 1'},
+    'status')
     ```
     """
     if updates:
@@ -167,11 +172,13 @@ def parse_pre_commit_log(
     Parse the pre-commit log lines and extract relevant information.
 
     Args:
-        log_lines (Iterator[str]): An iterator over the log lines from pre-commit hooks.
+        log_lines (Iterator[str]): An iterator over the log lines from
+        pre-commit hooks.
         padding (Optional[str]): The padding string used in the log messages.
 
     Returns:
-        Dict: A dictionary containing parsed information such as message, status, template, and exceptions.
+        Dict: A dictionary containing parsed information such as message,
+        status, template, and exceptions.
 
     Usage Example:
     --------------
@@ -208,7 +215,8 @@ def parse_pre_commit_log(
         ),
         # Template 2: Skipped
         (
-            r"^(?P<message>.+?)(?P<padding>\.+)\((?P<reason>.+)\)(?P<status>Skipped)$",
+            r"^(?P<message>.+?)(?P<padding>\.+)"
+            r"\((?P<reason>.+)\)(?P<status>Skipped)$",
             "Template 2",
         ),
         # Template 3: Failed
@@ -223,8 +231,15 @@ def parse_pre_commit_log(
         match = re.match(pattern, log_line)
         if match:
             parsed_data.update(match.groupdict())
-            parsed_data = update_parsed_data(parsed_data, {"template": template}, "status")
-            parsed_data["message_title_case"] = klingon_title_case(parsed_data["message"])
+            parsed_data = update_parsed_data(
+                parsed_data,
+                {
+                    "template": template
+                },
+                "status"
+            )
+            parsed_data["message_title_case"] = klingon_title_case(
+                parsed_data["message"])
             parsed_data["reason"] = parsed_data.get("reason", None)
 
             # If the status is Failed, parse exceptions
@@ -238,27 +253,31 @@ def parse_pre_commit_log(
     parsed_data = {
         "template": "Template 4",
         "raw_message": log_line,
-        "message": log_line.split(padding)[0] if padding in log_line else log_line,
+        "message": (
+            log_line.split(padding)[0] if padding in log_line else log_line
+        ),
         "reason": None,
         "padding": padding,
         "status": "Unknown",
     }
     parsed_data = update_parsed_data(parsed_data, status_key="status")
-    parsed_data["message_title_case"] = klingon_title_case(parsed_data["message"])
+    parsed_data["message_title_case"] = klingon_title_case(
+        parsed_data["message"])
 
     log_parsed_data(parsed_data)
     return parsed_data
 
 
 def parse_exceptions(log_lines: Iterator[str]) -> List[Dict]:
-    """
-    Parse exception details from the log lines.
+    """Parse exception details from the log lines.
 
     Args:
-        log_lines (Iterator[str]): An iterator over the log lines from pre-commit hooks.
+        log_lines (Iterator[str]): An iterator over the log lines from
+        pre-commit hooks.
 
     Returns:
-        List[Dict]: A list of dictionaries, each containing details of an exception.
+        List[Dict]: A list of dictionaries, each containing details of an
+        exception.
 
     Usage Example:
     --------------
@@ -277,7 +296,9 @@ def parse_exceptions(log_lines: Iterator[str]) -> List[Dict]:
         if line.startswith("- hook id:"):
             if exception_data:
                 # Save the previous exception data
-                exception_data["exception_messages"] = exception_messages.copy()
+                exception_data["exception_messages"] = (
+                    exception_messages.copy()
+                )
                 exceptions.append(exception_data.copy())
                 exception_data.clear()
                 exception_messages.clear()
@@ -292,7 +313,8 @@ def parse_exceptions(log_lines: Iterator[str]) -> List[Dict]:
             exception_messages.append(line)
             # Check if the hook modified any files
             if "files were modified by this hook" in line:
-                exception_data["files_modified"] = extract_modified_files(exception_messages)
+                exception_data["files_modified"] = extract_modified_files(
+                    exception_messages)
 
     # Append the last exception if exists
     if exception_data:
@@ -303,8 +325,7 @@ def parse_exceptions(log_lines: Iterator[str]) -> List[Dict]:
 
 
 def extract_modified_files(exception_messages: List[str]) -> List[str]:
-    """
-    Extract modified file names from exception messages.
+    """Extract modified file names from exception messages.
 
     Args:
         exception_messages (List[str]): A list of exception message strings.
@@ -325,8 +346,7 @@ def extract_modified_files(exception_messages: List[str]) -> List[str]:
 
 
 def log_parsed_data(parsed_data: Dict) -> None:
-    """
-    Log the parsed data according to the status.
+    """Log the parsed data according to the status.
 
     Args:
         parsed_data (Dict): The dictionary containing parsed log information.
@@ -336,28 +356,30 @@ def log_parsed_data(parsed_data: Dict) -> None:
     `log_parsed_data({'message': 'Test', 'status': 'Passed'})`
     """
     if debug_mode:
-        # Debugging: Print a horizontal rule and the pretty-formatted parsed data
+        # Debugging: Print a horizontal rule and the pretty-formatted parsed
+        # data
         log_message.debug(
             f"{pretty_format_dict(parsed_data)}",
             status="",
             style="none",
         )
 
-    # Log a horizontal rule for clarity
-    klog_hr.info(char="-")
     # Construct the message line without duplicating the status icon
-    message_line = f"{parsed_data['message_title_case']}{parsed_data['padding']}"
-    log_message.info(message_line, status=parsed_data.get("status_icon", ""), style="pre-commit")
+    message_line = f"{parsed_data['message_title_case']}{
+        parsed_data['padding']}"
+    log_message.info(message_line, status=parsed_data.get(
+        "status_icon", ""), style="pre-commit")
 
     # Additional logging for exceptions if the status is Failed
     if parsed_data["status"] == "Failed" and "exceptions" in parsed_data:
         for exception in parsed_data["exceptions"]:
             pre_commit_exception_log_message(exception)
+            for line in exception.get("exception_messages", []):
+                log_message.error(line.strip(), status="", style="none")
 
 
 def pre_commit_exception_log_message(exception_data: Dict) -> None:
-    """
-    Log pre-commit exception messages.
+    """Log pre-commit exception messages.
 
     Args:
         exception_data (Dict): A dictionary containing exception details.
@@ -372,18 +394,16 @@ def pre_commit_exception_log_message(exception_data: Dict) -> None:
     })
     ```
     """
-    log_message.error(f"Hook ID: {exception_data.get('hook_id', '')}")
-    log_message.error(f"Exit Code: {exception_data.get('exit_code', '')}")
-    for line in exception_data.get("exception_messages", []):
-        log_message.error(line)
+    log_tools = LogTools(debug=debug_mode)
+    log_tools.pre_commit_exception_log_message(exception_data)
 
 
 def process_pre_commit_config(repo: Repo, modified_files: List[str]) -> None:
-    """
-    Process and commit changes to the .pre-commit-config.yaml file.
+    """Process and commit changes to the .pre-commit-config.yaml file.
 
-    If the .pre-commit-config.yaml file is modified, this function stages and commits the changes
-    with a generated commit message. If no more files are left to process after this, the script exits.
+    If the .pre-commit-config.yaml file is modified, this function stages and
+    commits the changes with a generated commit message. If no more files are
+    left to process after this, the script exits.
 
     Args:
         repo (Repo): The Git repository object.
@@ -391,7 +411,8 @@ def process_pre_commit_config(repo: Repo, modified_files: List[str]) -> None:
 
     Usage Example:
     --------------
-    `process_pre_commit_config(repo, ['.pre-commit-config.yaml', 'other_file.py'])`
+    `process_pre_commit_config(repo, ['.pre-commit-config.yaml',
+    'other_file.py'])`
     """
     if ".pre-commit-config.yaml" in modified_files:
         log_message.info(".pre-commit-config.yaml modified", status="Staging")
@@ -401,7 +422,8 @@ def process_pre_commit_config(repo: Repo, modified_files: List[str]) -> None:
         log_message.info(".pre-commit-config.yaml staged", status="Committing")
         # Initialize LiteLLMTools to generate commit message
         litellm_tools = LiteLLMTools()
-        commit_message = litellm_tools.create_commit_message(".pre-commit-config.yaml", repo)
+        commit_message = litellm_tools.create_commit_message(
+            ".pre-commit-config.yaml", repo)
         # Commit the staged changes
         repo.index.commit(commit_message)
 
@@ -410,19 +432,20 @@ def process_pre_commit_config(repo: Repo, modified_files: List[str]) -> None:
         modified_files.remove(".pre-commit-config.yaml")
 
         if not modified_files:
-            log_message.info("No more files to process. Exiting script.", status="🚪🏃‍♂️")
+            log_message.info(
+                "No more files to process. Exiting script.", status="🚪🏃‍♂️")
             sys.exit(0)
 
 
 def git_pre_commit(
     file_name: str, repo: Repo, modified_files: List[str]
 ) -> Tuple[bool, str]:
-    """
-    Run pre-commit hooks on a file and handle the results.
+    """Run pre-commit hooks on a file and handle the results.
 
-    Executes the pre-commit hooks for the specified file, parses the output, handles any modifications
-    made by the hooks, and commits changes if necessary. Retries the hooks up to a maximum number of attempts
-    if files are modified by the hooks.
+    Executes the pre-commit hooks for the specified file, parses the output,
+    handles any modifications made by the hooks, and commits changes if
+    necessary. Retries the hooks up to a maximum number of attempts if files
+    are modified by the hooks.
 
     Args:
         file_name (str): The name of the file to run pre-commit hooks on.
@@ -430,7 +453,8 @@ def git_pre_commit(
         modified_files (List[str]): A list of modified file paths.
 
     Returns:
-        Tuple[bool, str]: A tuple containing a boolean indicating success, and a string representing the diff.
+        Tuple[bool, str]: A tuple containing a boolean indicating success, and
+        a string representing the diff.
 
     Usage Example:
     --------------
@@ -453,7 +477,8 @@ def git_pre_commit(
     while attempt < LOOP_MAX_PRE_COMMIT:
         attempt += 1
         log_message.info(
-            "Running pre-commit attempt", status=f"{attempt}/{LOOP_MAX_PRE_COMMIT}"
+            message="Running pre-commit attempt",
+            status=f"{attempt}/{LOOP_MAX_PRE_COMMIT}"
         )
 
         # Set up environment variables for subprocess
@@ -471,39 +496,28 @@ def git_pre_commit(
         stdout, stderr = process.communicate()
         stdout_lines = iter(stdout.splitlines())
 
-        # Parse the pre-commit log output
-        while True:
-            try:
-                log_data = parse_pre_commit_log(stdout_lines)
-                if not log_data:
-                    break
-            except StopIteration:
-                break
+        # Process each line of the pre-commit log output
+        for line in stdout_lines:
+            log_data = parse_pre_commit_log(iter([line]))
+            if log_data and log_data.get("status") == "Failed":
+                # Log the exception message
+                pre_commit_exception_log_message(log_data)
+                # Capture and log all remaining lines
+                remaining_lines = list(stdout_lines)
+                for remaining_line in remaining_lines:
+                    log_message.error(remaining_line.strip(),
+                                      status="", style="none")
+                # Exit with error
+                log_message.error(
+                    "Pre-commit hooks failed without modifying files. Exiting",
+                    status="❌",
+                    style="pre-commit"
+                )
+                sys.exit(1)
 
-        if process.returncode == 0:
-            # Pre-commit hooks passed successfully
-            log_message.info("Pre-commit completed", status="✅")
-            return True, diff
-
-        # Check if any exceptions indicate that files were modified by the hooks
-        if "exceptions" in log_data:
-            files_modified = any(
-                exc.get("files_modified") for exc in log_data["exceptions"]
-            )
-            if files_modified:
-                # Log and restage the modified file
-                klog_hr.info(char="-")
-                log_message.info("File modified by pre-commit, restaging", status="🔄")
-                diff = git_stage_diff(file_name, repo, modified_files)
-                continue  # Retry the pre-commit hooks
-
-        if process.returncode == 1:
-            # Pre-commit hooks failed without modifying files
-            log_message.error(
-                "Pre-commit hooks failed without modifying files. Exiting.",
-                status="❌",
-            )
-            sys.exit(1)
+        # If no exceptions, pre-commit hooks passed successfully
+        log_message.info("Pre-commit completed", status="✅")
+        return True, diff
 
     # If maximum attempts reached without success
     return False, diff
