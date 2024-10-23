@@ -163,8 +163,7 @@ def test_model_functionality(no_llm):
         model_to_test = models[0]["name"]
         print(f"Testing model: {model_to_test}")
 
-        prompt = "Calculate this, returning only a single "
-        "number as your answer: `2 + 2`"
+        prompt = "Solve `2 + 2`. You **MUST** only return a single number."
 
         generate_response = requests.post(
             f"{OLLAMA_URL}/api/generate",
