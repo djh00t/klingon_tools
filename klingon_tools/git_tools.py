@@ -193,53 +193,46 @@ def git_commit_deletes(repo: Repo, deleted_files: list) -> None:
         None
     """
     if deleted_files:
-        # Combine deleted files from the global list and the repository index
-        all_deleted_files = list(
-            set(
-                deleted_files
-                + [
-                    item.a_path
-                    for item in repo.index.diff(None)
-                    if item.change_type == "D"
-                ]
-            )
-        )
         # Log the number of deleted files
         log_message.info(
-            message="Deleted files",
-            status=f"{len(all_deleted_files)}",
+            message="Processing deleted files",
+            status=f"{len(deleted_files)}",
         )
         log_message.debug(
-            message=f"Deleted files: {all_deleted_files}", status="🐞"
+            message=f"Deleted files: {deleted_files}", status="🐞"
         )
 
         successfully_staged = []
-        # Stage the deleted files for commit
-        for file in all_deleted_files:
-            if os.path.exists(file):
-                repo.index.remove([file], working_tree=True)
+        # Stage the deleted files for commit using git rm
+        for file in deleted_files:
+            try:
+                # Use git rm to properly stage the deletion
+                repo.git.rm(file)
                 successfully_staged.append(file)
-            else:
                 log_message.info(
-                    message=(
-                        f"File {file} is already deleted and will be staged "
-                        "for removal."
-                    ),
-                    status="👾",
+                    message=f"Staged deletion of {file}",
+                    status="✅"
                 )
-                try:
-                    if file in repo.index.entries:
-                        repo.index.remove([file], working_tree=True)
+            except git_exc.GitCommandError as e:
+                if "did not match any files" in str(e):
+                    # File is already deleted, try to stage it
+                    try:
+                        repo.git.add(file)
                         successfully_staged.append(file)
-                    else:
-                        log_message.warning(
-                            message=f"File {file} not found in the index, "
-                            "skipping",
-                            status="👾",
+                        log_message.info(
+                            message=f"Staged already deleted file {file}",
+                            status="✅"
                         )
-                except git_exc.GitCommandError as e:
+                    except git_exc.GitCommandError as inner_e:
+                        log_message.error(
+                            message=f"Failed to stage deleted file {file}",
+                            status="❌",
+                        )
+                        log_message.exception(message=f"{inner_e}")
+                        continue
+                else:
                     log_message.error(
-                        message=f"Failed to stage deleted file {file}",
+                        message=f"Failed to remove file {file}",
                         status="❌",
                     )
                     log_message.exception(message=f"{e}")
