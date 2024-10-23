@@ -37,6 +37,10 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
+      - name: Generate changelog
+        run: |
+          npx conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 0
+
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

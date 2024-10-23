@@ -10,6 +10,7 @@ from klingon_tools.litellm_model_cache import (
     update_env_variable,
     get_supported_models,
 )
+import klingon_tools.litellm_model_cache  # 导入以重置 _cached_model_data
 
 
 @pytest.fixture
@@ -52,6 +53,9 @@ def test_fetch_model_data(mock_response, mock_file_content):
                 mock_file.assert_called_once_with(
                     "/tmp/klingon_models_cache.json", "r", encoding='utf-8'
                 )
+
+                # Reset the cached_model_data to ensure the next call tests the cache miss
+                klingon_tools.litellm_model_cache._cached_model_data = None
 
                 # Test when cache file doesn't exist
                 mock_exists.return_value = False

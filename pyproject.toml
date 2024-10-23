@@ -28,20 +28,19 @@ packaging = "^24.1"
 jinja2 = "^3.1.4"
 litellm = "^1.44.4"
 iniconfig = "^2.0.0"
-toml = "^0.10.2"
 emoji = "^2.14.0"
 pytest-timeout = "^2.3.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest-mock = "^3.14.0"
-poetry = "^1.8.3"
 pytest = "^8.3.2"
 pytest-dependency = "^0.6.0"
 autopep8 = "^2.3.1"
 docformatter = "^1.7.5"
+toml = "^0.10.2"
 
 [tool.poetry.scripts]
-push = "klingon_tools.push:main"
+push = "klingon_tools.entrypoints:push_entrypoint"
 gh-actions-update = "klingon_tools.gh_actions_update:main"
 pr-title-generate = "klingon_tools.entrypoints:gh_pr_gen_title"
 pr-summary-generate = "klingon_tools.entrypoints:gh_pr_gen_summary"
