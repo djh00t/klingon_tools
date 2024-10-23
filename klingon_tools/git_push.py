@@ -37,7 +37,8 @@ def git_push(repo: git.Repo) -> None:
     """
     try:
         repo.git.reset()
-        _handle_file_deletions(repo)
+        from klingon_tools.git_tools import git_commit_deletes
+        git_commit_deletes(repo, [])
 
         litellm_tools = LiteLLMTools()
         _generate_and_commit_messages(repo, litellm_tools)
