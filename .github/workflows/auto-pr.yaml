@@ -61,7 +61,7 @@ jobs:
         uses: snok/install-poetry@v1.4.1
 
       - name: Install Python Requirements
-        run: poetry install --with dev --no-root && pip install -U .
+        run: poetry lock && poetry install --with dev --no-root && pip install -U .
 
       - name: Run Unit Tests
         run: make test
