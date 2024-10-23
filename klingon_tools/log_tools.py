@@ -62,7 +62,6 @@ class LogTools:
         if level not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
             raise ValueError(f"Invalid log level '{level}'.")
         if level != self.current_log_level:
-            #print(f"Setting log level to {level}")
             self.current_log_level = level
             self.log_message.set_log_level(level)
 
@@ -220,7 +219,12 @@ class LogTools:
 
         def _log_hr(self, level, char="=", width=80):
             hr_line = char * width
-            self.log_message._log(level, message=hr_line, status="", style="none")
+            self.log_message._log(
+                level,
+                message=hr_line,
+                status="",
+                style="none"
+            )
 
         def info(self, char="=", width=80):
             self._log_hr(logging.INFO, char, width)
@@ -237,36 +241,35 @@ class LogTools:
         def critical(self, char="=", width=80):
             self._log_hr(logging.CRITICAL, char, width)
 
-    def pre_commit_exception_log_message(self, message, exception_hook_id, exception_exit_code, exception_message):
+    def pre_commit_exception_log_message(
+        self,
+        exception_data: dict
+    ) -> None:
         """Logs pre-commit exception details in a structured format."""
-        # Log the first line
-        self.log_message.info(
-            message=message,
-            status="",
-            style="none"
-        )
+        # Format hook ID with right-aligned value
+        hook_id = exception_data.get('hook_id', '').strip().title()
+        self.log_message.error(
+            f"- Hook id: {hook_id}", status="", style="none")
 
-        # Log the hook id
-        self.log_message.info(
-            message=f"hook id: {exception_hook_id}",
-            status="",
-            style="none"
-        )
+        # Format exit code with right-aligned value
+        exit_code = str(exception_data.get('exit_code', ''))
+        self.log_message.error(
+            f"- Exit code: {exit_code}", status="", style="none")
 
-        # Log the exit code
-        self.log_message.info(
-            message=f"exit code: {exception_exit_code}",
-            status="",
-            style="none"
-        )
+        # Log exception messages
+        messages = exception_data.get('exception_messages', [])
+        if messages:
+            for line in messages:
+                if "files were modified by this hook" in line.lower():
+                    self.log_message.error(
+                        "Files Were Modified by This Hook",
+                        status="",
+                        style="none"
+                    )
+                else:
+                    self.log_message.error(
+                        line.strip(), status="", style="none")
 
-        # Log the exception message
-        for line in exception_message:
-            self.log_message.info(
-                message=line,
-                status="",
-                style="none"
-            )
     def method_state(
         self,
         message: Optional[str] = None,
