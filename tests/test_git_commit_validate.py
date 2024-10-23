@@ -32,11 +32,11 @@ class MockLogMessage:
         """Log an info message."""
         self.messages.append(f"INFO: {message} - {status}")
 
-    def error(self, message, status, reason=None):
+    def error(self, message, status, reason=None, style=None):
         """Log an error message."""
         self.messages.append(f"ERROR: {message} - {status}")
 
-    def debug(self, message, status):
+    def debug(self, message, status, style=None):
         """Log a debug message."""
         self.messages.append(f"DEBUG: {message} - {status}")
 
@@ -104,12 +104,21 @@ def test_check_description(mock_log_message):
 
 def test_check_line_length(mock_log_message):
     """Test the check_line_length function."""
-    assert check_line_length(
+    # Test with a valid line length
+    is_valid, fixed_message = check_line_length(
         "feat(core): add new feature", mock_log_message
     )
-    assert not check_line_length(
-        "feat(core): " + "a" * 61, mock_log_message
-    )  # This will make the total length 74 characters
+    assert is_valid
+    assert fixed_message is None
+
+    # Test with an invalid line length (74 characters)
+    long_commit_message = "feat(core): " + "a" * 61  # Total length = 74
+    is_valid, fixed_message = check_line_length(
+        long_commit_message, mock_log_message
+    )
+    assert not is_valid
+    expected_fixed_message = "feat(core):\n" + "a" * 61
+    assert fixed_message == expected_fixed_message
 
 
 def test_check_body(mock_log_message):
@@ -154,8 +163,8 @@ def test_fix_body_wrapping():
     long_body = ("This is a very long body that exceeds the 72 character "
                  "limit and should be wrapped accordingly.")
     fixed_body = fix_body_wrapping(long_body)
-    wrapped_body = "\n".join(textwrap.wrap(fixed_body, width=79))
-    assert all(len(line) <= 79 for line in wrapped_body.split('\n'))
+    wrapped_body = "\n".join(textwrap.wrap(fixed_body, width=72))
+    assert all(len(line) <= 72 for line in wrapped_body.split('\n'))
 
 
 def test_fix_footer_wrapping():
@@ -164,15 +173,19 @@ def test_fix_footer_wrapping():
                    "exceeds the 72 character limit and should be wrapped "
                    "accordingly.")
     fixed_footer = fix_footer_wrapping(long_footer)
-    wrapped_footer = "\n".join(textwrap.wrap(fixed_footer, width=79))
-    assert all(len(line) <= 79 for line in wrapped_footer.split('\n'))
+    wrapped_footer = "\n".join(textwrap.wrap(fixed_footer, width=72))
+    assert all(len(line) <= 72 for line in wrapped_footer.split('\n'))
 
 
 def test_validate_commit_message(mock_log_message):
     """Test the validate_commit_message function."""
     valid_message = ("feat(core): add new feature\n\nThis is the body.\n\n"
                      "BREAKING CHANGE: This is a breaking change.")
-    assert validate_commit_message(valid_message, mock_log_message)
+    is_valid, fixed_message = validate_commit_message(valid_message, mock_log_message)
+    assert is_valid
+    assert fixed_message is None
 
     invalid_message = "invalid: this is not a valid commit message"
-    assert not validate_commit_message(invalid_message, mock_log_message)
+    is_valid, fixed_message = validate_commit_message(invalid_message, mock_log_message)
+    assert not is_valid
+    assert fixed_message is None  # Adjust this assertion based on expected behavior

@@ -18,13 +18,22 @@ ignore_patterns=()
 while [[ $# -gt 0 ]]; do
     case $1 in
         --dir)
-            dirs+=("$2")
-            shift 2
+            shift
+            while [[ $# -gt 0 && ! "$1" =~ ^-- ]]; do
+                for dir in $1; do
+                    dirs+=("$dir")
+                done
+                shift
+            done
             ;;
         --file)
-            # Use eval to properly handle wildcard patterns
-            eval "files+=($(printf '%q' "$2"))"
-            shift 2
+            shift
+            while [[ $# -gt 0 && ! "$1" =~ ^-- ]]; do
+                for file in $1; do
+                    files+=("$file")
+                done
+                shift
+            done
             ;;
         --ignore)
             ignore_patterns+=("$2")
@@ -46,18 +55,15 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Read .gitignore patterns
-gitignore_file="$(git rev-parse --show-toplevel)/.gitignore"
-gitignore_patterns=($(read_gitignore "$gitignore_file"))
-ignore_patterns+=("${gitignore_patterns[@]}")
-
 # Set default output file if not specified
 if [ -z "$output_file" ]; then
     # Get current date and time in YYYYMMDDHHMMSS format
     current_datetime=$(date +"%Y%m%d%H%M%S")
     # Get current git repository root directory
     root_directory=$(git rev-parse --show-toplevel)
-    output_file="${root_directory}/data/workflows_${current_datetime}.txt"
+    output_dir="${root_directory}/data"
+    mkdir -p "$output_dir"
+    output_file="${output_dir}/workflows_${current_datetime}.txt"
 fi
 
 # Function to read .gitignore and convert patterns to an array
@@ -75,6 +81,11 @@ read_gitignore() {
     echo "${patterns[@]}"
 }
 
+# Read .gitignore patterns
+gitignore_file="$(git rev-parse --show-toplevel)/.gitignore"
+gitignore_patterns=($(read_gitignore "$gitignore_file"))
+ignore_patterns+=("${gitignore_patterns[@]}")
+
 # Function to check if a file should be ignored
 should_ignore() {
     local file="$1"
@@ -90,9 +101,30 @@ should_ignore() {
 process_directory() {
     local dir="$1"
     echo "# Tree structure of $dir" >> "$output_file"
-    tree "$dir" >> "$output_file"
+    
+    # Create a temporary file to store additional files for tree
+    temp_file=$(mktemp)
+    
+    # Add individual files to the temporary file
+    for file in "${files[@]}"; do
+        if [ -f "$file" ] && ! should_ignore "$file"; then
+            echo "$file" >> "$temp_file"
+        fi
+    done
+    
+    # Use tree with the additional files
+    if [ -s "$temp_file" ]; then
+        tree "$dir" $(cat "$temp_file") >> "$output_file"
+    else
+        tree "$dir" >> "$output_file"
+    fi
+    
+    # Remove the temporary file
+    rm "$temp_file"
+    
     echo "" >> "$output_file"
 
+    # Process files in the directory
     while IFS= read -r -d '' file; do
         if [ -f "$file" ] && ! should_ignore "$file"; then
             echo "# $file" >> "$output_file"
@@ -100,30 +132,52 @@ process_directory() {
             echo "" >> "$output_file"
         fi
     done < <(find "$dir" -type f -print0)
-}
-
-# Process directories
-for dir_pattern in "${dirs[@]}"; do
-    for dir in $dir_pattern; do
-        if [ -d "$dir" ]; then
-            process_directory "$dir"
-        else
-            echo "Warning: Directory not found - $dir"
-        fi
-    done
-done
-
-# Process individual files
-for file_pattern in "${files[@]}"; do
-    for file in $file_pattern; do
-        if [ -f "$file" ] && ! should_ignore "$file"; then
+    
+    # Process individual files
+    for file in "${files[@]}"; do
+        if [ -f "$file" ] && ! should_ignore "$file" && [[ ! "$file" == "$dir"* ]]; then
             echo "# $file" >> "$output_file"
             cat "$file" >> "$output_file"
             echo "" >> "$output_file"
-        else
-            echo "Warning: File not found or ignored - $file"
         fi
     done
+}
+
+
+# Print git repo information
+repo_name=$(basename -s .git `git config --get remote.origin.url`)
+repo_dir=$(git rev-parse --show-toplevel)
+repo_origin=$(git config --get remote.origin.url)
+echo "Git Repository: $repo_name"
+echo "Repository Directory: $repo_dir"
+echo "Repository Origin: $repo_origin"
+echo ""
+
+# Initialize counters
+total_files=0
+total_lines=0
+
+# Process directories
+for dir in "${dirs[@]}"; do
+    if [ -d "$dir" ]; then
+        process_directory "$dir"
+    else
+        echo "Warning: Directory not found - $dir"
+    fi
 done
 
+# Count total files and lines
+total_files=$(grep -c '^# ' "$output_file")
+total_lines=$(wc -l < "$output_file")
+
+# Get file size in bytes
+file_size_bytes=$(wc -c < "$output_file")
+file_size_mb=$(bc <<< "scale=2; $file_size_bytes / 1048576")
+file_size_gb=$(bc <<< "scale=2; $file_size_bytes / 1073741824")
+
 echo "Generated $output_file"
+echo "Tree structure:"
+tree "${dirs[@]}"
+echo "Total files included: $total_files"
+echo "Total lines in output: $total_lines"
+echo "Output file size: $file_size_bytes bytes ($file_size_mb MB / $file_size_gb GB)"
