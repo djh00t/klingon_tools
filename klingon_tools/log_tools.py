@@ -25,11 +25,26 @@ class LogTools:
     log_message = None
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
+    # Logging suppression configuration
+    # Adjust logging for the following libraries to WARNING
+    suppress_library_logging_warning = [
+        "requests",
+        "urllib3",
+        "litellm",
+        "httpx"
+    ]
+
+    # Set the log level for the libraries above to WARNING
+    for lib in suppress_library_logging_warning:
+        logging.getLogger(lib).setLevel(logging.WARNING)
+
+    # Clear template values
     template = None
 
     def __init__(self, debug: bool) -> None:
         self.debug = debug
         self.default_style = "default"
+        self.current_log_level = None  # Track the current log level
         if LogTools.log_message is None:
             LogTools.log_message = LogTools.LogMessage(__name__, self)
         self.log_message = LogTools.log_message
@@ -46,16 +61,16 @@ class LogTools:
         level = level.upper()
         if level not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
             raise ValueError(f"Invalid log level '{level}'.")
-        if level != "INFO":
-            print(f"Setting log level to {level}")
-
-        self.log_message.set_log_level(level)
+        if level != self.current_log_level:
+            self.current_log_level = level
+            self.log_message.set_log_level(level)
 
     def get_log_level(self) -> int:
         """Get the current log level."""
         return self.log_message.logger.level
 
     def set_template(cls, template: str) -> None:
+        """Set the template for log messages."""
         cls.template = template
 
     class LogMessage:
@@ -110,7 +125,7 @@ class LogTools:
             if self.parent.template:
                 msg = self.parent.template.format(
                     message=msg, style=style, status=status)
-            return msg
+            return msg.strip()
 
         def _format_message(
                 self,
@@ -204,7 +219,12 @@ class LogTools:
 
         def _log_hr(self, level, char="=", width=80):
             hr_line = char * width
-            self.log_message._log(level, message=hr_line)
+            self.log_message._log(
+                level,
+                message=hr_line,
+                status="",
+                style="none"
+            )
 
         def info(self, char="=", width=80):
             self._log_hr(logging.INFO, char, width)
@@ -220,6 +240,35 @@ class LogTools:
 
         def critical(self, char="=", width=80):
             self._log_hr(logging.CRITICAL, char, width)
+
+    def pre_commit_exception_log_message(
+        self,
+        exception_data: dict
+    ) -> None:
+        """Logs pre-commit exception details in a structured format."""
+        # Format hook ID with right-aligned value
+        hook_id = exception_data.get('hook_id', '').strip().title()
+        self.log_message.error(
+            f"- Hook id: {hook_id}", status="", style="none")
+
+        # Format exit code with right-aligned value
+        exit_code = str(exception_data.get('exit_code', ''))
+        self.log_message.error(
+            f"- Exit code: {exit_code}", status="", style="none")
+
+        # Log exception messages
+        messages = exception_data.get('exception_messages', [])
+        if messages:
+            for line in messages:
+                if "files were modified by this hook" in line.lower():
+                    self.log_message.error(
+                        "Files Were Modified by This Hook",
+                        status="",
+                        style="none"
+                    )
+                else:
+                    self.log_message.error(
+                        line.strip(), status="", style="none")
 
     def method_state(
         self,

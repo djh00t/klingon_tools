@@ -481,7 +481,8 @@ class LiteLLMTools:
                 for line in formatted_message.split("\n")
             )
             log_message.info(
-                message=f"Generated commit message [{model}] for {file_name}:"
+                message=f"\nGenerated commit message [{model}]"
+                f"for {file_name}:"
                 f"\n\n{wrapped_message}\n",
                 status="",
                 style="none",
@@ -512,7 +513,7 @@ class LiteLLMTools:
                     textwrap.wrap(formatted_message, width=79)
                 )
                 log_message.info(
-                    message=f"Generated commit message [{model}]"
+                    message=f"\nGenerated commit message [{model}]"
                     f"for {file_name}:"
                     f"\n\n{wrapped_message}\n",
                     status="",

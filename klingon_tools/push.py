@@ -17,6 +17,7 @@ Attributes:
     staged_files (list): List of staged files.
     committed_not_pushed (list): List of committed but not pushed files.
 """
+
 from git import Repo
 from typing import Any, List, Optional, Tuple
 import argparse
@@ -37,11 +38,11 @@ from klingon_tools.git_tools import (
     log_git_stats,
     push_changes_if_needed,
 )
-from klingon_tools.pre_commit import git_pre_commit
+from klingon_tools.pre_commit import git_pre_commit, set_debug_mode
 from klingon_tools.git_user_info import get_git_user_info
 from klingon_tools.git_commit_validate import validate_commit_message
 from klingon_tools.litellm_model_cache import get_supported_models
-from klingon_tools.log_msg import log_message
+from klingon_tools.log_msg import log_message, klog_hr
 from klingon_tools.log_tools import LogTools
 from klingon_tools.litellm_tools import LiteLLMTools
 
@@ -53,9 +54,9 @@ staged_files: List[str] = []
 committed_not_pushed: List[str] = []
 
 # Suppress logs for common HTTP libraries
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-logging.getLogger("requests").setLevel(logging.WARNING)
-logging.getLogger("litellm").setLevel(logging.WARNING)
+# logging.getLogger("urllib3").setLevel(logging.WARNING)
+# logging.getLogger("requests").setLevel(logging.WARNING)
+# logging.getLogger("litellm").setLevel(logging.WARNING)
 
 # Configure logging with a simpler format
 logging.basicConfig(
@@ -431,10 +432,15 @@ def process_files(
             changes_made = True
         except Exception as e:
             log_message.error(
-                message=f"Error processing file {file}: {str(e)}",
+                message="Error processing file",
+                reason=f"{file}",
                 status="❌"
             )
-            print(f"\n{str(e)}\n")
+            log_message.error(
+                message=f"\n{str(e)}\n\n",
+                status="",
+                style="none"
+            )
 
     return changes_made or bool(files)
 
@@ -484,11 +490,13 @@ def workflow_process_file(
     log_message: Any,
     litellm_tools: LiteLLMTools,
     file_counter: int,
+    max_retries: int = 3,  # Added max_retries to prevent infinite loops
 ) -> None:
     """Process a single file through the git workflow.
 
     This function stages the file, generates a commit message, runs pre-commit
     hooks, and commits the file if all checks pass.
+    It also handles auto-fixed commit messages by re-staging and re-processing.
 
     Args:
         file_name: The name of the file to process.
@@ -498,6 +506,7 @@ def workflow_process_file(
         log_message: The logging function to use for output.
         litellm_tools: The LiteLLM tools object.
         file_counter: The current file counter.
+        max_retries: Maximum number of auto-fix attempts.
 
     Raises:
         SystemExit: If pre-commit hooks fail.
@@ -515,47 +524,62 @@ def workflow_process_file(
         )
         return
 
-    # Stage the file
-    log_message.info(
-        message=f"Staging {file_name}",
-        status=f"{file_counter}/{len(current_modified_files)}",
-    )
-
-    # Generate commit message
-    commit_message = litellm_tools.generate_commit_message_for_file(
-        file_name=file_name, repo=current_repo)
-
-    # Validate the commit message
-    if not validate_commit_message(commit_message, log_message):
-        log_message.error("Commit message validation failed")
-        return
-
-    # Run pre-commit hooks
-    success, _ = git_pre_commit(
-        file_name, current_repo, modified_files)
-
-    # Commit the file if pre-commit hooks pass
-    if success:
-        if current_args.dryrun:
-            log_message.info(
-                "Dry run mode enabled. Skipping commit and push",
-                status="🚫")
-        else:
-            git_commit_file(file_name, current_repo, commit_message)
-    else:
-        log_message.error(
-            "Pre-commit hooks failed. Exiting script",
-            status="❌"
+    attempt = 0
+    while attempt < max_retries:
+        attempt += 1
+        log_message.info(
+            message=f"Staging {file_name} (Attempt {attempt}/{max_retries})",
+            status=f"{file_counter}/{len(current_modified_files)}",
         )
-        sys.exit(1)
 
-    log_message.info(
-        f"Finished processing file: {file_name}",
-        status="✅"
-    )
-    if current_args.debug:
-        git_get_status(current_repo)
-        log_git_stats(*git_get_status(current_repo))
+        # Stage the file
+        current_repo.git.add(file_name)
+
+        # Generate commit message
+        commit_message = litellm_tools.generate_commit_message_for_file(
+            file_name=file_name, repo=current_repo)
+
+        # Validate the commit message
+        is_valid = validate_commit_message(commit_message, log_message)
+
+        if is_valid:
+            # Run pre-commit hooks
+            success, _ = git_pre_commit(
+                file_name, current_repo, current_modified_files)
+
+            # Commit the file if pre-commit hooks pass
+            if success:
+                if current_args.dryrun:
+                    log_message.info(
+                        "Dry run mode enabled. Skipping commit and push",
+                        status="🚫")
+                else:
+                    git_commit_file(file_name, current_repo, commit_message)
+            else:
+                log_message.error(
+                    "Pre-commit hooks failed. Exiting script",
+                    status="❌"
+                )
+                sys.exit(1)
+
+            log_message.info(
+                f"Finished processing file: {file_name}",
+                status="✅"
+            )
+            if current_args.debug:
+                git_get_status(current_repo)
+                log_git_stats(*git_get_status(current_repo))
+            return  # Exit after successful processing
+        else:
+            log_message.error("Commit message validation failed.", status="❌")
+            return
+
+    # If max retries exceeded
+    log_message.error(
+        message=f"Maximum auto-fix attempts reached for {file_name}.",
+        status="❌"
+        )
+    return
 
 
 def expand_and_check_files(file_patterns: List[str]) -> List[str]:
@@ -682,6 +706,17 @@ def process_changes(
         bool: True if changes were made, False otherwise.
     """
     changes_made = False
+
+    # Handle deleted files first
+    if deleted_files:
+        log_message.info("Processing deleted files first", status="🗑️")
+        git_commit_deletes(repo, deleted_files)
+        changes_made = True
+
+        # Re-get status after handling deletes
+        global untracked_files, modified_files
+        (_, untracked_files, modified_files, _, _) = git_get_status(repo)
+
     files_to_process = untracked_files + modified_files
 
     if ".pre-commit-config.yaml" in files_to_process:
@@ -703,10 +738,6 @@ def process_changes(
         repo.git.add(A=True)
         repo.git.commit("-m", "Update .pre-commit-config.yaml", "--no-verify")
         log_message.info("Staged and committed all changes", status="✅")
-
-    if deleted_files:
-        git_commit_deletes(repo, deleted_files)
-        changes_made = True
 
     if files_to_process:
         if args.oneshot:
@@ -826,6 +857,9 @@ def main() -> int:
             log_message.info(model_names_only, status="", style=None)
         return 0
 
+    # Set debug mode for downstream usage
+    set_debug_mode(args.debug)
+
     # Initialize LiteLLM tools
     litellm_tools = LiteLLMTools(
         debug=args.debug,
@@ -935,7 +969,7 @@ def main() -> int:
         log_message.info("No changes to push", status="ℹ️")
 
     log_message.info("All files processed successfully", status="🚀")
-    log_message.info("=" * 80, status="", style="none")
+    klog_hr.info()
 
     return 0
 

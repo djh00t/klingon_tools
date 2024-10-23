@@ -30,12 +30,14 @@ Example:
 """
 
 import argparse
+from math import log
 import traceback
 import warnings
+
+from click import style
 from klingon_tools.git_log_helper import get_commit_log
 from klingon_tools.litellm_tools import LiteLLMTools
-from klingon_tools.log_msg import log_message
-
+from klingon_tools.log_msg import log_message, klog_hr
 
 def log_message_entrypoint():
     """
@@ -51,6 +53,7 @@ def log_message_entrypoint():
         int: 0 for success, 1 for failure
     """
     parser = argparse.ArgumentParser(
+        prog='push',
         description="Log messages from the command line.")
     parser.add_argument(
         "--level",
@@ -92,6 +95,28 @@ def log_message_entrypoint():
         style=style,
         width=width)
     return 0
+
+
+def push_entrypoint():
+    """
+    Entrypoint for the push operation.
+
+    This function initializes logging and performs the push operation,
+    logging horizontal rules at the start and end.
+    """
+
+    # Log the start of the push operation
+    klog_hr.info()  # Log a horizontal rule at the start
+    log_message.info(
+        message="Initializing push entrypoint...",
+        status="🚀",
+        )
+    #klog_hr.info()  # Log a horizontal rule at the start
+
+    # Call the main function from push.py
+    from klingon_tools.push import main
+    
+    return main()
 
 
 # Filter out specific warnings
