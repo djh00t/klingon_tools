@@ -31,28 +31,26 @@ def test_pyproject_toml_exists() -> None:
     assert os.path.exists("pyproject.toml"), "pyproject.toml does not exist"
 
 
+import re
+
 def test_package_json_version() -> None:
     """Test if package.json contains a valid version.
 
     Assertions:
     1. Check that the package.json file contains a "version" key.
     2. Verify that the "version" value is a string.
-    3. Ensure that the version string has three numeric parts separated by
-    dots.
+    3. Ensure that the version string follows semantic versioning format.
     """
     with open("package.json", "r") as f:
         data = json.load(f)
 
     assert "version" in data, "version key not found in package.json"
-    assert isinstance(
-        data["version"], str), "version in package.json is not a string"
+    assert isinstance(data["version"], str), "version in package.json is not a string"
 
-    version_parts = data["version"].split(".")
-    assert len(
-        version_parts) == 3, "version in package.json should have 3 parts"
-    assert all(
-        part.isdigit() for part in version_parts
-    ), "version parts should be numeric"
+    # Semantic Versioning regex pattern
+    semver_pattern = r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
+
+    assert re.match(semver_pattern, data["version"]), f"Version '{data['version']}' does not follow semantic versioning format"
 
 
 def test_pyproject_toml_version() -> None:
@@ -119,4 +117,4 @@ def assert_version_variable(data: Dict[str, Any]) -> None:
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    pytest.main(["-v"])

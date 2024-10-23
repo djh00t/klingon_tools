@@ -35,10 +35,6 @@ from typing import List, Dict
 import requests
 import logging
 
-# Suppress logs for common HTTP libraries
-logging.getLogger("requests").setLevel(logging.WARNING)
-logging.getLogger("urllib3").setLevel(logging.WARNING)
-logging.getLogger("litellm").setLevel(logging.WARNING)
 
 MODEL_URL = (
     "https://raw.githubusercontent.com/BerriAI/litellm/main/"
@@ -66,6 +62,8 @@ IGNORED_REGEXES = [
 ]
 
 
+_cached_model_data = None
+
 def fetch_model_data() -> Dict[str, dict]:
     """Fetches and caches the model list from a remote JSON file.
 
@@ -79,9 +77,14 @@ def fetch_model_data() -> Dict[str, dict]:
     Raises:
         requests.exceptions.RequestException: If the HTTP request fails.
     """
+    global _cached_model_data
+    if _cached_model_data is not None:
+        return _cached_model_data
+
     if os.path.exists(CACHE_FILE):
         with open(CACHE_FILE, 'r', encoding='utf-8') as f:
-            return {model: {} for model in json.load(f).keys()}
+            _cached_model_data = {model: {} for model in json.load(f).keys()}
+            return _cached_model_data
 
     # Suppress only specific warnings for 'requests' HTTP handling
     session = requests.Session()
@@ -95,7 +98,8 @@ def fetch_model_data() -> Dict[str, dict]:
     with open(CACHE_FILE, 'w', encoding='utf-8') as f:
         json.dump(new_data, f)
 
-    return {model: {} for model in new_data.keys()}
+    _cached_model_data = {model: {} for model in new_data.keys()}
+    return _cached_model_data
 
 
 def filter_models(

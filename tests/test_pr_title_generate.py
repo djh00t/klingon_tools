@@ -58,11 +58,14 @@ def test_pr_title_generate(no_llm, debug: bool, capsys) -> None:
 
     # Debugging output
     if debug:
-        print("=" * 80)
-        print(f"RETURN CODE: {result.returncode}")
-        print(f"STDOUT: {result.stdout}")
-        print(f"STDERR: {result.stderr}")
-        print("=" * 80)
+        debug_output = (
+            f"{'=' * 80}\n"
+            f"RETURN CODE: {result.returncode}\n"
+            f"STDOUT: {result.stdout}\n"
+            f"STDERR: {result.stderr}\n"
+            f"{'=' * 80}\n"
+        )
+        print(debug_output)
 
     # Capture the printed output for assertion
     captured = capsys.readouterr()
