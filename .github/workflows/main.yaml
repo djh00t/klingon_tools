@@ -1,0 +1,147 @@
+name: CI/CD Pipeline 🤖
+
+on:
+  push:
+    branches: ['*']
+  pull_request:
+    branches: ['*']
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.9'
+  NODE_VERSION: '22.4.x'
+
+jobs:
+  determine_job:
+    runs-on: ubuntu-latest
+    outputs:
+      job_type: ${{ steps.set_job.outputs.job_type }}
+    steps:
+      - name: Determine job type
+        id: set_job
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "job_type=main" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/release" ]]; then
+            echo "job_type=release" >> $GITHUB_OUTPUT
+          else
+            echo "job_type=feature" >> $GITHUB_OUTPUT
+          fi
+
+  lint_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.7
+      - name: Set up Python
+        uses: actions/setup-python@v5.1.1
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install
+      - name: Run linters
+        run: |
+          poetry run pre-commit run --all-files
+      - name: Run tests with coverage
+        run: |
+          poetry run pytest --cov=./ --cov-report=xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+
+  feature_job:
+    needs: [determine_job, lint_and_test]
+    if: needs.determine_job.outputs.job_type == 'feature'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.7
+      - name: Set up Python
+        uses: actions/setup-python@v5.1.1
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install
+      - name: Create or Update PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          source .github/workflows/tasks-pr-create-update.sh
+
+  release_job:
+    needs: [determine_job, lint_and_test]
+    if: needs.determine_job.outputs.job_type == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.7
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5.1.1
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v4.0.3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install
+          npm ci
+      - name: Generate Release Candidate
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx semantic-release
+      - name: Create or Update PR to main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          source .github/workflows/tasks-pr-create-update.sh
+
+  main_job:
+    needs: [determine_job, lint_and_test]
+    if: needs.determine_job.outputs.job_type == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.7
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5.1.1
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v4.0.3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install
+          npm ci
+      - name: Generate Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PYPI_USER_AGENT: ${{ secrets.PYPI_USER_AGENT }}
+        run: |
+          npx semantic-release
+      - name: Publish to PyPI
+        env:
+          PYPI_USER_AGENT: ${{ secrets.PYPI_USER_AGENT }}
+        run: |
+          poetry publish --build
+      - name: Delete release branch
+        if: success()
+        run: |
+          git push origin --delete release
