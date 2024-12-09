@@ -155,7 +155,8 @@ def update():
 
 
 def run_web_server():
-    debug_mode = os.getenv('FLASK_DEBUG', 'False').lower() in ['true', '1', 't']
+    import os
+    debug_mode = os.getenv('FLASK_DEBUG', 'false').lower() in ['true', '1', 't']
     app.run(debug=debug_mode, use_reloader=True)
 
 
@@ -178,9 +179,7 @@ def main():
         event_handler = CSVFileHandler(lambda: None)
         observer.schedule(event_handler, path=filename, recursive=False)
         observer.start()
-
-        debug_mode = os.getenv('FLASK_DEBUG', 'False').lower() in ['true', '1', 't']
-        app.run(debug=debug_mode, use_reloader=True)
+        run_web_server()
 
         try:
             while True:
