@@ -7,6 +7,7 @@ import pandas as pd
 from flask import Flask, jsonify, render_template
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
+import os
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -178,7 +179,6 @@ def main():
         event_handler = CSVFileHandler(lambda: None)
         observer.schedule(event_handler, path=filename, recursive=False)
         observer.start()
-
         run_web_server()
 
         try:
