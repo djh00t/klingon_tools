@@ -7,6 +7,7 @@ import pandas as pd
 from flask import Flask, jsonify, render_template
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
+import os
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -154,7 +155,8 @@ def update():
 
 
 def run_web_server():
-    app.run(debug=True, use_reloader=True)
+    debug_mode = os.getenv('FLASK_DEBUG', 'False').lower() in ['true', '1', 't']
+    app.run(debug=debug_mode, use_reloader=True)
 
 
 def main():
@@ -177,7 +179,8 @@ def main():
         observer.schedule(event_handler, path=filename, recursive=False)
         observer.start()
 
-        app.run(debug=True, use_reloader=True)
+        debug_mode = os.getenv('FLASK_DEBUG', 'False').lower() in ['true', '1', 't']
+        app.run(debug=debug_mode, use_reloader=True)
 
         try:
             while True:
