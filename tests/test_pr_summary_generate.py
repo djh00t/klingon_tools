@@ -1,6 +1,7 @@
 import subprocess
-import pytest
 import warnings
+
+import pytest
 
 
 @pytest.fixture(autouse=True)
@@ -35,11 +36,6 @@ def pytest_addoption(parser):
     parser.addoption(
         "--no-llm", action="store_true", default=False, help="Skip LLM tests"
     )
-
-
-@pytest.fixture
-def no_llm(pytestconfig):
-    return pytestconfig.getoption("--no-llm")
 
 
 @pytest.fixture
@@ -98,13 +94,15 @@ def assert_pr_summary_generate_output(
         no_llm: bool,
         result: subprocess.CompletedProcess,
         debug_output: str,
-        debug: bool) -> None:
+        debug: bool,
+) -> None:
     """
     Assert the output of pr-summary-generate command.
 
     Args:
         no_llm (bool): Flag to skip LLM tests.
-        result (subprocess.CompletedProcess): The result of the command execution.
+        result (subprocess.CompletedProcess): The result of the command
+        execution.
         debug_output (str): Captured debug output, if any.
         debug (bool): Flag indicating whether debug mode is active.
 
@@ -116,17 +114,21 @@ def assert_pr_summary_generate_output(
         pytest.skip("Skipping LLM tests due to --no-llm flag")
 
     # Check that the command ran without errors
-    assert result.returncode == 0, f"Command failed with return code {
-        result.returncode}"
+    assert result.returncode == 0, (
+        f"Command failed with return code {result.returncode}")
 
     # Check that there is some output
     assert result.stdout.strip(), "Command output is empty"
 
     if debug:
-        print(f"Full command output:\n{result.stdout}")
+        print(f"Full command output:\n{result.stdout}")  # noqa: E501
         assert "RETURN CODE:" in debug_output
         assert "STDOUT:" in debug_output
         assert "STDERR:" in debug_output
+
+    assert some_long_function_call_with_many_arguments(
+        arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10
+    )
 
 
 if __name__ == "__main__":
