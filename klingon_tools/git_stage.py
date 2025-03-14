@@ -1,6 +1,8 @@
-from git import Repo
-from klingon_tools.log_msg import log_message
 import sys
+
+from git import Repo
+
+from klingon_tools.log_msg import log_message
 
 
 def git_stage_diff(file_name: str, repo: Repo, modified_files: list) -> str:
@@ -45,8 +47,7 @@ def git_stage_diff(file_name: str, repo: Repo, modified_files: list) -> str:
             if file_name in staged_files:
                 log_message.info(message="Staged file", status="✅")
             else:
-                log_message.error(f"Failed to stage file: {
-                                  file_name}", status="❌")
+                log_message.error(f"Failed to stage file: {file_name}", status="❌")
                 sys.exit(1)
         except Exception as e:
             log_message.error(f"Error staging file: {file_name}", status="❌")
