@@ -35,17 +35,18 @@ for file in modified_files.copy():
 
 import os
 import pprint
+import re
 import subprocess
 import sys
-from typing import Tuple, Dict, Optional, List, Iterator
-import re
+from typing import Dict, Iterator, List, Optional, Tuple
+
 from git import Repo
 
-from klingon_tools.log_msg import log_message, klog_hr
 from klingon_tools.git_stage import git_stage_diff
 from klingon_tools.litellm_tools import LiteLLMTools
-from klingon_tools.utils import klingon_title_case
+from klingon_tools.log_msg import klog_hr, log_message
 from klingon_tools.log_tools import LogTools
+from klingon_tools.utils import klingon_title_case
 
 # Maximum number of pre-commit attempts
 LOOP_MAX_PRE_COMMIT = 10
@@ -365,8 +366,7 @@ def log_parsed_data(parsed_data: Dict) -> None:
         )
 
     # Construct the message line without duplicating the status icon
-    message_line = f"{parsed_data['message_title_case']}{
-        parsed_data['padding']}"
+    message_line = f"{parsed_data['message_title_case']}{parsed_data['message']}"
     log_message.info(message_line, status=parsed_data.get(
         "status_icon", ""), style="pre-commit")
 
