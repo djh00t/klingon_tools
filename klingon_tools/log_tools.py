@@ -4,7 +4,7 @@ import subprocess
 import sys
 import textwrap
 from functools import wraps
-from typing import Optional, Callable, List, Tuple
+from typing import Callable, List, Optional, Tuple
 
 
 class LogTools:
@@ -342,6 +342,7 @@ class LogTools:
 
             old_stdout = sys.stdout
             sys.stdout = io.StringIO()
+            exit_code = 0  # Initialize exit_code with default success value
 
             try:
                 result = subprocess.run(
@@ -364,12 +365,17 @@ class LogTools:
                 print(f"{LogTools.BOLD_RED}ERROR{LogTools.RESET}", flush=True)
                 if self.debug:
                     self.log_message.error(f"ERROR DEBUG:\n{e.stderr}")
+                exit_code = e.returncode
                 raise e
             finally:
                 sys.stdout = old_stdout
 
-            # Log the completion status
-            self.log_message.info(
-                message=f"Command '{
-                    display_message}' completed with status: {status}"
-            )
+            # Log the completion status - success or failure based on exit_code
+            if exit_code == 0:
+                self.log_message.info(
+                    message=f"Command '{command}' completed successfully."
+                )
+            else:
+                self.log_message.info(
+                    message=f"Command '{command}' failed with exit code {exit_code}."
+                )
