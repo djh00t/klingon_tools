@@ -283,3 +283,4 @@ ktest.py
 klingon_templates/
 emoji*
 data/*
+poetry.lock
