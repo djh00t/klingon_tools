@@ -5,8 +5,8 @@ API connectivity, model availability, and basic model functionality.
 """
 
 import json
-import shutil
 import re
+import shutil
 import subprocess
 from typing import Dict
 
@@ -16,9 +16,19 @@ import requests
 # Check if Ollama is installed
 OLLAMA_INSTALLED = shutil.which("ollama") is not None
 
-if not OLLAMA_INSTALLED:
-    pytestmark = pytest.mark.skip(reason="Ollama is not installed")
+# Define URL constant early to avoid undefined variable errors
 OLLAMA_URL = "http://localhost:11434"
+
+
+def pytest_configure(config):
+    """Configure pytest environment."""
+    global pytestmark
+    if config.getoption("--no-llm", default=False):
+        pytestmark = pytest.mark.skip(
+            reason="Skipping Ollama tests due to --no-llm flag"
+        )
+    elif not OLLAMA_INSTALLED:
+        pytestmark = pytest.mark.skip(reason="Ollama is not installed")
 
 
 def pytest_addoption(parser):
@@ -37,7 +47,7 @@ def no_llm(request):
     return request.config.getoption("--no-llm")
 
 
-def ollama_cli_version() -> Dict[str, bool | str | None]:
+def ollama_cli_version() -> Dict[str, object]:
     """Capture and interpret the output of the `ollama --version` command.
 
     Returns:
@@ -62,9 +72,11 @@ def ollama_cli_version() -> Dict[str, bool | str | None]:
             check=True
         )
         result["ollama_cli_installed"] = True
-        output = process.stdout + process.stderr
+        output_text = process.stdout + process.stderr
 
-        version_match = re.search(r"ollama version is (\d+\.\d+\.\d+)", output)
+        version_match = re.search(
+            r"ollama version is (\d+\.\d+\.\d+)", output_text
+        )
         if version_match:
             result["ollama_cli_version"] = version_match.group(1)
         else:
@@ -85,7 +97,8 @@ def ollama_info():
 def test_ollama_cli_installed(ollama_info):
     """Test if the Ollama CLI is installed."""
     assert ollama_info['ollama_cli_installed'], "Ollama CLI is not installed"
-    print(f"ollama_cli_installed: {ollama_info['ollama_cli_installed']}")
+    is_installed = ollama_info['ollama_cli_installed']
+    print(f"ollama_cli_installed: {is_installed}")
 
 
 @pytest.mark.depends(on=['test_ollama_cli_installed'])
@@ -95,8 +108,8 @@ def test_ollama_cli_version(ollama_info):
         "Ollama CLI version not found"
     )
     assert re.match(r'\d+\.\d+\.\d+', ollama_info['ollama_cli_version']), (
-        f"Invalid Ollama CLI version format: {
-            ollama_info['ollama_cli_version']}"
+        f"Invalid Ollama CLI version format: "
+        f"{ollama_info['ollama_cli_version']}"
     )
     print(f"ollama_cli_version: {ollama_info['ollama_cli_version']}")
 
