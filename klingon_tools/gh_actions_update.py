@@ -13,16 +13,18 @@ Usage:
 """
 
 import argparse
+import glob
 import json
 import logging
 import os
 import re
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 import requests
 from git import Repo
 from ruamel.yaml import YAML
 from tabulate import tabulate
+
 from klingon_tools.log_msg import log_message
 
 
@@ -244,7 +246,22 @@ def find_github_actions(args: argparse.Namespace) -> Dict[str, Dict]:
     os.chdir(repo.git.rev_parse("--show-toplevel"))
 
     actions = {}
-    yaml_files = [args.file] if args.file else get_yaml_files()
+
+    # Handle file patterns and wildcards
+    if args.file:
+        yaml_files = []
+        # Handle multiple file arguments and wildcards
+        for file_pattern in args.file:
+            # Expand wildcards in each file pattern
+            expanded_files = glob.glob(file_pattern)
+            if expanded_files:
+                yaml_files.extend(expanded_files)
+            else:
+                log_message.warning(
+                    f"No files found matching pattern: {file_pattern}"
+                )
+    else:
+        yaml_files = get_yaml_files()
 
     log_message.debug(f"YAML files to process: {yaml_files}")
     log_message.debug(f"Arguments received: {args}")
@@ -274,13 +291,23 @@ def process_yaml_file(
     """Processes a single YAML file and updates the actions dictionary."""
     yaml = YAML()
     yaml.preserve_quotes = True
-    with open(file_path, "r", encoding="utf-8") as f:
-        workflow_data = yaml.load(f)
-        log_message.debug(f"Processing file: {file_path}")
-        log_message.debug(f"Workflow data: {workflow_data}")
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            workflow_data = yaml.load(f)
+            log_message.debug(f"Processing file: {file_path}")
+            log_message.debug(f"Workflow data: {workflow_data}")
 
-        if "jobs" in workflow_data:
-            process_jobs(file_path, workflow_data, actions, args)
+            if "jobs" in workflow_data:
+                process_jobs(file_path, workflow_data, actions, args)
+    except UnicodeDecodeError:
+        # Try again with a different encoding that handles emojis better
+        with open(file_path, "r", encoding="utf-8-sig") as f:
+            workflow_data = yaml.load(f)
+            log_message.debug(f"Processing file with utf-8-sig: {file_path}")
+            log_message.debug(f"Workflow data: {workflow_data}")
+
+            if "jobs" in workflow_data:
+                process_jobs(file_path, workflow_data, actions, args)
 
 
 def process_jobs(
@@ -574,7 +601,8 @@ def main() -> None:
     parser.add_argument(
         "--file",
         type=str,
-        help="Update actions in a specific file (bash wildcards accepted).",
+        nargs="+",
+        help="Update actions in specific files. Glob patterns (wildcards) are supported.",
     )
     parser.add_argument("--job", type=str, help="Filter actions by job name.")
     parser.add_argument(
