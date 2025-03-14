@@ -125,9 +125,8 @@ def test_command_state(mock_subprocess_run, mock_stdout, log_tools_fixture):
     assert "Running Test Command" in stdout_output or any(
         "Running Test Command" in msg for msg in log_messages
     )
-    assert "Passed" in stdout_output or any(
-        "Passed" in msg for msg in log_messages
-    )
+    # Check for the success message with the new format
+    assert any("completed successfully" in msg for msg in log_messages)
 
 
 def test_format_pre_commit():
