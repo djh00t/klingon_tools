@@ -40,6 +40,12 @@ module.exports = {
         commit.date = new Date(commit.date);
       }
       return commit;
+    },
+    formatDate: (date) => {
+      if (!(date instanceof Date)) {
+        date = new Date(date);
+      }
+      return date.toISOString();
     }
   }
 };
