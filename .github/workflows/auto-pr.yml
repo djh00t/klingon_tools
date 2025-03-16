@@ -74,7 +74,7 @@ jobs:
 
     - name: Run Unit Tests
       run: make test
-
+#Edit the following snippet to include the pr-title-generate and pr_body_gen.py scripts:
       # Check if PR exists, if it doesn't create one with a generated title using
       # pr-title-generate
     - name: Create or Update PR
