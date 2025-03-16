@@ -23,28 +23,12 @@ OLLAMA_URL = "http://localhost:11434"
 def pytest_configure(config):
     """Configure pytest environment."""
     global pytestmark
-    if config.getoption("--no-llm", default=False):
+    if not config.getoption("--run-llm", default=False):
         pytestmark = pytest.mark.skip(
-            reason="Skipping Ollama tests due to --no-llm flag"
+            reason="Skipping Ollama tests (use --run-llm to enable)"
         )
     elif not OLLAMA_INSTALLED:
         pytestmark = pytest.mark.skip(reason="Ollama is not installed")
-
-
-def pytest_addoption(parser):
-    """Add command-line option for skipping LLM tests."""
-    parser.addoption(
-        "--no-llm",
-        action="store_true",
-        default=False,
-        help="Skip LLM tests"
-    )
-
-
-@pytest.fixture
-def no_llm(request):
-    """Fixture to access the --no-llm flag."""
-    return request.config.getoption("--no-llm")
 
 
 def ollama_cli_version() -> Dict[str, object]:
@@ -138,7 +122,7 @@ def test_can_connect_to_ollama():
 def test_models_available(no_llm):
     """Test if there are any models available on the Ollama server."""
     if no_llm:
-        pytest.skip("Skipping LLM tests due to --no-llm flag")
+        pytest.skip("Skipping LLM tests (use --run-llm to enable)")
     try:
         response = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
         assert response.status_code == 200, (
@@ -162,7 +146,7 @@ def test_models_available(no_llm):
 def test_model_functionality(no_llm):
     """Test the functionality of an available model on the Ollama server."""
     if no_llm:
-        pytest.skip("Skipping LLM tests due to --no-llm flag")
+        pytest.skip("Skipping LLM tests (use --run-llm to enable)")
 
     try:
         response = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
