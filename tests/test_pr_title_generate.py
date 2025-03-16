@@ -10,12 +10,7 @@ import subprocess
 import pytest
 
 
-@pytest.fixture
-def no_llm(pytestconfig):
-    """
-    Fixture to access the --no-llm flag.
-    """
-    return pytestconfig.getoption("--no-llm")
+# Using the fixtures defined in conftest.py
 
 
 @pytest.mark.parametrize("debug", [False, True])
@@ -44,9 +39,9 @@ def test_pr_title_generate(no_llm, debug: bool, capsys) -> None:
     Raises:
         AssertionError: If any of the assertions fail.
     """
-    # Skip the test if the --no-llm flag is set
+    # Skip the test if LLM tests are disabled (default behavior)
     if no_llm:
-        pytest.skip("Skipping LLM tests due to --no-llm flag")
+        pytest.skip("Skipping LLM tests (use --run-llm to enable)")
 
     # Run the pr-title-generate command
     result = subprocess.run(
@@ -93,9 +88,9 @@ def assert_pr_title_generate_output(
     Raises:
         AssertionError: If any of the assertions fail.
     """
-    # Skip the test if the --no-llm flag is set
+    # Skip the test if LLM tests are disabled (default behavior)
     if no_llm:
-        pytest.skip("Skipping LLM tests due to --no-llm flag")
+        pytest.skip("Skipping LLM tests (use --run-llm to enable)")
 
     # Check that the command ran without errors
     assert result.returncode == 0, \
