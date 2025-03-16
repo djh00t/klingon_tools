@@ -544,9 +544,7 @@ def get_headers() -> List:
 def get_status(
         current_version: str, latest_version: str, no_emojis: bool) -> str:
     """Determines the status of an action based on its version."""
-    if current_version == latest_version or current_version.startswith(
-        latest_version.split(".")[0]
-    ):
+    if current_version == latest_version:
         return "OK" if no_emojis else "✅"
     return "Upgrade" if no_emojis else "⬆️"
 
