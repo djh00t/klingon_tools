@@ -30,14 +30,12 @@ Example:
 """
 
 import argparse
-from math import log
 import traceback
 import warnings
-
-from click import style
 from klingon_tools.git_log_helper import get_commit_log
 from klingon_tools.litellm_tools import LiteLLMTools
 from klingon_tools.log_msg import log_message, klog_hr
+
 
 def log_message_entrypoint():
     """
@@ -84,7 +82,7 @@ def log_message_entrypoint():
     message = args.message
     status = args.status
     reason = args.reason
-    style = args.style
+    log_style = args.style
     width = args.width
 
     log_func = getattr(log_message, level.lower(), log_message.info)
@@ -92,7 +90,7 @@ def log_message_entrypoint():
         message=message,
         status=status,
         reason=reason,
-        style=style,
+        style=log_style,
         width=width)
     return 0
 
@@ -111,11 +109,11 @@ def push_entrypoint():
         message="Initializing push entrypoint...",
         status="🚀",
         )
-    #klog_hr.info()  # Log a horizontal rule at the start
+    # klog_hr.info()  # Log a horizontal rule at the start
 
     # Call the main function from push.py
     from klingon_tools.push import main
-    
+
     return main()
 
 
@@ -144,11 +142,26 @@ def gh_pr_gen_title():
         int: 0 for success, 1 for failure
     """
     try:
-        log_message.info("Generating PR title using LiteLLMTools...")
         commit_result = get_commit_log("origin/release")
         diff = commit_result.stdout
         litellm_tools = LiteLLMTools()
         pr_title = litellm_tools.generate_pull_request_title(diff)
+
+        # Validate the PR title
+        if (not pr_title or pr_title.strip() == "" or
+                "No changes made in this commit" in pr_title):
+            # Generate a fallback title based on the latest commit message
+            commits = diff.strip().split("\n")
+            if commits:
+                latest_commit = commits[0]
+                # Extract just the description part if it's a conventional commit
+                if ":" in latest_commit:
+                    _, desc = latest_commit.split(":", 1)
+                    latest_commit = desc.strip()
+                pr_title = f"PR: {latest_commit[:60]}"
+            else:
+                pr_title = "PR: Update code"
+
         print(pr_title)
         return 0
     except ImportError as e:
