@@ -27,7 +27,7 @@ from git import (
     exc as git_exc,
 )
 
-from klingon_tools.git_push_helper import git_push
+from klingon_tools.git_push import git_push
 from klingon_tools.git_user_info import get_git_user_info
 from klingon_tools.log_msg import log_message
 

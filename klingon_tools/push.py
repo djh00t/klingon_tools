@@ -18,33 +18,29 @@ Attributes:
     committed_not_pushed (list): List of committed but not pushed files.
 """
 
-from git import Repo
-from typing import Any, List, Optional, Tuple
 import argparse
 import glob
+import logging
 import os
 import re
-import requests
 import subprocess
 import sys
-import logging
+from typing import Any, List, Optional, Tuple
 
-from klingon_tools.git_tools import (
-    cleanup_lock_file,
-    git_commit_deletes,
-    git_commit_file,
-    git_get_status,
-    git_get_toplevel,
-    log_git_stats,
-    push_changes_if_needed,
-)
-from klingon_tools.pre_commit import git_pre_commit, set_debug_mode
-from klingon_tools.git_user_info import get_git_user_info
+import requests
+from git import Repo
+
 from klingon_tools.git_commit_validate import validate_commit_message
+from klingon_tools.git_tools import (cleanup_lock_file, git_commit_deletes,
+                                     git_commit_file, git_get_status,
+                                     git_get_toplevel, log_git_stats,
+                                     push_changes_if_needed)
+from klingon_tools.git_user_info import get_git_user_info
 from klingon_tools.litellm_model_cache import get_supported_models
-from klingon_tools.log_msg import log_message, klog_hr
-from klingon_tools.log_tools import LogTools
 from klingon_tools.litellm_tools import LiteLLMTools
+from klingon_tools.log_msg import klog_hr, log_message
+from klingon_tools.log_tools import LogTools
+from klingon_tools.pre_commit import git_pre_commit, set_debug_mode
 
 # Initialize variables
 deleted_files: List[str] = []
@@ -455,7 +451,7 @@ def run_push_prep(log_message: Any) -> None:
         SystemExit: If running the 'push-prep' target fails.
     """
     makefile_path = os.path.join(os.getcwd(), "Makefile")
-    if os.path.exists(makefile_path):
+    if (os.path.exists(makefile_path)):
         with open(makefile_path, "r") as makefile:
             if "push-prep:" in makefile.read():
                 log_message.info(
@@ -691,69 +687,47 @@ def run_tests_and_confirm(log_message: Any, no_llm: bool) -> bool:
     return True
 
 
-def process_changes(
-        repo: Repo,
-        args: argparse.Namespace,
-        litellm_tools: LiteLLMTools
-) -> bool:
+def process_changes(repo, args, litellm):
     """
-    Process changes made to the repository.
-    Args:
-        repo (Repo): The repository object.
-        args (argparse.Namespace): The command line arguments.
-        litellm_tools (LiteLLMTools): The LiteLLMTools object.
-    Returns:
-        bool: True if changes were made, False otherwise.
+    Process changes in the repository.
+
+    This function handles untracked, modified, and deleted files.
+    It specially processes .pre-commit-config.yaml files directly.
     """
-    changes_made = False
+    global untracked_files, modified_files, deleted_files
+
+    # Check for .pre-commit-config.yaml and process it directly
+    pre_commit_config = '.pre-commit-config.yaml'
+    pre_commit_files = []
+
+    # Check if pre-commit config is in untracked or modified files
+    if (pre_commit_config in untracked_files):
+        pre_commit_files.append(pre_commit_config)
+        # Remove from untracked so it's not processed twice
+        untracked_files = [f for f in untracked_files if f != pre_commit_config]
+    elif (pre_commit_config in modified_files):
+        pre_commit_files.append(pre_commit_config)
+        # Remove from modified so it's not processed twice
+        modified_files = [f for f in modified_files if f != pre_commit_config]
+
+    # Process .pre-commit-config.yaml directly if found
+    for idx, file in enumerate(pre_commit_files):
+        workflow_process_file(
+            file, pre_commit_files, repo, args, log_message, litellm, idx
+        )
+
+    # Create a proper list instead of using the __add__ method directly
+    combined_files = list(untracked_files) + list(modified_files)
 
     # Handle deleted files first
     if deleted_files:
-        log_message.info("Processing deleted files first", status="🗑️")
         git_commit_deletes(repo, deleted_files)
-        changes_made = True
 
-        # Re-get status after handling deletes
-        global untracked_files, modified_files
-        (_, untracked_files, modified_files, _, _) = git_get_status(repo)
+    # Process modified and untracked files
+    if combined_files:
+        return process_files(combined_files, repo, args, log_message, litellm)
 
-    files_to_process = untracked_files + modified_files
-
-    if ".pre-commit-config.yaml" in files_to_process:
-        log_message.info(
-            "Processing .pre-commit-config.yaml separately", status="🔍")
-        workflow_process_file(
-            ".pre-commit-config.yaml",
-            [".pre-commit-config.yaml"],
-            repo,
-            args,
-            log_message,
-            litellm_tools,
-            0
-        )
-        files_to_process.remove(".pre-commit-config.yaml")
-        changes_made = True
-
-        # Stage and commit all changes
-        repo.git.add(A=True)
-        repo.git.commit("-m", "Update .pre-commit-config.yaml", "--no-verify")
-        log_message.info("Staged and committed all changes", status="✅")
-
-    if files_to_process:
-        if args.oneshot:
-            changes_made |= process_files(
-                [files_to_process[0]], repo, args, log_message, litellm_tools)
-        else:
-            changes_made |= process_files(
-                files_to_process, repo, args, log_message, litellm_tools)
-
-    # Always push if there are committed but not pushed files
-    if committed_not_pushed:
-        log_message.info("Pushing committed but not pushed files", status="🚀")
-        push_changes_if_needed(repo, args)
-        changes_made = True
-
-    return changes_made
+    return True or bool(pre_commit_files)  # Return True if any files were processed
 
 
 def startup_tasks(args: argparse.Namespace) -> Tuple[Repo, str, str]:

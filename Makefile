@@ -82,6 +82,7 @@ node-major-version:
 
 # Install the package locally
 install:
+	@pip install -e .
 	@log-message $(LOG_MSG_CONF) "Installing dependencies..." --status "⬇️"
 	@poetry install
 
