@@ -1,3 +1,4 @@
+import platform
 import pytest
 import warnings
 
@@ -39,3 +40,9 @@ def pytest_addoption(parser):
 @pytest.fixture
 def no_llm(pytestconfig):
     return pytestconfig.getoption("--no-llm")
+
+
+@pytest.fixture(scope="session")
+def is_macos():
+    """Return True if the current OS is macOS."""
+    return platform.system() == "Darwin"
