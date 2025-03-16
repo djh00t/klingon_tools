@@ -24,6 +24,7 @@ from git import Repo
 from ruamel.yaml import YAML
 from tabulate import tabulate
 from klingon_tools.log_msg import log_message
+from klingon_tools.log_tools import LogTools
 
 
 def can_display_emojis(no_emojis_flag: bool, args: argparse.Namespace) -> bool:
@@ -446,6 +447,13 @@ def collect_api_data(actions: Dict[str, Dict]) -> Dict[str, Dict]:
     return actions
 
 
+# Configure logging with a simpler format
+logging.basicConfig(
+    level=logging.WARNING,
+    format='%(message)s'
+)
+
+
 def setup_logging(args: argparse.Namespace) -> None:
     """
     Sets up logging based on the provided command-line arguments.
@@ -459,6 +467,10 @@ def setup_logging(args: argparse.Namespace) -> None:
     """
     token = get_github_token()
 
+    # Initialize logging tools
+    log_tools = LogTools(debug=args.debug)
+    log_tools.set_log_level("DEBUG" if args.debug else "INFO")
+
     log_message.debug("GitHub Actions Updater is starting.")
 
     if token:
@@ -467,12 +479,6 @@ def setup_logging(args: argparse.Namespace) -> None:
         log_message.warning(
             "No GitHub token found. Requests may be rate-limited."
         )
-
-    if args.debug:
-        logging.basicConfig(level=logging.DEBUG)
-        log_message.debug("Debug logging enabled.")
-    else:
-        logging.basicConfig(level=logging.INFO)
 
 
 def present_state_data(
@@ -613,11 +619,17 @@ def main() -> None:
     # Set up logging based on the provided arguments
     setup_logging(args)
 
-    # Determine if emojis can be displayed
+    # Determine if emojis should be displayed - default to showing emojis
     if not args.quiet:
-        args.no_emojis = not can_display_emojis(args.no_emojis, args)
+        # Only disable emojis if explicitly requested with --no-emojis
+        # Otherwise, check if the terminal can display them
+        if args.no_emojis:
+            args.no_emojis = not can_display_emojis(False, args)
+        else:
+            args.no_emojis = False
     else:
-        args.no_emojis = args.no_emojis
+        # In quiet mode, respect the --no-emojis flag
+        args.no_emojis = args.no_emojis if args.no_emojis else False
 
     # Collect file data
     log_message.debug("Collecting file data...")
@@ -634,11 +646,9 @@ def main() -> None:
         for data in actions.values():
             if data["action_version_current"] != data["action_latest_version"]:
                 log_message.info(
-                    "Updating action: %s/%s from version %s to %s",
-                    data["action_owner"],
-                    data["action_repo"],
-                    data["action_version_current"],
-                    data["action_latest_version"],
+                    f"Updating action: {data['action_owner']}/{data['action_repo']} "
+                    f"from version {data['action_version_current']} to {data['action_latest_version']}",
+                    status="⬆️"
                 )
                 update_action_version(
                     data["file_name"],
@@ -647,9 +657,8 @@ def main() -> None:
                 )
             else:
                 log_message.info(
-                    "No update needed for action: %s/%s",
-                    data["action_owner"],
-                    data["action_repo"],
+                    f"No update needed for action: {data['action_owner']}/{data['action_repo']}",
+                    status="✅"
                 )
 
         # Collect file data after update
