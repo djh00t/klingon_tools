@@ -5,7 +5,38 @@
 
 version: 2
 updates:
-  - package-ecosystem: "" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
       interval: "weekly"
+    # Set a limit of 5 open pull requests for GitHub Actions dependencies
+    open-pull-requests-limit: 5
+    # Add assignees
+    assignees:
+      - "djh00t"
+    # Add reviewers
+    reviewers:
+      - "djh00t"
+    # Add labels
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+  # Maintain dependencies for Python (Poetry)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Set a limit of 5 open pull requests for Python dependencies
+    open-pull-requests-limit: 5
+    # Add assignees
+    assignees:
+      - "djh00t"
+    # Add reviewers
+    reviewers:
+      - "djh00t"
+    # Add labels
+    labels:
+      - "dependencies"
+      - "python"
