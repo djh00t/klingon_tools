@@ -284,3 +284,4 @@ klingon_templates/
 emoji*
 data/*
 poetry.lock
+.vscode/settings.json
