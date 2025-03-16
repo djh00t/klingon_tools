@@ -6,7 +6,6 @@ on:
     branches-ignore:
     - main
     - master
-    - release
   workflow_dispatch:
 
 jobs:
