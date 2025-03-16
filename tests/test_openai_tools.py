@@ -8,10 +8,7 @@ import pytest
 from klingon_tools.openai_tools import OpenAITools
 
 
-@pytest.fixture
-def no_llm(request):
-    """Fixture to access the --no-llm flag."""
-    return request.config.getoption("--no-llm")
+# Using the fixtures defined in conftest.py
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -26,7 +23,7 @@ def disable_logging():
 def openai_tools(no_llm):
     """Create an instance of OpenAITools."""
     if no_llm:
-        pytest.skip("Skipping LLM tests due to --no-llm flag")
+        pytest.skip("Skipping LLM tests (use --run-llm to enable)")
     return OpenAITools(debug=True)
 
 
@@ -37,10 +34,8 @@ def test_generate_pull_request_summary(
     no_llm
 ):
     if no_llm:
-        pytest.skip("Skipping LLM tests due to --no-llm flag")
+        pytest.skip("Skipping LLM tests (use --run-llm to enable)")
     """Test the generate_pull_request_summary method."""
-    if no_llm:
-        pytest.skip("Skipping LLM tests due to --no-llm flag")
     mock_get_commit_log.return_value.stdout = "commit log content"
     openai_tools.generate_content = MagicMock(
         return_value="Generated PR Summary"
@@ -51,8 +46,6 @@ def test_generate_pull_request_summary(
     openai_tools.generate_content.assert_called_once_with(
         "pull_request_summary", "commit log content"
     )
-    if no_llm:
-        pytest.skip("Skipping LLM tests due to --no-llm flag")
     assert summary == "Generated PR Summary"
 
 
@@ -65,7 +58,7 @@ def test_init_with_valid_api_key(openai_tools, no_llm):
 @patch("openai.ChatCompletion.create")
 def test_generate_pull_request_title(mock_create, openai_tools, no_llm):
     if no_llm:
-        pytest.skip("Skipping LLM tests due to --no-llm flag")
+        pytest.skip("Skipping LLM tests (use --run-llm to enable)")
     """Test the generate_pull_request_title method."""
     mock_create.return_value = MagicMock(
         choices=[MagicMock(message=MagicMock(content="Generated PR title"))]
@@ -154,7 +147,7 @@ def test_generate_commit_message(
 ):
     """Test the generate_commit_message method."""
     if no_llm:
-        pytest.skip("Skipping LLM tests due to --no-llm flag")
+        pytest.skip("Skipping LLM tests (use --run-llm to enable)")
     mock_generate.return_value = "feat(test): add new feature"
     mock_format.return_value = "✨ feat(test): add new feature"
     mock_signoff.return_value = (
@@ -179,7 +172,7 @@ def test_generate_commit_message(
 @patch.object(OpenAITools, "generate_content")
 def test_generate_pull_request_body(mock_generate, openai_tools, no_llm):
     if no_llm:
-        pytest.skip("Skipping LLM tests due to --no-llm flag")
+        pytest.skip("Skipping LLM tests (use --run-llm to enable)")
     """Test the generate_pull_request_body method."""
     mock_generate.return_value = "Test PR body"
     result = openai_tools.generate_pull_request_body("Test diff")
@@ -195,7 +188,7 @@ def test_generate_release_body(
 ):
     """Test the generate_release_body method."""
     if no_llm:
-        pytest.skip("Skipping LLM tests due to --no-llm flag")
+        pytest.skip("Skipping LLM tests (use --run-llm to enable)")
     mock_format.return_value = "Formatted test release body"
     mock_generate.return_value = "Test release body"
     mock_repo = MagicMock()
@@ -205,8 +198,6 @@ def test_generate_release_body(
 
     assert result == "Formatted test release body"
     mock_generate.assert_called_once_with("release_body", "Test diff")
-    mock_unstage.assert_called_once_with(["file1.py", "file2.py"])
-    mock_unstage.assert_called_once_with(["file1.py", "file2.py"])
     mock_unstage.assert_called_once_with(["file1.py", "file2.py"])
     mock_format.assert_called_once_with("Test release body")
     mock_unstage.assert_called_once_with(["file1.py", "file2.py"])
