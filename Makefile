@@ -82,8 +82,8 @@ node-major-version:
 
 # Install the package locally
 install:
-	@log-message $(LOG_MSG_CONF) "Installing dependencies..." --status "⬇️"
 	@poetry install
+	@log-message $(LOG_MSG_CONF) "Installing dependencies..." --status "⬇️"
 
 # Install the development dependencies and the package locally
 install-dev:
