@@ -36,16 +36,15 @@ module.exports = {
   writerOpts: {
     commitsSort: ["subject", "scope"],
     transform: (commit, context) => {
-      if (commit.date && !(commit.date instanceof Date)) {
+      if (commit.date) {
+        // Always create a new Date object from the commit date
         commit.date = new Date(commit.date);
       }
       return commit;
     },
     formatDate: (date) => {
-      if (!(date instanceof Date)) {
-        date = new Date(date);
-      }
-      return date.toISOString();
+      // Always create a new Date object to ensure it's a proper Date instance
+      return new Date(date).toISOString();
     }
   }
 };
