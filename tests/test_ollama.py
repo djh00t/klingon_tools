@@ -5,6 +5,7 @@ API connectivity, model availability, and basic model functionality.
 """
 
 import json
+import platform
 import re
 import shutil
 import subprocess
@@ -23,7 +24,11 @@ OLLAMA_URL = "http://localhost:11434"
 def pytest_configure(config):
     """Configure pytest environment."""
     global pytestmark
-    if not config.getoption("--run-llm", default=False):
+    if platform.system() != "Darwin":
+        pytestmark = pytest.mark.skip(
+            reason="Skipping Ollama tests (only runs on macOS)"
+        )
+    elif not config.getoption("--run-llm", default=False):
         pytestmark = pytest.mark.skip(
             reason="Skipping Ollama tests (use --run-llm to enable)"
         )
