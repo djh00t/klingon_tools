@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "klingon_tools"
-version = "2.1.5-rc.2"
+version = "2.1.6"
 description = "A set of utilities for running and logging shell commands in a user-friendly manner."
 authors = ["David Hooton <klingon_tools+david@hooton.org>"]
 license = "MIT"
