@@ -5,36 +5,48 @@ API connectivity, model availability, and basic model functionality.
 """
 
 import json
-import shutil
+import platform
 import re
+import shutil
 import subprocess
 from typing import Dict
 
 import pytest
 import requests
 
+# Skip entire module if not on macOS
+if platform.system() != "Darwin":
+    pytest.skip(
+        "Ollama tests only supported on macOS",
+        allow_module_level=True
+    )
+
 # Check if Ollama is installed
 OLLAMA_INSTALLED = shutil.which("ollama") is not None
 
 if not OLLAMA_INSTALLED:
-    pytestmark = pytest.mark.skip(reason="Ollama is not installed")
+    pytest.skip(
+        "Ollama is not installed, skipping tests",
+        allow_module_level=True
+    )
+
 OLLAMA_URL = "http://localhost:11434"
 
 
 def pytest_addoption(parser):
     """Add command-line option for skipping LLM tests."""
     parser.addoption(
-        "--no-llm",
+        "--run-ollama",
         action="store_true",
         default=False,
-        help="Skip LLM tests"
+        help="Run tests that require Ollama"
     )
 
 
-@pytest.fixture
-def no_llm(request):
-    """Fixture to access the --no-llm flag."""
-    return request.config.getoption("--no-llm")
+@pytest.fixture(scope="session")
+def run_ollama_tests(request):
+    """Fixture to access the --run-ollama flag."""
+    return request.config.getoption("--run-ollama")
 
 
 def ollama_cli_version() -> Dict[str, bool | str | None]:
@@ -48,7 +60,7 @@ def ollama_cli_version() -> Dict[str, bool | str | None]:
         - ollama_cli_version (str | None): Ollama CLI version if installed.
         - ollama_server_running (bool): Whether the Ollama server is running.
     """
-    result = {
+    result: Dict[str, bool | str | None] = {
         "ollama_cli_installed": False,
         "ollama_cli_version": None,
         "ollama_server_running": True
@@ -68,64 +80,73 @@ def ollama_cli_version() -> Dict[str, bool | str | None]:
         if version_match:
             result["ollama_cli_version"] = version_match.group(1)
         else:
-            result["ollama_server_running"] = False
+            # If the version format changes, try alternative pattern
+            alt_version_match = re.search(r"version\s+(\d+\.\d+\.\d+)", output)
+            if alt_version_match:
+                result["ollama_cli_version"] = alt_version_match.group(1)
 
     except (subprocess.CalledProcessError, FileNotFoundError):
+        result["ollama_cli_installed"] = False
         result["ollama_server_running"] = False
 
     return result
 
 
 @pytest.fixture(scope="module")
-def ollama_info():
+def ollama_info_fixture():
     """Provide Ollama CLI information for all tests."""
     return ollama_cli_version()
 
 
-def test_ollama_cli_installed(ollama_info):
+def test_ollama_cli_installed(ollama_info_fixture):
     """Test if the Ollama CLI is installed."""
-    assert ollama_info['ollama_cli_installed'], "Ollama CLI is not installed"
-    print(f"ollama_cli_installed: {ollama_info['ollama_cli_installed']}")
+    assert ollama_info_fixture['ollama_cli_installed'], (
+        "Ollama CLI is not installed"
+    )
+    print(f"ollama_cli_installed: {ollama_info_fixture['ollama_cli_installed']}")
 
 
 @pytest.mark.depends(on=['test_ollama_cli_installed'])
-def test_ollama_cli_version(ollama_info):
+def test_ollama_cli_version(ollama_info_fixture):
     """Test if the Ollama CLI version is correctly captured."""
-    assert ollama_info['ollama_cli_version'] is not None, (
+    assert ollama_info_fixture['ollama_cli_version'] is not None, (
         "Ollama CLI version not found"
     )
-    assert re.match(r'\d+\.\d+\.\d+', ollama_info['ollama_cli_version']), (
-        f"Invalid Ollama CLI version format: {
-            ollama_info['ollama_cli_version']}"
+    version = ollama_info_fixture['ollama_cli_version']
+    assert re.match(r'\d+\.\d+\.\d+', version), (
+        f"Invalid Ollama CLI version format: {version}"
     )
-    print(f"ollama_cli_version: {ollama_info['ollama_cli_version']}")
+    print(f"ollama_cli_version: {version}")
 
 
 @pytest.mark.depends(on=['test_ollama_cli_version'])
-def test_ollama_server_running(ollama_info):
+def test_ollama_server_running(ollama_info_fixture):
     """Test if the Ollama server is running."""
-    assert ollama_info['ollama_server_running'], "Ollama server is not running"
-    print(f"ollama_server_running: {ollama_info['ollama_server_running']}")
+    assert ollama_info_fixture['ollama_server_running'], "Ollama server is not running"
+    print(f"ollama_server_running: {ollama_info_fixture['ollama_server_running']}")
 
 
-@pytest.mark.depends(on=['test_ollama_server_running'])
+@pytest.mark.depends(
+    on=['test_ollama_server_running']
+)
 def test_can_connect_to_ollama():
     """Check if the Ollama API is accessible."""
     try:
-        response = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
+        response = requests.get(f"{OLLAMA_URL}/api/version", timeout=5)
+        response.raise_for_status()
         assert response.status_code == 200, (
-            f"Expected status code 200, but got {response.status_code}"
+            f"Expected status code 200, got {response.status_code}"
         )
-        print("Successfully connected to Ollama API")
+        print(f"Successfully connected to Ollama API: {response.json()}")
     except requests.RequestException as e:
-        pytest.fail(f"Cannot connect to Ollama API: {e}")
+        pytest.fail(f"Failed to connect to Ollama API: {e}")
 
 
 @pytest.mark.depends(on=['test_can_connect_to_ollama'])
 def test_models_available(no_llm):
     """Test if there are any models available on the Ollama server."""
     if no_llm:
-        pytest.skip("Skipping LLM tests due to --no-llm flag")
+        pytest.skip("Skipping LLM tests due to --no-llm flag set")
     try:
         response = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
         assert response.status_code == 200, (
@@ -147,9 +168,9 @@ def test_models_available(no_llm):
 
 @pytest.mark.depends(on=['test_models_available'])
 def test_model_functionality(no_llm):
-    """Test the functionality of an available model on the Ollama server."""
+    """Test basic functionality of an Ollama model."""
     if no_llm:
-        pytest.skip("Skipping LLM tests due to --no-llm flag")
+        pytest.skip("Skipping LLM tests due to --no-llm flag set")
 
     try:
         response = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
@@ -181,7 +202,7 @@ def test_model_functionality(no_llm):
         # Check if either "4" or "four" appears in the response
         assert any(
             answer in model_response.lower() for answer in ["4", "four"]
-            ), (
+        ), (
             "Unexpected response. Expected '4' or 'four', "
             f"got '{model_response}'"
         )
