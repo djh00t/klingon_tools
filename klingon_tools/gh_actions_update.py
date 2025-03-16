@@ -25,7 +25,7 @@ from git import Repo
 from ruamel.yaml import YAML
 from tabulate import tabulate
 
-from klingon_tools.log_msg import log_message
+from klingon_tools.log_msg import log_message, klog_hr
 
 
 def can_display_emojis(no_emojis_flag: bool, args: argparse.Namespace) -> bool:
@@ -45,23 +45,20 @@ def can_display_emojis(no_emojis_flag: bool, args: argparse.Namespace) -> bool:
     # Check if emojis are disabled by the --no-emojis flag
     if no_emojis_flag:
         if not args.quiet:
-            log_message.debug(
-                "Emojis are disabled by the --no-emojis flag."
-            )
+            log_message.debug("Emojis are disabled by the --no-emojis flag.", status="🔍")
         return False
 
     # Check the LANG environment variable for UTF-8 support
     lang = os.getenv("LANG", "")
     if "UTF-8" in lang:
-        log_message.debug(
-            f"Terminal supports emojis based on LANG: {lang} 😎"
-        )
+        log_message.debug(f"Terminal supports emojis based on LANG: {lang} 😎", status="✅")
         return True
 
     # Log a warning if emojis may not be supported
     if not args.quiet:
         log_message.warning(
-            message=f"Terminal may not support emojis based on LANG: {lang} 😎"
+            message=f"Terminal may not support emojis based on LANG: {lang} 😎",
+            status="⚠️"
         )
 
     return False
@@ -101,9 +98,7 @@ def get_latest_version(repo_name: str) -> str:
 
     # Construct the URL for the GitHub API request
     url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
-    log_message.debug(
-        f"Fetching latest version for repo: {repo_name} using URL: {url}"
-    )
+    log_message.debug(f"Fetching latest version for repo: {repo_name} using URL: {url}", status="🔍")
 
     # Set up headers for the API request
     headers = {
@@ -117,20 +112,21 @@ def get_latest_version(repo_name: str) -> str:
 
     # Make the API request to fetch the latest release
     response = requests.get(url, headers=headers, timeout=10)
-    log_message.debug(message=f"Response status code: {response.status_code}")
+    log_message.debug(f"Response status code: {response.status_code}", status="🔍")
 
     # Check if the request was successful
     if response.status_code == 200:
         log_message.debug(
-            message=f"Latest version for {repo_name}: "
-            f"{response.json()['tag_name']}"
+            f"Latest version for {repo_name}: {response.json()['tag_name']}",
+            status="✅"
         )
         return response.json()["tag_name"]
 
     # Log an error if the request failed
     log_message.error(
         message=f"Failed to fetch latest version for {repo_name}, "
-        f"status code: {response.status_code}"
+                f"status code: {response.status_code}",
+        status="❌"
     )
     return None
 
@@ -257,19 +253,17 @@ def find_github_actions(args: argparse.Namespace) -> Dict[str, Dict]:
             if expanded_files:
                 yaml_files.extend(expanded_files)
             else:
-                log_message.warning(
-                    f"No files found matching pattern: {file_pattern}"
-                )
+                log_message.warning(f"No files found matching pattern: {file_pattern}", status="⚠️")
     else:
         yaml_files = get_yaml_files()
 
-    log_message.debug(f"YAML files to process: {yaml_files}")
-    log_message.debug(f"Arguments received: {args}")
+    log_message.debug(f"YAML files to process: {yaml_files}", status="🔍")
+    log_message.debug(f"Arguments received: {args}", status="🔍")
 
     for file_path in yaml_files:
         process_yaml_file(file_path, actions, args)
 
-    log_message.debug(f"YAML files found: {yaml_files}")
+    log_message.debug(f"YAML files found: {yaml_files}", status="🔍")
     return actions
 
 
@@ -281,7 +275,7 @@ def get_yaml_files() -> List[str]:
             if file.endswith((".yml", ".yaml")):
                 file_path = os.path.join(root, file)
                 yaml_files.append(file_path)
-                log_message.debug(f"Found YAML file: {file_path}")
+                log_message.debug(f"Found YAML file: {file_path}", status="✅")
     return yaml_files
 
 
@@ -294,8 +288,8 @@ def process_yaml_file(
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             workflow_data = yaml.load(f)
-            log_message.debug(f"Processing file: {file_path}")
-            log_message.debug(f"Workflow data: {workflow_data}")
+            log_message.debug(f"Processing file: {file_path}", status="🔍")
+            log_message.debug(f"Workflow data: {workflow_data}", status="🔍")
 
             if "jobs" in workflow_data:
                 process_jobs(file_path, workflow_data, actions, args)
@@ -303,8 +297,8 @@ def process_yaml_file(
         # Try again with a different encoding that handles emojis better
         with open(file_path, "r", encoding="utf-8-sig") as f:
             workflow_data = yaml.load(f)
-            log_message.debug(f"Processing file with utf-8-sig: {file_path}")
-            log_message.debug(f"Workflow data: {workflow_data}")
+            log_message.debug(f"Processing file with utf-8-sig: {file_path}", status="🔍")
+            log_message.debug(f"Workflow data: {workflow_data}", status="🔍")
 
             if "jobs" in workflow_data:
                 process_jobs(file_path, workflow_data, actions, args)
@@ -389,8 +383,9 @@ def update_action_version(
         bool: True if the action was updated, False otherwise.
     """
     log_message.debug(
-        message="Updating action %s in file %s to version %s",
-        args=(action_name, file_path, latest_version),
+        message=f"Updating action {action_name} in file {file_path} "
+                f"to version {latest_version}",
+        status="🔍"
     )
 
     # Read the YAML file content
@@ -412,19 +407,22 @@ def update_action_version(
     if updated:
         log_message.info(
             f"Action {action_name} updated to version "
-            f"{latest_version} in file {file_path}"
+            f"{latest_version} in file {file_path}",
+            status="✅"
         )
         with open(file_path, "w", encoding="utf-8") as file:
             yaml.dump(content, file)
     else:
         log_message.warning(
-            message="No updates made for action %s in file %s",
-            args=(action_name, file_path),
+            message=f"No updates made for action {action_name} "
+                    f"in file {file_path}",
+            status="⚠️"
         )
 
     log_message.debug(
-        message="Updated %s to %s in %s",
-        args=(action_name, latest_version, file_path),
+        message=f"Updated {action_name} to {latest_version} "
+                f"in {file_path}",
+        status="✅"
     )
 
     return updated
@@ -486,18 +484,16 @@ def setup_logging(args: argparse.Namespace) -> None:
     """
     token = get_github_token()
 
-    log_message.debug("GitHub Actions Updater is starting.")
+    log_message.debug("GitHub Actions Updater is starting.", status="🚀")
 
     if token:
-        log_message.debug("Using GitHub token for authentication.")
+        log_message.debug("Using GitHub token for authentication.", status="✅")
     else:
-        log_message.warning(
-            "No GitHub token found. Requests may be rate-limited."
-        )
+        log_message.warning("No GitHub token found. Requests may be rate-limited.", status="⚠️")
 
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
-        log_message.debug("Debug logging enabled.")
+        log_message.debug("Debug logging enabled.", status="🐞")
     else:
         logging.basicConfig(level=logging.INFO)
 
@@ -522,7 +518,7 @@ def present_state_data(
         print(tabulate(table, headers=get_headers()))
         if not args.update and not args.quiet:
             print(
-                "\nNote: Use '--update' to update all outdated actions to the"
+                "\nNote: Use '--update' to update all outdated actions to the "
                 "latest version."
             )
 
@@ -571,9 +567,7 @@ def get_headers() -> List:
 def get_status(
         current_version: str, latest_version: str, no_emojis: bool) -> str:
     """Determines the status of an action based on its version."""
-    if current_version == latest_version or current_version.startswith(
-        latest_version.split(".")[0]
-    ):
+    if current_version == latest_version:
         return "OK" if no_emojis else "✅"
     return "Upgrade" if no_emojis else "⬆️"
 
@@ -650,25 +644,25 @@ def main() -> None:
         args.no_emojis = args.no_emojis
 
     # Collect file data
-    log_message.debug("Collecting file data...")
+    log_message.debug("Collecting file data...", status="🔍")
     actions = find_github_actions(args)
-    log_message.debug(f"Actions data:\n{actions}")
+    log_message.debug(f"Actions data:\n{actions}", status="📊")
 
     # Collect API data (latest versions)
-    log_message.debug("Collecting API data...")
+    log_message.debug("Collecting API data...", status="🔍")
     actions = collect_api_data(actions)
-    log_message.debug(f"API data: {actions}")
+    log_message.debug(f"API data: {actions}", status="📊")
 
     # Update file data for filtered files to the latest version
     if args.update:
         for data in actions.values():
             if data["action_version_current"] != data["action_latest_version"]:
                 log_message.info(
-                    "Updating action: %s/%s from version %s to %s",
-                    data["action_owner"],
-                    data["action_repo"],
-                    data["action_version_current"],
-                    data["action_latest_version"],
+                    message=f"Updating action: {data['action_owner']}/"
+                            f"{data['action_repo']} from version "
+                            f"{data['action_version_current']} to "
+                            f"{data['action_latest_version']}",
+                    status="✅"
                 )
                 update_action_version(
                     data["file_name"],
@@ -677,9 +671,9 @@ def main() -> None:
                 )
             else:
                 log_message.info(
-                    "No update needed for action: %s/%s",
-                    data["action_owner"],
-                    data["action_repo"],
+                    message=f"No update needed for action: "
+                            f"{data['action_owner']}/{data['action_repo']}",
+                    status="ℹ️"
                 )
 
         # Collect file data after update
@@ -688,6 +682,9 @@ def main() -> None:
         present_state_data(actions_after, args)
     else:
         present_state_data(actions, args)
+
+    # Add horizontal rule at the end like in push.py
+    klog_hr.info()
 
 
 if __name__ == "__main__":
