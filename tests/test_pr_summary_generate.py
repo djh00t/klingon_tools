@@ -116,8 +116,7 @@ def assert_pr_summary_generate_output(
         pytest.skip("Skipping LLM tests due to --no-llm flag")
 
     # Check that the command ran without errors
-    assert result.returncode == 0, f"Command failed with return code {
-        result.returncode}"
+    assert result.returncode == 0, f"Command failed with return code {result.returncode}"
 
     # Check that there is some output
     assert result.stdout.strip(), "Command output is empty"

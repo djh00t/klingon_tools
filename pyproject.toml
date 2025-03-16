@@ -30,6 +30,9 @@ litellm = "^1.44.4"
 iniconfig = "^2.0.0"
 emoji = "^2.14.0"
 pytest-timeout = "^2.3.1"
+toml = "^0.10.2"
+pytest-depends = "^1.0.1"
+types-requests = "^2.32.0.20250306"
 
 [tool.poetry.group.dev.dependencies]
 pytest-mock = "^3.14.0"
