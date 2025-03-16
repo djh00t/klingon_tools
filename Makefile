@@ -82,13 +82,8 @@ node-major-version:
 
 # Install the package locally
 install:
-	@echo "Checking for Poetry installation..."
-	@if ! command -v poetry &> /dev/null; then \
-		echo "Poetry not found. Installing Poetry."; \
-		curl -sSL https://install.python-poetry.org | python3 -; \
-	fi
-	@echo "Poetry is installed. Installing dependencies..."
 	@poetry install
+	@pip install .
 	@log-message $(LOG_MSG_CONF) "Installing dependencies..." --status "⬇️"
 
 # Install the development dependencies and the package locally
