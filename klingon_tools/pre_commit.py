@@ -365,8 +365,7 @@ def log_parsed_data(parsed_data: Dict) -> None:
         )
 
     # Construct the message line without duplicating the status icon
-    message_line = f"{parsed_data['message_title_case']}{
-        parsed_data['padding']}"
+    message_line = f"{parsed_data['message_title_case']}{parsed_data['padding']}"
     log_message.info(message_line, status=parsed_data.get(
         "status_icon", ""), style="pre-commit")
 
