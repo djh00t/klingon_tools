@@ -69,6 +69,7 @@ class LogTools:
         """Get the current log level."""
         return self.log_message.logger.level
 
+    @classmethod
     def set_template(cls, template: str) -> None:
         """Set the template for log messages."""
         cls.template = template
@@ -310,8 +311,7 @@ class LogTools:
                     *args, **kwargs)
                 print(f"{color}{status}{LogTools.RESET} {status}", flush=True)
                 self.log_message.info(
-                    message=f"Command '{display_message}'"
-                    f"completed with status: {status}"
+                    message=f"Command '{display_message}' completed with status: {status}"
                 )
                 if self.debug and stdout:
                     print(
@@ -370,6 +370,5 @@ class LogTools:
 
             # Log the completion status
             self.log_message.info(
-                message=f"Command '{
-                    display_message}' completed with status: {status}"
+                message=f"Command '{display_message}' completed with status: {status}"
             )
