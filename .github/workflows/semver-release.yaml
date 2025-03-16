@@ -8,22 +8,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v4.2.2
 
-      - name: Get Next Version
-        id: semver
-        uses: ietf-tools/semver-action@v1
-        with:
-          token: ${{ github.token }}
-          branch: main
+    - name: Get Next Version
+      id: semver
+      uses: ietf-tools/semver-action@v1.10.0
+      with:
+        token: ${{ github.token }}
+        branch: main
 
-      - name: Create Release
-        uses: ncipollo/release-action@v1.12.0
-        with:
-          allowUpdates: true
-          draft: false
-          makeLatest: true
-          name: ${{ steps.semver.outputs.next }}
-          body: Changelog Contents
-          token: ${{ github.token }}
+    - name: Create Release
+      uses: ncipollo/release-action@v1.16.0
+      with:
+        allowUpdates: true
+        draft: false
+        makeLatest: true
+        name: ${{ steps.semver.outputs.next }}
+        body: Changelog Contents
+        token: ${{ github.token }}
