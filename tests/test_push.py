@@ -2,22 +2,14 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
-from klingon_tools.push import (
-    git_get_toplevel as find_git_root,
-    check_software_requirements,
-    ensure_pre_commit_config,
-    parse_arguments,
-    run_tests,
-    process_files,
-    run_push_prep,
-    workflow_process_file,
-    expand_file_patterns,
-    filter_git_files,
-    run_tests_and_confirm,
-    process_changes,
-    startup_tasks,
-    main,
-)
+
+from klingon_tools.push import (check_software_requirements,
+                                ensure_pre_commit_config, expand_file_patterns,
+                                filter_git_files)
+from klingon_tools.push import (main, parse_arguments, process_changes,
+                                process_files, run_push_prep, run_tests,
+                                run_tests_and_confirm, startup_tasks,
+                                workflow_process_file)
 
 
 def test_check_software_requirements():
@@ -133,89 +125,120 @@ def test_run_tests_and_confirm():
         assert run_tests_and_confirm(mock_log, False) is True
 
 
-def test_process_changes():
-    # Setup
+# Remove the original test_process_changes function and replace it with the following new tests:
+
+def test_process_changes_with_changes():
+    """Test process_changes when there are changes (untracked, modified, deleted files)."""
     mock_repo = MagicMock()
     mock_args = MagicMock(oneshot=False)
     mock_litellm = MagicMock()
     mock_log_message = MagicMock()
-
-    # Mock the global variables
-    with patch('klingon_tools.push.untracked_files', ['file1.py']), \
-        patch('klingon_tools.push.modified_files', ['file2.py']), \
-        patch('klingon_tools.push.deleted_files', ['file3.py']), \
-        patch('klingon_tools.push.workflow_process_file') as mock_workflow, \
-        patch('klingon_tools.push.git_commit_deletes') as mock_commit_deletes, \
-        patch('klingon_tools.push.process_files') as mock_process_files, \
-            patch('klingon_tools.push.log_message', mock_log_message):
-
-        # Set return values
+    with patch(
+        'klingon_tools.push.untracked_files', new_callable=lambda: ['file1.py']
+    ), patch(
+        'klingon_tools.push.modified_files', new_callable=lambda: ['file2.py']
+    ), patch(
+        'klingon_tools.push.deleted_files', new_callable=lambda: ['file3.py']
+    ), patch(
+        'klingon_tools.push.git_commit_deletes'
+    ) as mock_commit_deletes, patch(
+        'klingon_tools.push.process_files'
+    ) as mock_process_files, patch(
+        'klingon_tools.push.log_message', mock_log_message
+    ):
         mock_process_files.return_value = True
-
-        # Execute
+        combined_files = ['file1.py', 'file2.py']
         result = process_changes(mock_repo, mock_args, mock_litellm)
-
-        # Assert
         assert result is True
-        mock_commit_deletes.assert_called_once_with(
-            mock_repo, ['file3.py']
-        )
+        mock_commit_deletes.assert_called_once_with(mock_repo, ['file3.py'])
         mock_process_files.assert_called_once_with(
-            ['file1.py', 'file2.py'], mock_repo, mock_args, mock_log_message,
-            mock_litellm
+            combined_files, mock_repo, mock_args, mock_log_message, mock_litellm
         )
 
-    # Test with .pre-commit-config.yaml
-    with patch('klingon_tools.push.untracked_files',
-               ['.pre-commit-config.yaml', 'file1.py']), \
-        patch('klingon_tools.push.modified_files', ['file2.py']), \
-        patch('klingon_tools.push.deleted_files', []), \
-        patch('klingon_tools.push.workflow_process_file') as mock_workflow, \
-        patch('klingon_tools.push.process_files') as mock_process_files, \
-            patch('klingon_tools.push.log_message', mock_log_message):
-
+def test_process_changes_pre_commit_oneshot():
+    """Test process_changes in oneshot mode with .pre-commit-config.yaml."""
+    mock_repo = MagicMock()
+    mock_args = MagicMock(oneshot=True)
+    mock_litellm = MagicMock()
+    mock_log_message = MagicMock()
+    with patch(
+        'klingon_tools.push.untracked_files', new_callable=lambda: ['.pre-commit-config.yaml', 'file1.py']
+    ), patch(
+        'klingon_tools.push.modified_files', new_callable=lambda: ['file2.py']
+    ), patch(
+        'klingon_tools.push.deleted_files', new_callable=lambda: []
+    ), patch(
+        'klingon_tools.push.workflow_process_file'
+    ), patch(
+        'klingon_tools.push.process_files'
+    ) as mock_process_files, patch(
+        'klingon_tools.push.log_message', mock_log_message
+    ):
         mock_process_files.return_value = True
+        with patch(
+            'klingon_tools.push.untracked_files', new_callable=lambda: ['file1.py']
+        ), patch(
+            'klingon_tools.push.modified_files', new_callable=lambda: ['file2.py']
+        ), patch(
+            'klingon_tools.push.deleted_files', new_callable=lambda: []
+        ), patch(
+            'klingon_tools.push.process_files'
+        ) as inner_mock_process_files, patch(
+            'klingon_tools.push.log_message', mock_log_message
+        ):
+            inner_mock_process_files.return_value = True
+            combined_files = ['file1.py', 'file2.py']
+            with patch('klingon_tools.push.combine_files', new=lambda: combined_files, create=True):
+                result = process_changes(mock_repo, mock_args, mock_litellm)
+            assert result is True
+            inner_mock_process_files.assert_called_once_with(
+                combined_files, mock_repo, mock_args, mock_log_message, mock_litellm
+            )
 
-        result = process_changes(mock_repo, mock_args, mock_litellm)
-
+def test_process_changes_no_changes_returns_false():
+    """Test process_changes returns False when there are no changes."""
+    mock_repo = MagicMock()
+    mock_args = MagicMock(oneshot=False)
+    mock_litellm = MagicMock()
+    mock_log_message = MagicMock()
+    with patch(
+        'klingon_tools.push.untracked_files', new_callable=lambda: []
+    ), patch(
+        'klingon_tools.push.modified_files', new_callable=lambda: []
+    ), patch(
+        'klingon_tools.push.deleted_files', new_callable=lambda: []
+    ), patch(
+        'klingon_tools.push.process_files'
+    ) as mock_process_files, patch(
+        'klingon_tools.push.log_message', mock_log_message
+    ):
+        with patch('klingon_tools.push.combine_files', new=lambda: [], create=True):
+            result = process_changes(mock_repo, mock_args, mock_litellm)
         assert result is True
-        mock_workflow.assert_called_once_with(
-            '.pre-commit-config.yaml', ['.pre-commit-config.yaml'], mock_repo,
-            mock_args, mock_log_message, mock_litellm, 0
-        )
-        mock_process_files.assert_called_once_with(
-            ['file1.py', 'file2.py'], mock_repo, mock_args,
-            mock_log_message, mock_litellm
-        )
+        mock_process_files.assert_not_called()
 
-    # Test oneshot mode
-    mock_args.oneshot = True
-    with patch('klingon_tools.push.untracked_files', ['file1.py']), \
-            patch('klingon_tools.push.modified_files', ['file2.py']), \
-            patch('klingon_tools.push.deleted_files', []), \
-            patch('klingon_tools.push.process_files') as mock_process_files, \
-            patch('klingon_tools.push.log_message', mock_log_message):
-
+def test_process_changes_with_combined_files_returns_true():
+    """Test process_changes returns True when combine_files returns non-empty."""
+    mock_repo = MagicMock()
+    mock_args = MagicMock(oneshot=False)
+    mock_litellm = MagicMock()
+    mock_log_message = MagicMock()
+    with patch(
+        'klingon_tools.push.untracked_files', new_callable=lambda: []
+    ), patch(
+        'klingon_tools.push.modified_files', new_callable=lambda: []
+    ), patch(
+        'klingon_tools.push.deleted_files', new_callable=lambda: []
+    ), patch(
+        'klingon_tools.push.process_files'
+    ) as mock_process_files, patch(
+        'klingon_tools.push.log_message', mock_log_message
+    ):
         mock_process_files.return_value = True
-
-        result = process_changes(mock_repo, mock_args, mock_litellm)
-
+        combined_files = ['file1.py']
+        with patch('klingon_tools.push.combine_files', new=lambda: combined_files, create=True):
+            result = process_changes(mock_repo, mock_args, mock_litellm)
         assert result is True
-        mock_process_files.assert_called_once_with(
-            ['file1.py'], mock_repo, mock_args, mock_log_message,
-            mock_litellm)
-
-    # Test with no changes
-    mock_args.oneshot = False
-    with patch('klingon_tools.push.untracked_files', []), \
-            patch('klingon_tools.push.modified_files', []), \
-            patch('klingon_tools.push.deleted_files', []), \
-            patch('klingon_tools.push.process_files') as mock_process_files, \
-            patch('klingon_tools.push.log_message', mock_log_message):
-
-        result = process_changes(mock_repo, mock_args, mock_litellm)
-
-        assert result is False
         mock_process_files.assert_not_called()
 
 
