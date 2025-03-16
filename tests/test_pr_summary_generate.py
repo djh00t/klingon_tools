@@ -32,18 +32,7 @@ def ignore_warnings():
     )
 
 
-def pytest_addoption(parser):
-    parser.addoption(
-        "--no-llm", action="store_true", default=False, help="Skip LLM tests"
-    )
-
-
-@pytest.fixture
-def no_llm(pytestconfig):
-    """
-    Fixture to access the --no-llm flag.
-    """
-    return pytestconfig.getoption("--no-llm")
+# Using the fixtures defined in conftest.py
 
 
 @pytest.mark.parametrize("debug", [False, True])
@@ -61,9 +50,9 @@ def test_pr_summary_generate(no_llm, debug: bool, capsys) -> None:
     Raises:
         AssertionError: If any of the assertions fail.
     """
-    # Skip the test if the --no-llm flag is set
+    # Skip the test if LLM tests are disabled (default behavior)
     if no_llm:
-        pytest.skip("Skipping LLM tests due to --no-llm flag")
+        pytest.skip("Skipping LLM tests (use --run-llm to enable)")
 
     # Run the pr-summary-generate command
     result = subprocess.run(
@@ -109,9 +98,9 @@ def assert_pr_summary_generate_output(
     Raises:
         AssertionError: If any of the assertions fail.
     """
-    # Skip the test if the --no-llm flag is set
+    # Skip the test if LLM tests are disabled (default behavior)
     if no_llm:
-        pytest.skip("Skipping LLM tests due to --no-llm flag")
+        pytest.skip("Skipping LLM tests (use --run-llm to enable)")
 
     # Check that the command ran without errors
     assert result.returncode == 0, (
@@ -126,9 +115,7 @@ def assert_pr_summary_generate_output(
         assert "STDOUT:" in debug_output
         assert "STDERR:" in debug_output
 
-    assert some_long_function_call_with_many_arguments(
-        arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10
-    )
+    # Additional check was removed as it used undefined functions and arguments
 
 
 if __name__ == "__main__":
