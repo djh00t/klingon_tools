@@ -10,12 +10,7 @@ import subprocess
 import pytest
 
 
-@pytest.fixture
-def no_llm(pytestconfig):
-    """
-    Fixture to access the --no-llm flag.
-    """
-    return pytestconfig.getoption("--no-llm")
+# Using the fixtures defined in conftest.py
 
 
 @pytest.mark.parametrize("debug", [False, True])
@@ -44,9 +39,9 @@ def test_pr_context_generate(no_llm, debug: bool, capsys) -> None:
         3. If in debug mode, checks for the presence of debug information in
            the output.
     """
-    # Skip the test if the --no-llm flag is set
+    # Skip the test if LLM tests are disabled (default behavior)
     if no_llm:
-        pytest.skip("Skipping LLM tests due to --no-llm flag")
+        pytest.skip("Skipping LLM tests (use --run-llm to enable)")
 
     # Run the pr-context-generate command
     result = subprocess.run(
@@ -98,9 +93,9 @@ def assert_pr_context_generate_output(
            - Checks for the presence of "RETURN CODE:", "STDOUT:", and
            "STDERR:" in the debug output.
     """
-    # Skip the test if the --no-llm flag is set
+    # Skip the test if LLM tests are disabled (default behavior)
     if no_llm:
-        pytest.skip("Skipping LLM tests due to --no-llm flag")
+        pytest.skip("Skipping LLM tests (use --run-llm to enable)")
 
     # Check that the command ran without errors
     assert result.returncode == 0, \
