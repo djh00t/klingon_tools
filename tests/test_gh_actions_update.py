@@ -132,9 +132,8 @@ def test_update_action_version(mock_log_message, mock_yaml, mock_file):
     assert result is True
     mock_yaml_instance.dump.assert_called_once()
     assert "actions/checkout@v3" in str(mock_yaml_instance.dump.call_args)
-    mock_log_message.info.assert_called_once_with(
-        "Action actions/checkout updated to version v3 in file workflow.yml"
-    )
+    # Check call was made with the correct message (ignoring status parameter added for emoji display)
+    assert mock_log_message.info.call_args[0][0] == "Action actions/checkout updated to version v3 in file workflow.yml"
 
 
 def test_can_display_emojis(mock_args):
@@ -340,8 +339,8 @@ def test_find_github_actions_with_empty_wildcard(
     # Call function under test
     result = find_github_actions(args)
 
-    # Verify warning was logged
-    mock_log.warning.assert_called_with("No files found matching pattern: non_existent/*.yml")
+    # Verify warning was logged (ignoring status parameter added for emoji display)
+    assert mock_log.warning.call_args[0][0] == "No files found matching pattern: non_existent/*.yml"
 
     # Verify get_yaml_files was not called (we're not testing the else branch here)
     mock_get_yaml.assert_not_called()
