@@ -32,10 +32,26 @@ def ignore_warnings():
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--no-llm", action="store_true", default=False, help="Skip LLM tests"
+        "--run-llm", action="store_true", default=False,
+        help="Run LLM tests (skipped by default)"
     )
 
 
 @pytest.fixture
 def no_llm(pytestconfig):
-    return pytestconfig.getoption("--no-llm")
+    """
+    Fixture to determine if LLM tests should be skipped.
+    Returns True if LLM tests should be skipped (default).
+    For backward compatibility, keeps the name 'no_llm'.
+    """
+    return not pytestconfig.getoption("--run-llm")
+
+
+@pytest.fixture
+def run_llm(pytestconfig):
+    """
+    Fixture to determine if LLM tests should be run.
+    Returns True if LLM tests should be run, False otherwise.
+    This is the inverse of no_llm for better readability in new tests.
+    """
+    return pytestconfig.getoption("--run-llm")
