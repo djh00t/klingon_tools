@@ -34,6 +34,12 @@ module.exports = {
     noteKeywords: ["BREAKING CHANGE", "BREAKING CHANGES"]
   },
   writerOpts: {
-    commitsSort: ["subject", "scope"]
+    commitsSort: ["subject", "scope"],
+    transform: (commit, context) => {
+      if (commit.date && !(commit.date instanceof Date)) {
+        commit.date = new Date(commit.date);
+      }
+      return commit;
+    }
   }
 };
