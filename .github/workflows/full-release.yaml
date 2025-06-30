@@ -38,7 +38,7 @@ jobs:
           generateChangelog: true
 
       - name: Create GitHub Release
-        uses: ncipollo/release-action@v1.16.0
+        uses: ncipollo/release-action@v1.18.0
         with:
           tag: ${{ steps.semver.outputs.next }}
           name: Release ${{ steps.semver.outputs.next }}
