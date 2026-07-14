@@ -12,12 +12,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v7.0.0
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5.4.0
+        uses: actions/setup-python@v6.3.0
         with:
           python-version: "3.x"
 
@@ -28,23 +28,17 @@ jobs:
 
       - name: Bump version & Generate Changelog
         id: semver
-        uses: ietf-tools/semver-action@v1.10.0
+        uses: ietf-tools/semver-action@v1.11.0
         with:
           token: ${{ github.token }}
           branch: main
           minorList: "✨ feat, feat, feature"
-<<<<<<< HEAD
-          patchList: "🐛 fix, fix, 🐛 bug, bug, bugfix, perf, ♻️ refactor, refactor, 🚨 test, test, tests"
-          additionalCommits: "📚 doc, doc, 📚 docs, docs, 💄 style, style, 🚀 perf, perf, 🛠️ build, build, ⚙️ ci, ci, 🔧 chore, chore, ⏪ revert, revert, other"
-          generateChangelog: true
-=======
           patchList: "🐛 fix, fix, 🐛 bug, bug, bugfix, perf, ♻️ refactor, refactor, 🚨 test, test, tests, 🔧 chore, chore"
           additionalCommits: "📚 doc, doc, 📚 docs, docs, 💄 style, style, 🚀 perf, perf, 🛠️ build, build, ⚙️ ci, ci, ⏪ revert, revert, other"
           noVersionBumpBehavior: patch
->>>>>>> 21d3082 (fix(ci): align semver release version and staged TestPyPI/PyPI publish)
 
       - name: Create GitHub Release
-        uses: ncipollo/release-action@v1.16.0
+        uses: ncipollo/release-action@v1.20.0
         with:
           tag: ${{ steps.semver.outputs.next }}
           name: Release ${{ steps.semver.outputs.next }}
