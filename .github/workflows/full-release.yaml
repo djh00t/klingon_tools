@@ -33,9 +33,15 @@ jobs:
           token: ${{ github.token }}
           branch: main
           minorList: "✨ feat, feat, feature"
+<<<<<<< HEAD
           patchList: "🐛 fix, fix, 🐛 bug, bug, bugfix, perf, ♻️ refactor, refactor, 🚨 test, test, tests"
           additionalCommits: "📚 doc, doc, 📚 docs, docs, 💄 style, style, 🚀 perf, perf, 🛠️ build, build, ⚙️ ci, ci, 🔧 chore, chore, ⏪ revert, revert, other"
           generateChangelog: true
+=======
+          patchList: "🐛 fix, fix, 🐛 bug, bug, bugfix, perf, ♻️ refactor, refactor, 🚨 test, test, tests, 🔧 chore, chore"
+          additionalCommits: "📚 doc, doc, 📚 docs, docs, 💄 style, style, 🚀 perf, perf, 🛠️ build, build, ⚙️ ci, ci, ⏪ revert, revert, other"
+          noVersionBumpBehavior: patch
+>>>>>>> 21d3082 (fix(ci): align semver release version and staged TestPyPI/PyPI publish)
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1.16.0
@@ -45,14 +51,50 @@ jobs:
           body: ${{ steps.semver.outputs.changelog }}
           token: ${{ github.token }}
 
-      - name: Build and Publish to PyPI
-        env:
-          TWINE_USERNAME: "__token__"
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+      - name: Sync package version to release tag
+        run: |
+          RAW_VERSION="${{ steps.semver.outputs.next }}"
+          PACKAGE_VERSION="${RAW_VERSION#v}"
+          echo "Using package version: ${PACKAGE_VERSION}"
+          sed -i -E "s/^version = \".*\"$/version = \"${PACKAGE_VERSION}\"/" pyproject.toml
+
+      - name: Build and Verify Version
         run: |
           python -m build
+          EXPECTED_VERSION="${{ steps.semver.outputs.next }}"
+          EXPECTED_VERSION="${EXPECTED_VERSION#v}"
+          ACTUAL_VERSION=$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["tool"]["poetry"]["version"])')
+
+          if [[ "$ACTUAL_VERSION" != "$EXPECTED_VERSION" ]]; then
+            echo "Version mismatch: expected $EXPECTED_VERSION but pyproject has $ACTUAL_VERSION"
+            exit 1
+          fi
+
+          if ! ls dist/*"${EXPECTED_VERSION}"* >/dev/null 2>&1; then
+            echo "Built artifacts do not include expected version $EXPECTED_VERSION"
+            ls -la dist
+            exit 1
+          fi
+
+      - name: Publish to TestPyPI
+        env:
+          TWINE_USERNAME: "__token__"
+          TWINE_PASSWORD: ${{ secrets.TEST_PYPI_USER_AGENT }}
+        run: |
           for i in {1..5}; do
-            twine upload dist/* && break || {
+            twine upload --skip-existing --repository-url https://test.pypi.org/legacy/ dist/* && break || {
+              echo "TestPyPI upload failed, retrying in 5 seconds..."
+              sleep 5
+            }
+          done
+
+      - name: Publish to PyPI
+        env:
+          TWINE_USERNAME: "__token__"
+          TWINE_PASSWORD: ${{ secrets.PYPI_USER_AGENT }}
+        run: |
+          for i in {1..5}; do
+            twine upload --skip-existing dist/* && break || {
               echo "Upload failed, retrying in 5 seconds..."
               sleep 5
             }
