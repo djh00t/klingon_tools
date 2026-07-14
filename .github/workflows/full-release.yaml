@@ -36,6 +36,7 @@ jobs:
           patchList: "🐛 fix, fix, 🐛 bug, bug, bugfix, perf, ♻️ refactor, refactor, 🚨 test, test, tests, 🔧 chore, chore"
           additionalCommits: "📚 doc, doc, 📚 docs, docs, 💄 style, style, 🚀 perf, perf, 🛠️ build, build, ⚙️ ci, ci, ⏪ revert, revert, other"
           generateChangelog: true
+          noVersionBumpBehavior: patch
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1.20.0
