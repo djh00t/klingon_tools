@@ -33,8 +33,8 @@ jobs:
           token: ${{ github.token }}
           branch: main
           minorList: "✨ feat, feat, feature"
-          patchList: "🐛 fix, fix, 🐛 bug, bug, bugfix, perf, ♻️ refactor, refactor, 🚨 test, test, tests"
-          additionalCommits: "📚 doc, doc, 📚 docs, docs, 💄 style, style, 🚀 perf, perf, 🛠️ build, build, ⚙️ ci, ci, 🔧 chore, chore, ⏪ revert, revert, other"
+          patchList: "🐛 fix, fix, 🐛 bug, bug, bugfix, perf, ♻️ refactor, refactor, 🚨 test, test, tests, 🔧 chore, chore"
+          additionalCommits: "📚 doc, doc, 📚 docs, docs, 💄 style, style, 🚀 perf, perf, 🛠️ build, build, ⚙️ ci, ci, ⏪ revert, revert, other"
           generateChangelog: true
 
       - name: Create GitHub Release
